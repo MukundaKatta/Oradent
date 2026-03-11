@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
-import { authenticate, authorize } from '../middleware/auth';
+import { authenticate, authorize, generateToken, generateRefreshToken } from '../middleware/auth';
 
 const router = Router();
 router.use(authenticate);
@@ -97,6 +98,99 @@ router.put('/chairs/:id', authorize('OWNER'), async (req: Request, res: Response
   });
 
   res.json(chair);
+});
+
+// Invite a new provider (OWNER only)
+router.post('/providers', authorize('OWNER'), async (req: Request, res: Response) => {
+  const schema = z.object({
+    name: z.string().min(2),
+    email: z.string().email(),
+    role: z.enum(['DENTIST', 'HYGIENIST', 'ASSISTANT', 'FRONT_DESK']),
+    title: z.string().default('DDS'),
+    npi: z.string().optional(),
+    licenseNumber: z.string().optional(),
+    color: z.string().default('#6366f1'),
+    temporaryPassword: z.string().min(8),
+  });
+
+  const data = schema.parse(req.body);
+
+  const existing = await prisma.provider.findUnique({ where: { email: data.email } });
+  if (existing) {
+    res.status(409).json({ error: 'A provider with this email already exists' });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(data.temporaryPassword, 12);
+
+  const provider = await prisma.provider.create({
+    data: {
+      practiceId: req.auth!.practiceId,
+      name: data.name,
+      email: data.email,
+      passwordHash,
+      role: data.role,
+      title: data.title,
+      npi: data.npi,
+      licenseNumber: data.licenseNumber,
+      color: data.color,
+    },
+    select: { id: true, name: true, email: true, role: true, title: true, color: true, isActive: true },
+  });
+
+  res.status(201).json(provider);
+});
+
+// Update provider (OWNER only)
+router.put('/providers/:id', authorize('OWNER'), async (req: Request, res: Response) => {
+  const schema = z.object({
+    name: z.string().min(2).optional(),
+    role: z.enum(['OWNER', 'DENTIST', 'HYGIENIST', 'ASSISTANT', 'FRONT_DESK']).optional(),
+    title: z.string().optional(),
+    color: z.string().optional(),
+    npi: z.string().optional(),
+    licenseNumber: z.string().optional(),
+    isActive: z.boolean().optional(),
+  });
+
+  const data = schema.parse(req.body);
+
+  const existing = await prisma.provider.findFirst({
+    where: { id: req.params.id, practiceId: req.auth!.practiceId },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Provider not found' });
+    return;
+  }
+
+  const provider = await prisma.provider.update({
+    where: { id: req.params.id },
+    data,
+    select: { id: true, name: true, email: true, role: true, title: true, color: true, isActive: true, npi: true, licenseNumber: true },
+  });
+
+  res.json(provider);
+});
+
+// Reset provider password (OWNER only)
+router.post('/providers/:id/reset-password', authorize('OWNER'), async (req: Request, res: Response) => {
+  const { newPassword } = z.object({ newPassword: z.string().min(8) }).parse(req.body);
+
+  const existing = await prisma.provider.findFirst({
+    where: { id: req.params.id, practiceId: req.auth!.practiceId },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Provider not found' });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await prisma.provider.update({
+    where: { id: req.params.id },
+    data: { passwordHash },
+  });
+
+  res.json({ message: 'Password reset successfully' });
 });
 
 export default router;

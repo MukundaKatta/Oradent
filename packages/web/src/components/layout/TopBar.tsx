@@ -9,6 +9,7 @@ import { useAppStore } from "@/stores/appStore";
 import { NotificationPanel } from "./NotificationPanel";
 import { CommandPalette } from "./CommandPalette";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function TopBar() {
   const [commandOpen, setCommandOpen] = useState(false);
@@ -58,6 +59,8 @@ export function TopBar() {
         {/* Right: Date, notifications, profile */}
         <div className="flex items-center gap-4">
           <span className="hidden text-sm text-stone-500 lg:block">{today}</span>
+
+          <ThemeToggle />
 
           {/* Notification bell */}
           <div className="relative">

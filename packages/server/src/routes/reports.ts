@@ -268,4 +268,108 @@ router.get('/provider-productivity', async (req: Request, res: Response) => {
   res.json(result);
 });
 
+// Recall / Recare report (patients overdue for hygiene)
+router.get('/recall', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+  const monthsOverdue = parseInt(req.query.months as string) || 6;
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - monthsOverdue);
+
+  const patients = await prisma.patient.findMany({
+    where: {
+      practiceId,
+      status: 'ACTIVE',
+      OR: [
+        { lastVisit: { lt: cutoff } },
+        { lastVisit: null },
+      ],
+      nextAppointment: null,
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      email: true,
+      lastVisit: true,
+      insurancePrimary: { select: { company: true, remainingBenefit: true, expirationDate: true } },
+    },
+    orderBy: { lastVisit: 'asc' },
+    take: 200,
+  });
+
+  const result = patients.map((p) => ({
+    ...p,
+    daysSinceLastVisit: p.lastVisit
+      ? Math.floor((Date.now() - p.lastVisit.getTime()) / (1000 * 60 * 60 * 24))
+      : null,
+    benefitsExpiringSoon: p.insurancePrimary?.expirationDate
+      ? p.insurancePrimary.expirationDate.getTime() - Date.now() < 90 * 24 * 60 * 60 * 1000
+      : false,
+  }));
+
+  res.json({ patients: result, total: result.length, criteria: { monthsOverdue } });
+});
+
+// Appointment type breakdown
+router.get('/appointment-types', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+  const startDate = req.query.start ? new Date(req.query.start as string) : new Date(new Date().getFullYear(), 0, 1);
+
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      provider: { practiceId },
+      startTime: { gte: startDate },
+      status: { notIn: ['CANCELLED', 'NO_SHOW'] },
+    },
+    select: { type: true, status: true },
+  });
+
+  const typeBreakdown: Record<string, { total: number; completed: number }> = {};
+  for (const apt of appointments) {
+    if (!typeBreakdown[apt.type]) typeBreakdown[apt.type] = { total: 0, completed: 0 };
+    typeBreakdown[apt.type].total++;
+    if (apt.status === 'COMPLETED') typeBreakdown[apt.type].completed++;
+  }
+
+  const result = Object.entries(typeBreakdown)
+    .map(([type, data]) => ({ type, ...data, completionRate: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0 }))
+    .sort((a, b) => b.total - a.total);
+
+  res.json(result);
+});
+
+// Treatment acceptance rate
+router.get('/treatment-acceptance', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+  const startDate = req.query.start ? new Date(req.query.start as string) : new Date(new Date().getFullYear(), 0, 1);
+
+  const plans = await prisma.treatmentPlan.findMany({
+    where: {
+      patient: { practiceId },
+      createdAt: { gte: startDate },
+    },
+    select: { status: true, totalFee: true, patientEst: true },
+  });
+
+  const total = plans.length;
+  const accepted = plans.filter(p => ['ACCEPTED', 'IN_PROGRESS', 'COMPLETED'].includes(p.status)).length;
+  const declined = plans.filter(p => p.status === 'DECLINED').length;
+  const pending = plans.filter(p => ['PROPOSED', 'PRESENTED'].includes(p.status)).length;
+  const totalValue = plans.reduce((s, p) => s + p.totalFee, 0);
+  const acceptedValue = plans
+    .filter(p => ['ACCEPTED', 'IN_PROGRESS', 'COMPLETED'].includes(p.status))
+    .reduce((s, p) => s + p.totalFee, 0);
+
+  res.json({
+    total,
+    accepted,
+    declined,
+    pending,
+    acceptanceRate: total > 0 ? Math.round((accepted / total) * 100) : 0,
+    totalValue: Math.round(totalValue * 100) / 100,
+    acceptedValue: Math.round(acceptedValue * 100) / 100,
+  });
+});
+
 export default router;

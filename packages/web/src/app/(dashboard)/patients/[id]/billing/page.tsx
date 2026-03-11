@@ -216,7 +216,6 @@ export default function PatientBillingPage() {
           open={showCreateInvoice}
           onClose={() => setShowCreateInvoice(false)}
           onSave={() => setShowCreateInvoice(false)}
-          defaultPatientId={params.id}
         />
       )}
 

@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-export function authenticate(req: Request, res: Response, next: NextFunction): void {
+export async function authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Authentication required' });
@@ -34,6 +34,13 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     // Reject refresh tokens used as access tokens
     if (payload.type === 'refresh') {
       res.status(401).json({ error: 'Invalid token type' });
+      return;
+    }
+
+    // Check if token has been blacklisted (logout)
+    const isBlacklisted = await redis.get(`bl:${token.slice(-16)}`);
+    if (isBlacklisted) {
+      res.status(401).json({ error: 'Token has been revoked' });
       return;
     }
 
@@ -64,14 +71,14 @@ export function authorize(...roles: ProviderRole[]) {
 
 export function generateToken(payload: Omit<AuthPayload, 'type'>): string {
   return jwt.sign({ ...payload, type: 'access' }, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRY,
-  });
+    expiresIn: env.JWT_EXPIRY as string & { __brand?: never },
+  } as jwt.SignOptions);
 }
 
 export function generateRefreshToken(payload: Omit<AuthPayload, 'type'>): string {
   return jwt.sign({ ...payload, type: 'refresh' }, env.JWT_SECRET, {
-    expiresIn: env.JWT_REFRESH_EXPIRY,
-  });
+    expiresIn: env.JWT_REFRESH_EXPIRY as string & { __brand?: never },
+  } as jwt.SignOptions);
 }
 
 export function verifyRefreshToken(token: string): AuthPayload {

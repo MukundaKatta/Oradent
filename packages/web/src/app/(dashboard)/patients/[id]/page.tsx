@@ -24,6 +24,7 @@ import {
 
 const TABS = [
   { label: 'Chart', href: 'chart', icon: ClipboardList },
+  { label: 'Treatments', href: 'treatments', icon: FileText },
   { label: 'History', href: 'history', icon: Activity },
   { label: 'Imaging', href: 'imaging', icon: Image },
   { label: 'Billing', href: 'billing', icon: DollarSign },

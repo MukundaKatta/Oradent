@@ -153,6 +153,14 @@ const claimSchema = z.object({
 router.post('/claims', async (req: Request, res: Response) => {
   const data = claimSchema.parse(req.body);
 
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: data.invoiceId, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!invoice) {
+    res.status(404).json({ error: 'Invoice not found' });
+    return;
+  }
+
   const claim = await prisma.insuranceClaim.create({
     data: {
       ...data,
@@ -174,6 +182,14 @@ router.patch('/claims/:id/status', async (req: Request, res: Response) => {
     denialReason: z.string().optional(),
   }).parse(req.body);
 
+  const claim = await prisma.insuranceClaim.findFirst({
+    where: { id: req.params.id, invoice: { patient: { practiceId: req.auth!.practiceId } } },
+  });
+  if (!claim) {
+    res.status(404).json({ error: 'Claim not found' });
+    return;
+  }
+
   const updateData: Record<string, unknown> = { status };
   if (status === 'SUBMITTED') updateData.submittedAt = new Date();
   if (status === 'PAID') updateData.paidAt = new Date();
@@ -181,33 +197,58 @@ router.patch('/claims/:id/status', async (req: Request, res: Response) => {
   if (amountPaid !== undefined) updateData.amountPaid = amountPaid;
   if (denialReason) updateData.denialReason = denialReason;
 
-  const claim = await prisma.insuranceClaim.update({
+  const updatedClaim = await prisma.insuranceClaim.update({
     where: { id: req.params.id },
     data: updateData as any,
   });
 
-  res.json(claim);
+  res.json(updatedClaim);
 });
 
-// Patient ledger
+// Patient ledger (paginated with aggregated summary)
 router.get('/ledger/:patientId', async (req: Request, res: Response) => {
-  const invoices = await prisma.invoice.findMany({
-    where: { patientId: req.params.patientId },
-    include: {
-      treatments: { select: { cdtCode: true, description: true, fee: true } },
-      payments: true,
-    },
-    orderBy: { date: 'desc' },
+  const patient = await prisma.patient.findFirst({
+    where: { id: req.params.patientId, practiceId: req.auth!.practiceId },
   });
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
 
-  const totalCharges = invoices.reduce((sum, inv) => sum + inv.total, 0);
-  const totalPayments = invoices.reduce(
-    (sum, inv) => sum + inv.payments.reduce((ps, p) => ps + p.amount, 0),
-    0
-  );
-  const balance = totalCharges - totalPayments;
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(100, parseInt(req.query.limit as string) || 50);
 
-  res.json({ invoices, summary: { totalCharges, totalPayments, balance } });
+  const [invoices, total, chargesAgg, paymentsAgg] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { patientId: req.params.patientId },
+      include: {
+        treatments: { select: { cdtCode: true, description: true, fee: true } },
+        payments: true,
+      },
+      orderBy: { date: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.invoice.count({ where: { patientId: req.params.patientId } }),
+    prisma.invoice.aggregate({
+      where: { patientId: req.params.patientId },
+      _sum: { total: true },
+    }),
+    prisma.payment.aggregate({
+      where: { invoice: { patientId: req.params.patientId } },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  const totalCharges = chargesAgg._sum.total || 0;
+  const totalPayments = paymentsAgg._sum.amount || 0;
+  const balance = Math.round((totalCharges - totalPayments) * 100) / 100;
+
+  res.json({
+    invoices,
+    summary: { totalCharges, totalPayments, balance },
+    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+  });
 });
 
 // Fee schedule

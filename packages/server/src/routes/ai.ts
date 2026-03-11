@@ -153,6 +153,14 @@ router.post('/pre-auth-letter', async (req: Request, res: Response) => {
 
 // Get AI analysis history
 router.get('/history/:patientId', async (req: Request, res: Response) => {
+  const patient = await prisma.patient.findFirst({
+    where: { id: req.params.patientId, practiceId: req.auth!.practiceId },
+  });
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
+
   const analyses = await prisma.aIAnalysis.findMany({
     where: { patientId: req.params.patientId },
     include: { image: { select: { id: true, fileName: true, type: true } } },

@@ -15,6 +15,9 @@ import { errorHandler } from './middleware/errorHandler';
 import { apiLimiter } from './middleware/rateLimiter';
 import { auditMiddleware } from './middleware/auditMiddleware';
 import { initializeWebSocket } from './websocket/liveUpdates';
+import { startAppointmentReminders } from './jobs/appointmentReminder';
+import { startClaimFollowUp } from './jobs/claimFollowUp';
+import { startDailyDigest } from './jobs/dailyDigest';
 
 import authRoutes from './routes/auth';
 import patientRoutes from './routes/patients';
@@ -84,6 +87,11 @@ initializeWebSocket(httpServer);
 httpServer.listen(env.PORT, () => {
   logger.info(`Oradent server running on port ${env.PORT}`);
   logger.info(`Environment: ${env.NODE_ENV}`);
+
+  // Start background jobs
+  startAppointmentReminders();
+  startClaimFollowUp();
+  startDailyDigest();
 });
 
 // Graceful shutdown
