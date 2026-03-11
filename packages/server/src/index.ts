@@ -5,6 +5,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import path from 'path';
 import { createServer } from 'http';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 import { env } from './config/env';
 import { prisma } from './config/database';
@@ -53,6 +55,93 @@ app.use(auditMiddleware);
 // Static files for uploads
 ensureUploadDir();
 app.use('/uploads', express.static(uploadDir));
+
+// API Documentation
+const swaggerSpec = swaggerJsdoc({
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Oradent API',
+      version: '1.0.0',
+      description: 'Dental Practice Management System API',
+      contact: { name: 'Oradent Support', email: 'support@oradent.com' },
+    },
+    servers: [{ url: `/api`, description: 'API Server' }],
+    components: {
+      securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      },
+      schemas: {
+        Error: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            code: { type: 'string' },
+          },
+        },
+        Patient: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            firstName: { type: 'string' },
+            lastName: { type: 'string' },
+            dateOfBirth: { type: 'string', format: 'date' },
+            email: { type: 'string', format: 'email' },
+            phone: { type: 'string' },
+            status: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'ARCHIVED'] },
+          },
+        },
+        Appointment: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            patientId: { type: 'string', format: 'uuid' },
+            providerId: { type: 'string', format: 'uuid' },
+            startTime: { type: 'string', format: 'date-time' },
+            endTime: { type: 'string', format: 'date-time' },
+            type: { type: 'string', enum: ['EXAM', 'CLEANING', 'FILLING', 'CROWN', 'ROOT_CANAL', 'EXTRACTION', 'IMPLANT', 'COSMETIC', 'EMERGENCY', 'CONSULTATION', 'FOLLOW_UP', 'OTHER'] },
+            status: { type: 'string', enum: ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_CHAIR', 'COMPLETED', 'CANCELLED', 'NO_SHOW', 'RESCHEDULED'] },
+          },
+        },
+        Invoice: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            invoiceNumber: { type: 'string' },
+            patientId: { type: 'string', format: 'uuid' },
+            total: { type: 'number' },
+            status: { type: 'string', enum: ['DRAFT', 'PENDING', 'PARTIALLY_PAID', 'PAID', 'OVERDUE', 'VOID', 'WRITE_OFF'] },
+          },
+        },
+        HealthCheck: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            timestamp: { type: 'string', format: 'date-time' },
+            uptime: { type: 'number' },
+          },
+        },
+      },
+    },
+    security: [{ bearerAuth: [] }],
+    tags: [
+      { name: 'Auth', description: 'Authentication & authorization' },
+      { name: 'Patients', description: 'Patient management' },
+      { name: 'Appointments', description: 'Scheduling & appointments' },
+      { name: 'Treatments', description: 'Treatment plans & clinical notes' },
+      { name: 'Billing', description: 'Invoicing, payments & insurance claims' },
+      { name: 'Imaging', description: 'Dental imaging & X-rays' },
+      { name: 'AI', description: 'AI-powered analysis & suggestions' },
+      { name: 'Reports', description: 'Analytics & reporting' },
+      { name: 'Settings', description: 'Practice configuration' },
+    ],
+  },
+  apis: [],
+});
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Oradent API Docs',
+}));
 
 // Health check — liveness probe
 app.get('/api/health', (_req, res) => {
