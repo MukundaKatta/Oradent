@@ -1,24 +1,31 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
+import { cached } from '../utils/cache';
 
 const router = Router();
 router.use(authenticate);
 
-// Dashboard stats
+// Dashboard stats with trend data (cached 60s)
 router.get('/dashboard', async (req: Request, res: Response) => {
   const practiceId = req.auth!.practiceId;
+
+  const stats = await cached(`dashboard:${practiceId}`, 60, async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
 
   const [
     todayAppointments,
     monthRevenue,
+    lastMonthRevenue,
     activePatients,
+    lastMonthPatients,
     pendingClaims,
+    pendingClaimsAmount,
   ] = await Promise.all([
     prisma.appointment.count({
       where: {
@@ -34,8 +41,22 @@ router.get('/dashboard', async (req: Request, res: Response) => {
         date: { gte: monthStart },
       },
     }),
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: {
+        invoice: { patient: { practiceId } },
+        date: { gte: lastMonthStart, lt: monthStart },
+      },
+    }),
     prisma.patient.count({
       where: { practiceId, status: 'ACTIVE' },
+    }),
+    prisma.patient.count({
+      where: {
+        practiceId,
+        status: 'ACTIVE',
+        createdAt: { lt: monthStart },
+      },
     }),
     prisma.insuranceClaim.count({
       where: {
@@ -43,14 +64,37 @@ router.get('/dashboard', async (req: Request, res: Response) => {
         status: { in: ['SUBMITTED', 'IN_REVIEW'] },
       },
     }),
+    prisma.insuranceClaim.aggregate({
+      _sum: { amountClaimed: true },
+      where: {
+        invoice: { patient: { practiceId } },
+        status: { in: ['SUBMITTED', 'IN_REVIEW'] },
+      },
+    }),
   ]);
 
-  res.json({
+  const currentRevenue = monthRevenue._sum.amount || 0;
+  const prevRevenue = lastMonthRevenue._sum.amount || 0;
+  const revenueTrend = prevRevenue > 0
+    ? Math.round(((currentRevenue - prevRevenue) / prevRevenue) * 100)
+    : 0;
+
+  const patientsTrend = lastMonthPatients > 0
+    ? activePatients - lastMonthPatients
+    : 0;
+
+  return {
     todayAppointments,
-    monthRevenue: monthRevenue._sum.amount || 0,
+    monthRevenue: currentRevenue,
+    revenueTrend,
     activePatients,
+    patientsTrend,
     pendingClaims,
+    pendingClaimsAmount: pendingClaimsAmount._sum.amountClaimed || 0,
+  };
   });
+
+  res.json(stats);
 });
 
 // Revenue report
@@ -65,11 +109,7 @@ router.get('/revenue', async (req: Request, res: Response) => {
       invoice: { patient: { practiceId } },
       date: { gte: startDate, lte: endDate },
     },
-    include: {
-      invoice: {
-        select: { patientId: true, total: true },
-      },
-    },
+    select: { amount: true, date: true, method: true },
     orderBy: { date: 'asc' },
   });
 
@@ -90,11 +130,18 @@ router.get('/revenue', async (req: Request, res: Response) => {
     grouped[key] = (grouped[key] || 0) + payment.amount;
   }
 
+  // Payment method breakdown
+  const methodBreakdown: Record<string, number> = {};
+  for (const payment of payments) {
+    methodBreakdown[payment.method] = (methodBreakdown[payment.method] || 0) + payment.amount;
+  }
+
   const total = payments.reduce((sum, p) => sum + p.amount, 0);
 
   res.json({
-    data: Object.entries(grouped).map(([period, amount]) => ({ period, amount })),
-    total,
+    data: Object.entries(grouped).map(([period, amount]) => ({ period, amount: Math.round(amount * 100) / 100 })),
+    methodBreakdown,
+    total: Math.round(total * 100) / 100,
     startDate,
     endDate,
   });
@@ -123,7 +170,11 @@ router.get('/procedures', async (req: Request, res: Response) => {
   }
 
   const procedures = Object.entries(procedureMap)
-    .map(([code, data]) => ({ code, ...data }))
+    .map(([code, data]) => ({
+      code,
+      ...data,
+      revenue: Math.round(data.revenue * 100) / 100,
+    }))
     .sort((a, b) => b.count - a.count);
 
   res.json(procedures);
@@ -151,6 +202,8 @@ router.get('/aging', async (req: Request, res: Response) => {
   for (const inv of invoices) {
     const paid = inv.payments.reduce((s, p) => s + p.amount, 0);
     const balance = inv.total - paid;
+    if (balance <= 0) continue;
+
     const daysPast = Math.floor((now.getTime() - inv.dueDate.getTime()) / (1000 * 60 * 60 * 24));
 
     if (daysPast <= 0) aging.current += balance;
@@ -165,13 +218,54 @@ router.get('/aging', async (req: Request, res: Response) => {
       patient: inv.patient,
       total: inv.total,
       paid,
-      balance,
+      balance: Math.round(balance * 100) / 100,
       dueDate: inv.dueDate,
       daysPastDue: Math.max(0, daysPast),
     });
   }
 
-  res.json({ aging, details });
+  for (const key of Object.keys(aging) as Array<keyof typeof aging>) {
+    aging[key] = Math.round(aging[key] * 100) / 100;
+  }
+
+  const totalOutstanding = aging.current + aging.thirtyDays + aging.sixtyDays + aging.ninetyDays + aging.overNinety;
+
+  res.json({ aging, totalOutstanding: Math.round(totalOutstanding * 100) / 100, details });
+});
+
+// Provider productivity
+router.get('/provider-productivity', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+  const startDate = req.query.start ? new Date(req.query.start as string) : new Date(new Date().getFullYear(), 0, 1);
+
+  const providers = await prisma.provider.findMany({
+    where: { practiceId, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      _count: {
+        select: {
+          appointments: {
+            where: { startTime: { gte: startDate }, status: 'COMPLETED' },
+          },
+          treatments: {
+            where: { date: { gte: startDate } },
+          },
+        },
+      },
+    },
+  });
+
+  const result = providers.map((p) => ({
+    id: p.id,
+    name: p.name,
+    role: p.role,
+    completedAppointments: p._count.appointments,
+    treatmentsPerformed: p._count.treatments,
+  }));
+
+  res.json(result);
 });
 
 export default router;

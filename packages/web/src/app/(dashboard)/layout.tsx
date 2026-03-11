@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
+import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
+import { useAppStore } from "@/stores/appStore";
+import { apiGet } from "@/lib/api";
 
 export default function DashboardLayout({
   children,
@@ -12,6 +15,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+  const { login, provider } = useAppStore();
 
   useEffect(() => {
     const token =
@@ -21,12 +25,24 @@ export default function DashboardLayout({
 
     if (!token) {
       router.replace("/login");
+      return;
+    }
+
+    // Hydrate user data if not in store
+    if (!provider) {
+      apiGet<{ provider: any; practice: any }>("/api/auth/me")
+        .then((data) => {
+          login(token, data.provider, data.practice);
+          setIsAuthed(true);
+        })
+        .catch(() => {
+          router.replace("/login");
+        });
     } else {
       setIsAuthed(true);
     }
-  }, [router]);
+  }, [router, provider, login]);
 
-  // Show nothing while checking auth
   if (isAuthed === null) {
     return (
       <div className="flex h-screen items-center justify-center bg-stone-50">
@@ -40,17 +56,11 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-stone-50">
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Main area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Top bar */}
         <TopBar />
-
-        {/* Content */}
         <main className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-          {children}
+          <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
     </div>

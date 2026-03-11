@@ -1,4 +1,5 @@
-import fs from 'fs';
+import { readFile } from 'fs/promises';
+import { z } from 'zod';
 import { callClaudeVision } from './claudeAI';
 import { logger } from '../utils/logger';
 
@@ -17,7 +18,7 @@ Analyze for:
 8. Any other notable findings
 
 For each finding, provide:
-- tooth_number (Universal numbering)
+- tooth_number (Universal numbering 1-32)
 - finding_type
 - location (surface/area)
 - severity (mild/moderate/severe)
@@ -25,24 +26,57 @@ For each finding, provide:
 - description (brief clinical description)
 - recommendation (suggested action)
 
-Return ONLY valid JSON: { "findings": [...], "summary": "...", "image_quality": "good/fair/poor", "image_type": "periapical/bitewing/panoramic", "overallConfidence": 0.0-1.0 }`;
+Return ONLY valid JSON with no markdown wrapping: { "findings": [...], "summary": "...", "image_quality": "good/fair/poor", "image_type": "periapical/bitewing/panoramic", "overallConfidence": 0.0-1.0 }`;
 
-export interface XrayFinding {
-  tooth_number: number;
-  finding_type: string;
-  location: string;
-  severity: 'mild' | 'moderate' | 'severe';
-  confidence: number;
-  description: string;
-  recommendation: string;
+const xrayFindingSchema = z.object({
+  tooth_number: z.number().min(1).max(32),
+  finding_type: z.string(),
+  location: z.string(),
+  severity: z.enum(['mild', 'moderate', 'severe']),
+  confidence: z.number().min(0).max(1),
+  description: z.string(),
+  recommendation: z.string(),
+});
+
+const xrayResultSchema = z.object({
+  findings: z.array(xrayFindingSchema),
+  summary: z.string(),
+  image_quality: z.string(),
+  image_type: z.string(),
+  overallConfidence: z.number().min(0).max(1),
+});
+
+export type XrayFinding = z.infer<typeof xrayFindingSchema>;
+export type XrayAnalysisResult = z.infer<typeof xrayResultSchema>;
+
+function extractJSON(text: string): string {
+  // Try to find JSON between code fences first
+  const fenced = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+  if (fenced) return fenced[1];
+
+  // Find the outermost balanced braces
+  let depth = 0;
+  let start = -1;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '{') {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (text[i] === '}') {
+      depth--;
+      if (depth === 0 && start !== -1) {
+        return text.slice(start, i + 1);
+      }
+    }
+  }
+  throw new Error('No valid JSON object found in AI response');
 }
 
-export interface XrayAnalysisResult {
-  findings: XrayFinding[];
-  summary: string;
-  image_quality: string;
-  image_type: string;
-  overallConfidence: number;
+function detectMediaType(filePath: string): 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' {
+  const lower = filePath.toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  return 'image/jpeg';
 }
 
 export async function analyzeXray(
@@ -50,13 +84,9 @@ export async function analyzeXray(
   imageType: string
 ): Promise<XrayAnalysisResult> {
   try {
-    const imageBuffer = fs.readFileSync(filePath);
+    const imageBuffer = await readFile(filePath);
     const base64 = imageBuffer.toString('base64');
-
-    const ext = filePath.toLowerCase();
-    let mediaType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' = 'image/jpeg';
-    if (ext.endsWith('.png')) mediaType = 'image/png';
-    else if (ext.endsWith('.webp')) mediaType = 'image/webp';
+    const mediaType = detectMediaType(filePath);
 
     const response = await callClaudeVision(
       XRAY_ANALYSIS_PROMPT,
@@ -65,12 +95,10 @@ export async function analyzeXray(
       `This is a ${imageType} dental radiograph. Please analyze it thoroughly.`
     );
 
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Failed to parse AI response as JSON');
-    }
+    const jsonStr = extractJSON(response);
+    const parsed = JSON.parse(jsonStr);
+    const result = xrayResultSchema.parse(parsed);
 
-    const result = JSON.parse(jsonMatch[0]) as XrayAnalysisResult;
     return result;
   } catch (error) {
     logger.error(error, 'X-ray analysis failed');

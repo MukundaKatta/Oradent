@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/stores/appStore";
 import {
   LayoutDashboard,
   Users,
@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 const navigation = [
-  { name: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Patients", href: "/patients", icon: Users },
   { name: "Appointments", href: "/appointments", icon: Calendar },
   { name: "Billing", href: "/billing", icon: Receipt },
@@ -29,13 +29,30 @@ const navigation = [
 ];
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { provider, isCollapsed, toggleSidebar, logout } = useAppStore();
+
+  const initials = provider?.name
+    ? provider.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "DR";
+
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem("oradent_token");
+    localStorage.removeItem("oradent_refresh_token");
+    router.push("/login");
+  };
 
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 64 : 240 }}
+      animate={{ width: isCollapsed ? 64 : 240 }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
       className="relative flex h-screen flex-col border-r border-stone-800 bg-stone-900"
       style={{ backgroundColor: "#1c1917" }}
@@ -58,7 +75,7 @@ export function Sidebar() {
           </svg>
         </div>
         <AnimatePresence>
-          {!collapsed && (
+          {!isCollapsed && (
             <motion.span
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
@@ -76,7 +93,9 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4 scrollbar-thin">
         {navigation.map((item) => {
           const isActive =
-            pathname === item.href || pathname?.startsWith(item.href + "/");
+            item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href || pathname?.startsWith(item.href + "/");
 
           return (
             <Link
@@ -88,7 +107,7 @@ export function Sidebar() {
                   ? "bg-teal-600/20 text-teal-400"
                   : "text-stone-400 hover:bg-stone-800 hover:text-stone-100"
               )}
-              title={collapsed ? item.name : undefined}
+              title={isCollapsed ? item.name : undefined}
             >
               <item.icon
                 className={cn(
@@ -99,7 +118,7 @@ export function Sidebar() {
                 )}
               />
               <AnimatePresence>
-                {!collapsed && (
+                {!isCollapsed && (
                   <motion.span
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: "auto" }}
@@ -116,14 +135,17 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Provider avatar + collapse toggle */}
+      {/* Provider avatar + logout */}
       <div className="border-t border-stone-800 p-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-700 text-sm font-medium text-white">
-            DR
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-medium text-white"
+            style={{ backgroundColor: provider?.color || "#0d9488" }}
+          >
+            {initials}
           </div>
           <AnimatePresence>
-            {!collapsed && (
+            {!isCollapsed && (
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
@@ -132,10 +154,26 @@ export function Sidebar() {
                 className="flex-1 overflow-hidden"
               >
                 <p className="truncate text-sm font-medium text-stone-200">
-                  Dr. Smith
+                  {provider?.name || "Provider"}
                 </p>
-                <p className="truncate text-xs text-stone-500">DDS</p>
+                <p className="truncate text-xs text-stone-500">
+                  {provider?.title || provider?.role || ""}
+                </p>
               </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleLogout}
+                className="shrink-0 rounded-md p-1.5 text-stone-500 hover:bg-stone-800 hover:text-stone-300 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </motion.button>
             )}
           </AnimatePresence>
         </div>
@@ -143,11 +181,11 @@ export function Sidebar() {
 
       {/* Collapse toggle button */}
       <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={toggleSidebar}
         className="absolute -right-3 top-[4.25rem] z-10 flex h-6 w-6 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-500 shadow-sm transition-colors hover:bg-stone-50 hover:text-stone-700"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
-        {collapsed ? (
+        {isCollapsed ? (
           <ChevronRight className="h-3.5 w-3.5" />
         ) : (
           <ChevronLeft className="h-3.5 w-3.5" />

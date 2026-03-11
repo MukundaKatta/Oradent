@@ -3,6 +3,13 @@ import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 
+class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ConflictError';
+  }
+}
+
 const router = Router();
 router.use(authenticate);
 
@@ -64,6 +71,30 @@ router.get('/', async (req: Request, res: Response) => {
   res.json(appointments);
 });
 
+// Today's appointments (must be before /:id to avoid matching "today" as an id)
+router.get('/today/schedule', async (req: Request, res: Response) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      provider: { practiceId: req.auth!.practiceId },
+      startTime: { gte: today, lt: tomorrow },
+      status: { notIn: ['CANCELLED', 'NO_SHOW'] },
+    },
+    include: {
+      patient: { select: { id: true, firstName: true, lastName: true, phone: true } },
+      provider: { select: { id: true, name: true, color: true } },
+      chair: { select: { id: true, name: true } },
+    },
+    orderBy: { startTime: 'asc' },
+  });
+
+  res.json(appointments);
+});
+
 // Get single appointment
 router.get('/:id', async (req: Request, res: Response) => {
   const appointment = await prisma.appointment.findFirst({
@@ -86,52 +117,60 @@ router.get('/:id', async (req: Request, res: Response) => {
   res.json(appointment);
 });
 
-// Create appointment
+// Create appointment (with race-condition protection)
 router.post('/', async (req: Request, res: Response) => {
   const data = createAppointmentSchema.parse(req.body);
   const endTime = new Date(data.startTime.getTime() + data.duration * 60 * 1000);
 
-  // Check for conflicts
-  const conflict = await prisma.appointment.findFirst({
-    where: {
-      provider: { practiceId: req.auth!.practiceId },
-      status: { notIn: ['CANCELLED', 'NO_SHOW', 'RESCHEDULED'] },
-      OR: [
-        {
-          providerId: data.providerId,
-          startTime: { lt: endTime },
-          endTime: { gt: data.startTime },
-        },
-        ...(data.chairId
-          ? [{
-              chairId: data.chairId,
+  try {
+    const appointment = await prisma.$transaction(async (tx) => {
+      const conflict = await tx.appointment.findFirst({
+        where: {
+          provider: { practiceId: req.auth!.practiceId },
+          status: { notIn: ['CANCELLED', 'NO_SHOW', 'RESCHEDULED'] },
+          OR: [
+            {
+              providerId: data.providerId,
               startTime: { lt: endTime },
               endTime: { gt: data.startTime },
-            }]
-          : []),
-      ],
-    },
-  });
+            },
+            ...(data.chairId
+              ? [{
+                  chairId: data.chairId,
+                  startTime: { lt: endTime },
+                  endTime: { gt: data.startTime },
+                }]
+              : []),
+          ],
+        },
+      });
 
-  if (conflict) {
-    res.status(409).json({ error: 'Time slot conflicts with existing appointment' });
-    return;
+      if (conflict) {
+        throw new ConflictError('Time slot conflicts with existing appointment');
+      }
+
+      return tx.appointment.create({
+        data: {
+          ...data,
+          endTime,
+          procedures: data.procedures || [],
+        },
+        include: {
+          patient: { select: { id: true, firstName: true, lastName: true } },
+          provider: { select: { id: true, name: true, color: true } },
+          chair: { select: { id: true, name: true } },
+        },
+      });
+    });
+
+    res.status(201).json(appointment);
+  } catch (error) {
+    if (error instanceof ConflictError) {
+      res.status(409).json({ error: error.message });
+      return;
+    }
+    throw error;
   }
-
-  const appointment = await prisma.appointment.create({
-    data: {
-      ...data,
-      endTime,
-      procedures: data.procedures || [],
-    },
-    include: {
-      patient: { select: { id: true, firstName: true, lastName: true } },
-      provider: { select: { id: true, name: true, color: true } },
-      chair: { select: { id: true, name: true } },
-    },
-  });
-
-  res.status(201).json(appointment);
 });
 
 // Update appointment
@@ -187,30 +226,6 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
   await prisma.appointment.delete({ where: { id: req.params.id } });
   res.json({ message: 'Appointment deleted' });
-});
-
-// Today's appointments
-router.get('/today/schedule', async (req: Request, res: Response) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const appointments = await prisma.appointment.findMany({
-    where: {
-      provider: { practiceId: req.auth!.practiceId },
-      startTime: { gte: today, lt: tomorrow },
-      status: { notIn: ['CANCELLED', 'NO_SHOW'] },
-    },
-    include: {
-      patient: { select: { id: true, firstName: true, lastName: true, phone: true } },
-      provider: { select: { id: true, name: true, color: true } },
-      chair: { select: { id: true, name: true } },
-    },
-    orderBy: { startTime: 'asc' },
-  });
-
-  res.json(appointments);
 });
 
 export default router;
