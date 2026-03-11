@@ -89,6 +89,21 @@ router.post('/invoices', async (req: Request, res: Response) => {
 
   const dueDate = data.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+  // Validate that treatments belong to the same patient and practice
+  if (data.treatmentIds && data.treatmentIds.length > 0) {
+    const validTreatments = await prisma.treatment.count({
+      where: {
+        id: { in: data.treatmentIds },
+        patientId: data.patientId,
+        patient: { practiceId: req.auth!.practiceId },
+      },
+    });
+    if (validTreatments !== data.treatmentIds.length) {
+      res.status(400).json({ error: 'One or more treatments do not belong to this patient' });
+      return;
+    }
+  }
+
   const invoice = await prisma.invoice.create({
     data: {
       patientId: data.patientId,
@@ -118,26 +133,27 @@ router.post('/invoices', async (req: Request, res: Response) => {
 router.post('/payments', async (req: Request, res: Response) => {
   const data = paymentSchema.parse(req.body);
 
-  const invoice = await prisma.invoice.findFirst({
-    where: { id: data.invoiceId, patient: { practiceId: req.auth!.practiceId } },
-    include: { payments: true },
-  });
+  const payment = await prisma.$transaction(async (tx) => {
+    const invoice = await tx.invoice.findFirst({
+      where: { id: data.invoiceId, patient: { practiceId: req.auth!.practiceId } },
+      include: { payments: true },
+    });
 
-  if (!invoice) {
-    res.status(404).json({ error: 'Invoice not found' });
-    return;
-  }
+    if (!invoice) {
+      throw new Error('Invoice not found');
+    }
 
-  const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0) + data.amount;
-  const newStatus = totalPaid >= invoice.total ? 'PAID' : 'PARTIALLY_PAID';
+    const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0) + data.amount;
+    const newStatus = totalPaid >= invoice.total ? 'PAID' : 'PARTIALLY_PAID';
 
-  const [payment] = await prisma.$transaction([
-    prisma.payment.create({ data }),
-    prisma.invoice.update({
+    const newPayment = await tx.payment.create({ data });
+    await tx.invoice.update({
       where: { id: data.invoiceId },
       data: { status: newStatus },
-    }),
-  ]);
+    });
+
+    return newPayment;
+  });
 
   res.status(201).json(payment);
 });

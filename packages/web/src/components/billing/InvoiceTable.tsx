@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { format } from 'date-fns';
 import {
   ChevronDown,
@@ -147,9 +147,8 @@ export function InvoiceTable({
         </thead>
         <tbody>
           {filtered.map((invoice) => (
-            <>
+            <Fragment key={invoice.id}>
               <tr
-                key={invoice.id}
                 className="border-b border-stone-100 hover:bg-stone-50 transition-colors"
               >
                 <td className="px-4 py-3 font-mono text-xs font-medium text-teal-600">
@@ -208,7 +207,7 @@ export function InvoiceTable({
                 </td>
               </tr>
               {expandedId === invoice.id && (
-                <tr key={`${invoice.id}-detail`} className="border-b border-stone-100 bg-stone-50">
+                <tr className="border-b border-stone-100 bg-stone-50">
                   <td colSpan={7} className="px-8 py-4">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
                       Line Items
@@ -238,7 +237,7 @@ export function InvoiceTable({
                   </td>
                 </tr>
               )}
-            </>
+            </Fragment>
           ))}
         </tbody>
       </table>

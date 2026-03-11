@@ -5,7 +5,7 @@ const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
 
 function getEncryptionKey(): Buffer {
-  const key = process.env.JWT_SECRET || 'default-key-change-in-production';
+  const key = process.env.ENCRYPTION_KEY || process.env.JWT_SECRET || 'default-key-change-in-production';
   return crypto.scryptSync(key, 'oradent-salt', 32);
 }
 

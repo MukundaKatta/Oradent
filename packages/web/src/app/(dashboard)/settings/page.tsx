@@ -321,7 +321,22 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
 
 // ═══════════════════ TEAM TAB ═══════════════════
 
+const inviteSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Valid email required'),
+  title: z.string().min(1, 'Title is required'),
+  role: z.enum(['DENTIST', 'HYGIENIST', 'ASSISTANT', 'FRONT_DESK'] as const),
+  tempPassword: z.string().min(8, 'Minimum 8 characters'),
+});
+
+type InviteFormData = z.infer<typeof inviteSchema>;
+
 function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: string) => void }) {
+  const [showInvite, setShowInvite] = useState(false);
+  const queryClient = useQueryClient();
+  const currentProvider = useAppStore((s) => s.provider);
+  const isOwner = currentProvider?.role === 'OWNER';
+
   const {
     data: providers,
     isLoading,
@@ -331,80 +346,245 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
     queryFn: () => apiGet<Provider[]>('/api/settings/providers'),
   });
 
+  const {
+    register: registerInvite,
+    handleSubmit: handleInviteSubmit,
+    formState: { errors: inviteErrors },
+    reset: resetInvite,
+  } = useForm<InviteFormData>({
+    resolver: zodResolver(inviteSchema),
+    defaultValues: { role: 'DENTIST', tempPassword: '' },
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: (data: InviteFormData) => apiPost('/api/settings/providers', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings', 'providers'] });
+      setShowInvite(false);
+      resetInvite();
+      addToast('success', 'Team member invited successfully');
+    },
+    onError: () => {
+      addToast('error', 'Failed to invite team member. Email may already be in use.');
+    },
+  });
+
+  const toggleActive = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      apiPut(`/api/settings/providers/${id}`, { isActive }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings', 'providers'] });
+      addToast('success', 'Provider status updated');
+    },
+    onError: () => addToast('error', 'Failed to update provider'),
+  });
+
   if (error) {
     return <ErrorCard message="Failed to load team members. Please try again." />;
   }
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
-      <div className="border-b border-stone-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-stone-900">Team Members</h2>
-        <p className="mt-1 text-sm text-stone-500">
-          View providers and staff associated with your practice.
-        </p>
-      </div>
-      <div className="p-6">
-        {isLoading ? (
-          <CardSkeleton rows={4} />
-        ) : !providers || providers.length === 0 ? (
-          <div className="py-12 text-center">
-            <Users className="mx-auto h-12 w-12 text-stone-300" />
-            <h3 className="mt-3 text-sm font-medium text-stone-700">No team members</h3>
-            <p className="mt-1 text-xs text-stone-500">
-              No providers have been added to this practice yet.
+    <div className="space-y-4">
+      <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
+          <div>
+            <h2 className="text-lg font-semibold text-stone-900">Team Members</h2>
+            <p className="mt-1 text-sm text-stone-500">
+              Manage providers and staff associated with your practice.
             </p>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {providers.map((provider) => (
-              <div
-                key={provider.id}
-                className="flex items-center justify-between rounded-lg border border-stone-200 px-5 py-4 transition-colors hover:bg-stone-50"
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white"
-                    style={{ backgroundColor: provider.color || '#14b8a6' }}
-                  >
-                    {provider.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase()}
+          {isOwner && (
+            <button
+              onClick={() => setShowInvite(true)}
+              className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700"
+            >
+              <Plus className="h-4 w-4" />
+              Invite Member
+            </button>
+          )}
+        </div>
+        <div className="p-6">
+          {isLoading ? (
+            <CardSkeleton rows={4} />
+          ) : !providers || providers.length === 0 ? (
+            <div className="py-12 text-center">
+              <Users className="mx-auto h-12 w-12 text-stone-300" />
+              <h3 className="mt-3 text-sm font-medium text-stone-700">No team members</h3>
+              <p className="mt-1 text-xs text-stone-500">
+                No providers have been added to this practice yet.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {providers.map((provider) => (
+                <div
+                  key={provider.id}
+                  className="flex items-center justify-between rounded-lg border border-stone-200 px-5 py-4 transition-colors hover:bg-stone-50"
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white"
+                      style={{ backgroundColor: provider.color || '#14b8a6' }}
+                    >
+                      {provider.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-stone-900">{provider.name}</p>
+                      <p className="text-xs text-stone-500">
+                        {provider.title} {provider.email ? `- ${provider.email}` : ''}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-stone-900">{provider.name}</p>
-                    <p className="text-xs text-stone-500">
-                      {provider.title} {provider.email ? `- ${provider.email}` : ''}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={cn(
+                        'rounded-full border px-2.5 py-0.5 text-xs font-medium',
+                        ROLE_COLORS[provider.role]
+                      )}
+                    >
+                      {ROLE_LABELS[provider.role]}
+                    </span>
+                    {isOwner && provider.role !== 'OWNER' ? (
+                      <button
+                        onClick={() =>
+                          toggleActive.mutate({ id: provider.id, isActive: !provider.isActive })
+                        }
+                        className={cn(
+                          'rounded-full px-2 py-0.5 text-xs font-medium cursor-pointer transition-colors',
+                          provider.isActive
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
+                        )}
+                      >
+                        {provider.isActive ? 'Active' : 'Inactive'}
+                      </button>
+                    ) : (
+                      <span
+                        className={cn(
+                          'rounded-full px-2 py-0.5 text-xs font-medium',
+                          provider.isActive
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-stone-100 text-stone-500'
+                        )}
+                      >
+                        {provider.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Invite Modal */}
+      {showInvite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-stone-200 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
+              <h3 className="text-lg font-semibold text-stone-900">Invite Team Member</h3>
+              <button
+                onClick={() => { setShowInvite(false); resetInvite(); }}
+                className="rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form
+              onSubmit={handleInviteSubmit((data) => inviteMutation.mutate(data))}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Full Name</label>
+                <input
+                  {...registerInvite('name')}
+                  className={cn(
+                    'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
+                    inviteErrors.name ? 'border-red-300 bg-red-50' : 'border-stone-300'
+                  )}
+                  placeholder="Dr. Jane Smith"
+                />
+                {inviteErrors.name && <p className="mt-1 text-xs text-red-600">{inviteErrors.name.message}</p>}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Email</label>
+                <input
+                  {...registerInvite('email')}
+                  type="email"
+                  className={cn(
+                    'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
+                    inviteErrors.email ? 'border-red-300 bg-red-50' : 'border-stone-300'
+                  )}
+                  placeholder="jane@practice.com"
+                />
+                {inviteErrors.email && <p className="mt-1 text-xs text-red-600">{inviteErrors.email.message}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Title</label>
+                  <input
+                    {...registerInvite('title')}
                     className={cn(
-                      'rounded-full border px-2.5 py-0.5 text-xs font-medium',
-                      ROLE_COLORS[provider.role]
+                      'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
+                      inviteErrors.title ? 'border-red-300 bg-red-50' : 'border-stone-300'
                     )}
+                    placeholder="DDS"
+                  />
+                  {inviteErrors.title && <p className="mt-1 text-xs text-red-600">{inviteErrors.title.message}</p>}
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Role</label>
+                  <select
+                    {...registerInvite('role')}
+                    className="w-full rounded-lg border border-stone-300 px-3.5 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                   >
-                    {ROLE_LABELS[provider.role]}
-                  </span>
-                  <span
-                    className={cn(
-                      'rounded-full px-2 py-0.5 text-xs font-medium',
-                      provider.isActive
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-stone-100 text-stone-500'
-                    )}
-                  >
-                    {provider.isActive ? 'Active' : 'Inactive'}
-                  </span>
+                    <option value="DENTIST">Dentist</option>
+                    <option value="HYGIENIST">Hygienist</option>
+                    <option value="ASSISTANT">Assistant</option>
+                    <option value="FRONT_DESK">Front Desk</option>
+                  </select>
                 </div>
               </div>
-            ))}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Temporary Password</label>
+                <input
+                  {...registerInvite('tempPassword')}
+                  type="password"
+                  className={cn(
+                    'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
+                    inviteErrors.tempPassword ? 'border-red-300 bg-red-50' : 'border-stone-300'
+                  )}
+                  placeholder="Min. 8 characters"
+                />
+                {inviteErrors.tempPassword && <p className="mt-1 text-xs text-red-600">{inviteErrors.tempPassword.message}</p>}
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowInvite(false); resetInvite(); }}
+                  className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={inviteMutation.isPending}
+                  className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:bg-stone-300"
+                >
+                  <Mail className="h-4 w-4" />
+                  {inviteMutation.isPending ? 'Inviting...' : 'Send Invite'}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

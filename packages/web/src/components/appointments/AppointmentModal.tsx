@@ -51,7 +51,7 @@ interface Provider {
 interface Chair {
   id: string;
   name: string;
-  active: boolean;
+  isActive: boolean;
 }
 
 interface Appointment {
@@ -192,15 +192,9 @@ export function AppointmentModal({
     }
   }, [watchType, setValue, appointment]);
 
-  useEffect(() => {
-    if (watchDate && watchStartTime && (watchProviderId || watchChairId)) {
-      checkConflicts();
-    }
-  }, [watchDate, watchStartTime, watchProviderId, watchChairId]);
-
   const fetchProviders = async () => {
     try {
-      const data = await apiGet<Provider[]>('/api/providers');
+      const data = await apiGet<Provider[]>('/api/settings/providers');
       setProviders(data);
     } catch (error) {
       console.error('Failed to fetch providers:', error);
@@ -209,8 +203,8 @@ export function AppointmentModal({
 
   const fetchChairs = async () => {
     try {
-      const data = await apiGet<Chair[]>('/api/chairs');
-      setChairs(data.filter((c) => c.active));
+      const data = await apiGet<Chair[]>('/api/settings/chairs');
+      setChairs(data.filter((c) => c.isActive));
     } catch (error) {
       console.error('Failed to fetch chairs:', error);
     }
@@ -223,8 +217,8 @@ export function AppointmentModal({
         return;
       }
       try {
-        const data = await apiGet<Patient[]>(`/api/patients?search=${encodeURIComponent(query)}`);
-        setSearchResults(data);
+        const data = await apiGet<{ patients: Patient[] }>(`/api/patients?search=${encodeURIComponent(query)}`);
+        setSearchResults(data.patients);
       } catch (error) {
         console.error('Failed to search patients:', error);
       }
@@ -251,6 +245,13 @@ export function AppointmentModal({
       setConflictWarning(null);
     }
   };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (watchDate && watchStartTime && (watchProviderId || watchChairId)) {
+      checkConflicts();
+    }
+  }, [watchDate, watchStartTime, watchProviderId, watchChairId]);
 
   const selectPatient = (patient: Patient) => {
     setSelectedPatient(patient);
