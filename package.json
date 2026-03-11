@@ -16,6 +16,9 @@
     "db:studio": "npm run db:studio -w packages/server",
     "docker:up": "docker compose up -d db redis",
     "docker:down": "docker compose down",
+    "test": "npm run test -w packages/server",
+    "lint": "npm run lint -w packages/server && npm run lint -w packages/web",
+    "type-check": "npm run type-check -w packages/server && npm run type-check -w packages/web",
     "setup": "npm install && npm run docker:up && sleep 3 && npm run db:migrate && npm run db:seed"
   },
   "devDependencies": {

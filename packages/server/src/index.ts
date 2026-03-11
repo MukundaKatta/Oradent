@@ -54,15 +54,34 @@ app.use(auditMiddleware);
 ensureUploadDir();
 app.use('/uploads', express.static(uploadDir));
 
-// Health check
-app.get('/api/health', async (_req, res) => {
+// Health check — liveness probe
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
+});
+
+// Readiness check — verifies database and Redis connectivity
+app.get('/api/health/ready', async (_req, res) => {
+  const checks: Record<string, string> = {};
+  let healthy = true;
+
   try {
     await prisma.$queryRaw`SELECT 1`;
-    await redis.ping();
-    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
-  } catch (error) {
-    res.status(503).json({ status: 'unhealthy', error: String(error) });
+    checks.database = 'ok';
+  } catch {
+    checks.database = 'error';
+    healthy = false;
   }
+
+  try {
+    await redis.ping();
+    checks.redis = 'ok';
+  } catch {
+    checks.redis = 'error';
+    healthy = false;
+  }
+
+  const status = healthy ? 'ready' : 'not_ready';
+  res.status(healthy ? 200 : 503).json({ status, checks, timestamp: new Date().toISOString() });
 });
 
 // Routes
