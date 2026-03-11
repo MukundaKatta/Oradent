@@ -77,7 +77,7 @@ export function XrayUploader({
         formData.append('type', imageType);
         if (toothNumber) formData.append('toothNumber', toothNumber);
 
-        await apiUpload(`/api/patients/${patientId}/images`, formData);
+        await apiUpload(`/api/imaging/${patientId}`, formData);
       }
       onUploaded();
     } catch (err) {

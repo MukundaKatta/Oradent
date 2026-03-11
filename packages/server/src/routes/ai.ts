@@ -151,6 +151,25 @@ router.post('/pre-auth-letter', async (req: Request, res: Response) => {
   res.json(analysis);
 });
 
+// Get X-ray analysis by image ID
+router.get('/xray-analysis/:imageId', async (req: Request, res: Response) => {
+  const analysis = await prisma.aIAnalysis.findFirst({
+    where: {
+      imageId: req.params.imageId,
+      type: 'xray_analysis',
+      patient: { practiceId: req.auth!.practiceId },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!analysis) {
+    res.status(404).json({ error: 'No analysis found for this image' });
+    return;
+  }
+
+  res.json(analysis);
+});
+
 // Get AI analysis history
 router.get('/history/:patientId', async (req: Request, res: Response) => {
   const patient = await prisma.patient.findFirst({

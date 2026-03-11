@@ -55,14 +55,15 @@ export function AIAnalysisPanel({
     queryKey: ['ai-analysis', imageId],
     queryFn: () =>
       apiGet<AnalysisResult>(
-        `/api/patients/${patientId}/images/${imageId}/analysis`
+        `/api/ai/xray-analysis/${imageId}`
       ),
   });
 
   const runAnalysis = useMutation({
     mutationFn: () =>
       apiPost<AnalysisResult>(
-        `/api/patients/${patientId}/images/${imageId}/analyze`
+        `/api/ai/analyze-xray`,
+        { imageId, patientId }
       ),
     onMutate: () => setIsRunning(true),
     onSuccess: () => {
