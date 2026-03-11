@@ -75,6 +75,17 @@ router.get('/providers', async (req: Request, res: Response) => {
   res.json(providers);
 });
 
+// List chairs
+router.get('/chairs', async (req: Request, res: Response) => {
+  const chairs = await prisma.chair.findMany({
+    where: { practiceId: req.auth!.practiceId },
+    select: { id: true, name: true, isActive: true },
+    orderBy: { name: 'asc' },
+  });
+
+  res.json(chairs);
+});
+
 // Manage chairs
 router.post('/chairs', authorize('OWNER'), async (req: Request, res: Response) => {
   const { name } = z.object({ name: z.string().min(1) }).parse(req.body);

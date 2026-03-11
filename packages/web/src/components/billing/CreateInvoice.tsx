@@ -90,8 +90,8 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
       return;
     }
     try {
-      const data = await apiGet<Patient[]>(`/api/patients?search=${encodeURIComponent(query)}`);
-      setSearchResults(data);
+      const data = await apiGet<{ patients: Patient[] }>(`/api/patients?search=${encodeURIComponent(query)}`);
+      setSearchResults(data.patients);
     } catch (error) {
       console.error('Failed to search patients:', error);
     }

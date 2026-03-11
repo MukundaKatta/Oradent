@@ -95,6 +95,66 @@ router.get('/today/schedule', async (req: Request, res: Response) => {
   res.json(appointments);
 });
 
+// Check for scheduling conflicts
+router.get('/check-conflict', async (req: Request, res: Response) => {
+  const date = req.query.date as string;
+  const time = req.query.time as string;
+  const providerId = req.query.providerId as string;
+  const chairId = req.query.chairId as string;
+  const excludeId = req.query.excludeId as string;
+  const duration = parseInt(req.query.duration as string) || 30;
+
+  if (!date || !time) {
+    res.json({ hasConflict: false });
+    return;
+  }
+
+  const startTime = new Date(`${date}T${time}:00`);
+  const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+
+  const where: Record<string, unknown> = {
+    provider: { practiceId: req.auth!.practiceId },
+    status: { notIn: ['CANCELLED', 'NO_SHOW', 'RESCHEDULED'] },
+    OR: [
+      ...(providerId
+        ? [{
+            providerId,
+            startTime: { lt: endTime },
+            endTime: { gt: startTime },
+          }]
+        : []),
+      ...(chairId
+        ? [{
+            chairId,
+            startTime: { lt: endTime },
+            endTime: { gt: startTime },
+          }]
+        : []),
+    ],
+  };
+
+  if (excludeId) {
+    where.id = { not: excludeId };
+  }
+
+  const conflict = await prisma.appointment.findFirst({
+    where: where as any,
+    include: {
+      provider: { select: { name: true } },
+      chair: { select: { name: true } },
+    },
+  });
+
+  if (conflict) {
+    res.json({
+      hasConflict: true,
+      message: `Conflicts with existing appointment for ${conflict.provider?.name || 'provider'}`,
+    });
+  } else {
+    res.json({ hasConflict: false });
+  }
+});
+
 // Get single appointment
 router.get('/:id', async (req: Request, res: Response) => {
   const appointment = await prisma.appointment.findFirst({
