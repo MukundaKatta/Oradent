@@ -2,11 +2,17 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../config/database';
-import { generateToken, authenticate, AuthPayload } from '../middleware/auth';
+import { generateToken, generateRefreshToken, verifyRefreshToken, authenticate, blacklistToken, AuthPayload } from '../middleware/auth';
 import { authLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
 
 const router = Router();
+
+const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number');
 
 const registerSchema = z.object({
   practiceName: z.string().min(2),
@@ -15,7 +21,7 @@ const registerSchema = z.object({
   practiceEmail: z.string().email(),
   providerName: z.string().min(2),
   providerEmail: z.string().email(),
-  password: z.string().min(8),
+  password: passwordSchema,
   title: z.string().default('DDS'),
 });
 
@@ -23,6 +29,13 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
 });
+
+function buildTokenResponse(payload: AuthPayload) {
+  return {
+    accessToken: generateToken(payload),
+    refreshToken: generateRefreshToken(payload),
+  };
+}
 
 // Register (creates practice + owner provider)
 router.post('/register', authLimiter, async (req: Request, res: Response) => {
@@ -72,17 +85,20 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
   });
 
   const provider = practice.providers[0];
-  const token = generateToken({
+  const payload: AuthPayload = {
     providerId: provider.id,
     practiceId: practice.id,
     role: provider.role,
     email: provider.email,
-  });
+  };
+  const tokens = buildTokenResponse(payload);
 
   logger.info({ practiceId: practice.id }, 'New practice registered');
 
   res.status(201).json({
-    token,
+    ...tokens,
+    // Backwards compatibility
+    token: tokens.accessToken,
     provider: {
       id: provider.id,
       name: provider.name,
@@ -117,17 +133,20 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
     return;
   }
 
-  const token = generateToken({
+  const payload: AuthPayload = {
     providerId: provider.id,
     practiceId: provider.practiceId,
     role: provider.role,
     email: provider.email,
-  });
+  };
+  const tokens = buildTokenResponse(payload);
 
   logger.info({ providerId: provider.id }, 'Provider logged in');
 
   res.json({
-    token,
+    ...tokens,
+    // Backwards compatibility
+    token: tokens.accessToken,
     provider: {
       id: provider.id,
       name: provider.name,
@@ -141,6 +160,48 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
       name: provider.practice.name,
     },
   });
+});
+
+// Refresh token
+router.post('/refresh', async (req: Request, res: Response) => {
+  const { refreshToken } = z.object({ refreshToken: z.string() }).parse(req.body);
+
+  try {
+    const payload = verifyRefreshToken(refreshToken);
+
+    // Verify provider still exists and is active
+    const provider = await prisma.provider.findUnique({
+      where: { id: payload.providerId },
+    });
+    if (!provider || !provider.isActive) {
+      res.status(401).json({ error: 'Account is deactivated' });
+      return;
+    }
+
+    const newPayload: AuthPayload = {
+      providerId: provider.id,
+      practiceId: provider.practiceId,
+      role: provider.role,
+      email: provider.email,
+    };
+    const tokens = buildTokenResponse(newPayload);
+
+    res.json({
+      ...tokens,
+      token: tokens.accessToken,
+    });
+  } catch {
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+});
+
+// Logout (blacklist current token)
+router.post('/logout', authenticate, async (req: Request, res: Response) => {
+  const token = req.headers.authorization?.slice(7);
+  if (token) {
+    await blacklistToken(token);
+  }
+  res.json({ message: 'Logged out successfully' });
 });
 
 // Get current user
@@ -180,7 +241,7 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
 router.put('/password', authenticate, async (req: Request, res: Response) => {
   const schema = z.object({
     currentPassword: z.string(),
-    newPassword: z.string().min(8),
+    newPassword: passwordSchema,
   });
   const data = schema.parse(req.body);
 

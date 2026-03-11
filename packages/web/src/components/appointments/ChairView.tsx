@@ -11,6 +11,7 @@ import {
 
 interface Appointment {
   id: string;
+  patientId: string;
   patientName: string;
   providerId: string;
   providerName: string;
@@ -21,6 +22,8 @@ interface Appointment {
   endTime: string;
   type: string;
   status: string;
+  reason?: string;
+  notes?: string;
 }
 
 interface ChairViewProps {

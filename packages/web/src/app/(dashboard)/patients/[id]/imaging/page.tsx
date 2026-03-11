@@ -32,7 +32,7 @@ export default function ImagingPage() {
 
   const { data: images, isLoading, refetch } = useQuery<XrayImage[]>({
     queryKey: ['xrays', params.id],
-    queryFn: () => apiGet<XrayImage[]>(`/api/patients/${params.id}/images`),
+    queryFn: () => apiGet<XrayImage[]>(`/api/imaging/${params.id}`),
     enabled: !!params.id,
   });
 

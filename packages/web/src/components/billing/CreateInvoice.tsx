@@ -39,9 +39,10 @@ interface CreateInvoiceProps {
   open: boolean;
   onClose: () => void;
   onSave: () => void;
+  defaultPatientId?: string;
 }
 
-export function CreateInvoice({ open, onClose, onSave }: CreateInvoiceProps) {
+export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: CreateInvoiceProps) {
   const [patientSearch, setPatientSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -58,7 +59,7 @@ export function CreateInvoice({ open, onClose, onSave }: CreateInvoiceProps) {
   } = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
-      patientId: '',
+      patientId: defaultPatientId || '',
       date: new Date().toISOString().split('T')[0],
       dueDate: '',
       items: [{ cdtCode: '', description: '', toothNumber: '', quantity: 1, fee: 0 }],
@@ -70,6 +71,18 @@ export function CreateInvoice({ open, onClose, onSave }: CreateInvoiceProps) {
   const watchItems = watch('items');
 
   const total = watchItems.reduce((sum, item) => sum + (item.fee || 0) * (item.quantity || 1), 0);
+
+  // Auto-load patient when defaultPatientId is provided
+  useEffect(() => {
+    if (defaultPatientId && !selectedPatient) {
+      apiGet<Patient>(`/api/patients/${defaultPatientId}`)
+        .then((p) => {
+          setSelectedPatient({ id: p.id, firstName: p.firstName, lastName: p.lastName, phone: p.phone });
+          setValue('patientId', p.id);
+        })
+        .catch(() => {});
+    }
+  }, [defaultPatientId, selectedPatient, setValue]);
 
   const searchPatients = useCallback(async (query: string) => {
     if (query.length < 2) {

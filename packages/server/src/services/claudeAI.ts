@@ -1,6 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '../utils/logger';
 
+const MODEL = 'claude-sonnet-4-6';
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
 let client: Anthropic | null = null;
 
 function getClient(): Anthropic {
@@ -14,6 +18,26 @@ function getClient(): Anthropic {
   return client;
 }
 
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (error: unknown) {
+      const isRateLimit = error instanceof Anthropic.RateLimitError;
+      const isOverloaded = error instanceof Anthropic.InternalServerError;
+
+      if ((isRateLimit || isOverloaded) && attempt < MAX_RETRIES - 1) {
+        const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
+        logger.warn({ attempt, delay }, 'Claude API rate limited, retrying...');
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
 export async function callClaude(
   systemPrompt: string,
   userMessage: string,
@@ -21,9 +45,9 @@ export async function callClaude(
 ): Promise<string> {
   const anthropic = getClient();
 
-  try {
+  return withRetry(async () => {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODEL,
       max_tokens: options?.maxTokens || 4096,
       temperature: options?.temperature || 0.3,
       system: systemPrompt,
@@ -36,10 +60,7 @@ export async function callClaude(
     }
 
     return textBlock.text;
-  } catch (error) {
-    logger.error(error, 'Claude API call failed');
-    throw error;
-  }
+  });
 }
 
 export async function callClaudeVision(
@@ -51,9 +72,9 @@ export async function callClaudeVision(
 ): Promise<string> {
   const anthropic = getClient();
 
-  try {
+  return withRetry(async () => {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODEL,
       max_tokens: options?.maxTokens || 4096,
       temperature: 0.2,
       system: systemPrompt,
@@ -79,10 +100,7 @@ export async function callClaudeVision(
     }
 
     return textBlock.text;
-  } catch (error) {
-    logger.error(error, 'Claude Vision API call failed');
-    throw error;
-  }
+  });
 }
 
 export function resetClient(): void {

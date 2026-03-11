@@ -69,9 +69,12 @@ export default function RegisterPage() {
 
       const result = await response.json();
 
-      localStorage.setItem("oradent_token", result.token);
+      localStorage.setItem("oradent_token", result.token || result.accessToken);
+      if (result.refreshToken) {
+        localStorage.setItem("oradent_refresh_token", result.refreshToken);
+      }
 
-      router.push("/dashboard");
+      router.push("/");
     } catch (error) {
       setServerError(
         error instanceof Error

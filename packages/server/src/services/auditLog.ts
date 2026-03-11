@@ -17,7 +17,7 @@ export async function createAuditEntry(
         action,
         resource,
         resourceId,
-        details: details || {},
+        details: (details || {}) as any,
         ipAddress: ipAddress || '',
         userAgent: userAgent || '',
       },

@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { Save, RotateCcw } from 'lucide-react';
 import { useDentalChart } from '@/hooks/useDentalChart';
-import { DentalChart } from '@/components/dental-chart/DentalChart';
+import DentalChart from '@/components/dental-chart/DentalChart';
 import { formatDate } from '@/lib/formatters';
 
 export default function DentalChartPage() {
@@ -50,7 +50,7 @@ export default function DentalChartPage() {
       {/* Chart */}
       <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
         {chartData ? (
-          <DentalChart patientId={params.id} data={chartData} />
+          <DentalChart />
         ) : (
           <div className="flex h-96 items-center justify-center text-stone-400">
             No chart data available. Start by selecting a tooth.

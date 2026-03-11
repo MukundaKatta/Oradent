@@ -470,6 +470,7 @@ model Payment {
   notes     String?
 
   @@index([invoiceId])
+  @@index([date])
 }
 
 enum PaymentMethod {
@@ -501,6 +502,9 @@ model InsuranceClaim {
   notes          String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+
+  @@index([status])
+  @@index([followUpDate])
 }
 
 enum ClaimStatus {

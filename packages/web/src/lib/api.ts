@@ -9,17 +9,20 @@ interface ApiError {
   message: string;
   statusCode: number;
   errors?: Record<string, string[]>;
+  code?: string;
 }
 
 class ApiClientError extends Error {
   statusCode: number;
   errors?: Record<string, string[]>;
+  code?: string;
 
-  constructor(message: string, statusCode: number, errors?: Record<string, string[]>) {
+  constructor(message: string, statusCode: number, errors?: Record<string, string[]>, code?: string) {
     super(message);
     this.name = "ApiClientError";
     this.statusCode = statusCode;
     this.errors = errors;
+    this.code = code;
   }
 }
 
@@ -38,14 +41,71 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (response.status === 401) {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("oradent_token");
-      localStorage.removeItem("oradent_provider");
-      localStorage.removeItem("oradent_practice");
-      window.location.href = "/login";
+/** Attempt to refresh the access token using the stored refresh token */
+let refreshPromise: Promise<boolean> | null = null;
+
+async function tryRefreshToken(): Promise<boolean> {
+  // Deduplicate concurrent refresh attempts
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = typeof window !== "undefined"
+        ? localStorage.getItem("oradent_refresh_token")
+        : null;
+
+      if (!refreshToken) return false;
+
+      const response = await fetch(`${BASE_URL}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) return false;
+
+      const data = await response.json();
+      localStorage.setItem("oradent_token", data.token || data.accessToken);
+      if (data.refreshToken) {
+        localStorage.setItem("oradent_refresh_token", data.refreshToken);
+      }
+      return true;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
     }
+  })();
+
+  return refreshPromise;
+}
+
+function clearAuthAndRedirect(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("oradent_token");
+    localStorage.removeItem("oradent_refresh_token");
+    localStorage.removeItem("oradent-app-store");
+    window.location.href = "/login";
+  }
+}
+
+async function handleResponse<T>(response: Response, retryFn?: () => Promise<Response>): Promise<T> {
+  if (response.status === 401 && retryFn) {
+    // Try refreshing the token
+    const errorData = await response.json().catch(() => ({}));
+    if (errorData.code === "TOKEN_EXPIRED") {
+      const refreshed = await tryRefreshToken();
+      if (refreshed) {
+        const retryResponse = await retryFn();
+        return handleResponse<T>(retryResponse);
+      }
+    }
+    clearAuthAndRedirect();
+    throw new ApiClientError("Unauthorized", 401);
+  }
+
+  if (response.status === 401) {
+    clearAuthAndRedirect();
     throw new ApiClientError("Unauthorized", 401);
   }
 
@@ -62,7 +122,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
     throw new ApiClientError(
       errorData.message || "Request failed",
       response.status,
-      errorData.errors
+      errorData.errors,
+      errorData.code
     );
   }
 
@@ -73,20 +134,31 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit
+): Promise<{ response: Response; retry: () => Promise<Response> }> {
+  const response = await fetch(url, init);
+  const retry = () =>
+    fetch(url, {
+      ...init,
+      headers: { ...init.headers, ...getAuthHeaders() },
+    });
+  return { response, retry };
+}
+
 export async function apiGet<T>(
   endpoint: string,
   options?: RequestOptions
 ): Promise<T> {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const url = `${BASE_URL}${endpoint}`;
+  const init: RequestInit = {
     method: "GET",
-    headers: {
-      ...getAuthHeaders(),
-      ...options?.headers,
-    },
+    headers: { ...getAuthHeaders(), ...options?.headers },
     signal: options?.signal,
-  });
-
-  return handleResponse<T>(response);
+  };
+  const { response, retry } = await fetchWithRetry(url, init);
+  return handleResponse<T>(response, retry);
 }
 
 export async function apiPost<T, B = unknown>(
@@ -94,17 +166,15 @@ export async function apiPost<T, B = unknown>(
   body?: B,
   options?: RequestOptions
 ): Promise<T> {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const url = `${BASE_URL}${endpoint}`;
+  const init: RequestInit = {
     method: "POST",
-    headers: {
-      ...getAuthHeaders(),
-      ...options?.headers,
-    },
+    headers: { ...getAuthHeaders(), ...options?.headers },
     body: body ? JSON.stringify(body) : undefined,
     signal: options?.signal,
-  });
-
-  return handleResponse<T>(response);
+  };
+  const { response, retry } = await fetchWithRetry(url, init);
+  return handleResponse<T>(response, retry);
 }
 
 export async function apiPut<T, B = unknown>(
@@ -112,17 +182,15 @@ export async function apiPut<T, B = unknown>(
   body?: B,
   options?: RequestOptions
 ): Promise<T> {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const url = `${BASE_URL}${endpoint}`;
+  const init: RequestInit = {
     method: "PUT",
-    headers: {
-      ...getAuthHeaders(),
-      ...options?.headers,
-    },
+    headers: { ...getAuthHeaders(), ...options?.headers },
     body: body ? JSON.stringify(body) : undefined,
     signal: options?.signal,
-  });
-
-  return handleResponse<T>(response);
+  };
+  const { response, retry } = await fetchWithRetry(url, init);
+  return handleResponse<T>(response, retry);
 }
 
 export async function apiPatch<T, B = unknown>(
@@ -130,33 +198,29 @@ export async function apiPatch<T, B = unknown>(
   body?: B,
   options?: RequestOptions
 ): Promise<T> {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const url = `${BASE_URL}${endpoint}`;
+  const init: RequestInit = {
     method: "PATCH",
-    headers: {
-      ...getAuthHeaders(),
-      ...options?.headers,
-    },
+    headers: { ...getAuthHeaders(), ...options?.headers },
     body: body ? JSON.stringify(body) : undefined,
     signal: options?.signal,
-  });
-
-  return handleResponse<T>(response);
+  };
+  const { response, retry } = await fetchWithRetry(url, init);
+  return handleResponse<T>(response, retry);
 }
 
 export async function apiDelete<T>(
   endpoint: string,
   options?: RequestOptions
 ): Promise<T> {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const url = `${BASE_URL}${endpoint}`;
+  const init: RequestInit = {
     method: "DELETE",
-    headers: {
-      ...getAuthHeaders(),
-      ...options?.headers,
-    },
+    headers: { ...getAuthHeaders(), ...options?.headers },
     signal: options?.signal,
-  });
-
-  return handleResponse<T>(response);
+  };
+  const { response, retry } = await fetchWithRetry(url, init);
+  return handleResponse<T>(response, retry);
 }
 
 export async function apiUpload<T>(
@@ -175,10 +239,7 @@ export async function apiUpload<T>(
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     method: "POST",
-    headers: {
-      ...headers,
-      ...options?.headers,
-    },
+    headers: { ...headers, ...options?.headers },
     body: formData,
     signal: options?.signal,
   });
