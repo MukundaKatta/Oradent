@@ -16,13 +16,21 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  RefreshCcw,
+  ClipboardList,
+  FileCheck,
+  MessageSquare,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Patients", href: "/patients", icon: Users },
   { name: "Appointments", href: "/appointments", icon: Calendar },
+  { name: "Recall", href: "/recall", icon: RefreshCcw },
+  { name: "Waitlist", href: "/waitlist", icon: ClipboardList },
   { name: "Billing", href: "/billing", icon: Receipt },
+  { name: "Consent", href: "/consent", icon: FileCheck },
+  { name: "Communications", href: "/communications", icon: MessageSquare },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "AI Assistant", href: "/ai-assistant", icon: Brain },
   { name: "Settings", href: "/settings", icon: Settings },

@@ -52,12 +52,15 @@ model Provider {
   licenseNumber String?
   color         String        @default("#6366f1")
   isActive      Boolean       @default(true)
-  appointments  Appointment[]
-  treatments    Treatment[]
-  notes         ClinicalNote[]
-  auditLogs     AuditLog[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  appointments     Appointment[]
+  treatments       Treatment[]
+  notes            ClinicalNote[]
+  auditLogs        AuditLog[]
+  waitlistEntries  WaitlistEntry[]
+  consents         PatientConsent[]
+  communications   Communication[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
 
 enum ProviderRole {
@@ -108,6 +111,10 @@ model Patient {
   invoices           Invoice[]
   clinicalNotes      ClinicalNote[]
   aiAnalyses         AIAnalysis[]
+  recalls            RecallSchedule[]
+  waitlistEntries    WaitlistEntry[]
+  consents           PatientConsent[]
+  communications     Communication[]
   status             PatientStatus    @default(ACTIVE)
   lastVisit          DateTime?
   nextAppointment    DateTime?
@@ -517,6 +524,196 @@ enum ClaimStatus {
   APPEALED
   PAID
   WRITE_OFF
+}
+
+// ═══════════════════ RECALL & RECARE ═══════════════════
+
+model RecallSchedule {
+  id           String       @id @default(cuid())
+  patientId    String
+  patient      Patient      @relation(fields: [patientId], references: [id])
+  type         RecallType
+  intervalMonths Int        @default(6)
+  lastCompleted  DateTime?
+  nextDue      DateTime
+  status       RecallStatus @default(DUE)
+  priority     Int          @default(1)
+  notes        String?
+  reminders    RecallReminder[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([patientId])
+  @@index([nextDue, status])
+  @@index([status])
+}
+
+enum RecallType {
+  PROPHYLAXIS
+  PERIO_MAINTENANCE
+  EXAM
+  XRAYS
+  FLUORIDE
+  SEALANT_CHECK
+  ORTHO_CHECK
+  CUSTOM
+}
+
+enum RecallStatus {
+  DUE
+  SCHEDULED
+  OVERDUE
+  COMPLETED
+  SKIPPED
+}
+
+model RecallReminder {
+  id         String         @id @default(cuid())
+  recallId   String
+  recall     RecallSchedule @relation(fields: [recallId], references: [id], onDelete: Cascade)
+  sentAt     DateTime       @default(now())
+  method     ReminderMethod
+  status     String         @default("sent")
+  response   String?
+
+  @@index([recallId])
+}
+
+enum ReminderMethod {
+  EMAIL
+  SMS
+  PHONE
+  MAIL
+}
+
+// ═══════════════════ WAITLIST ═══════════════════
+
+model WaitlistEntry {
+  id            String         @id @default(cuid())
+  patientId     String
+  patient       Patient        @relation(fields: [patientId], references: [id])
+  providerId    String?
+  provider      Provider?      @relation(fields: [providerId], references: [id])
+  appointmentType AppointmentType
+  preferredDays   Int[]        @default([1, 2, 3, 4, 5])
+  preferredTimeStart String?   @default("08:00")
+  preferredTimeEnd   String?   @default("17:00")
+  urgency       WaitlistUrgency @default(ROUTINE)
+  status        WaitlistStatus  @default(WAITING)
+  notes         String?
+  notifiedAt    DateTime?
+  scheduledAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([status, urgency])
+  @@index([patientId])
+}
+
+enum WaitlistUrgency {
+  ROUTINE
+  SOON
+  URGENT
+}
+
+enum WaitlistStatus {
+  WAITING
+  NOTIFIED
+  SCHEDULED
+  EXPIRED
+  CANCELLED
+}
+
+// ═══════════════════ CONSENT FORMS ═══════════════════
+
+model ConsentTemplate {
+  id          String    @id @default(cuid())
+  practiceId  String
+  name        String
+  category    String
+  content     String
+  version     Int       @default(1)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([practiceId, category])
+}
+
+model PatientConsent {
+  id             String        @id @default(cuid())
+  patientId      String
+  patient        Patient       @relation(fields: [patientId], references: [id])
+  providerId     String
+  provider       Provider      @relation(fields: [providerId], references: [id])
+  templateName   String
+  templateVersion Int          @default(1)
+  content        String
+  procedureDescription String?
+  toothNumbers   Int[]
+  signatureData  String?
+  signedAt       DateTime?
+  witnessName    String?
+  status         ConsentStatus @default(PENDING)
+  revokedAt      DateTime?
+  revokedReason  String?
+  pdfPath        String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+}
+
+enum ConsentStatus {
+  PENDING
+  SIGNED
+  REVOKED
+  EXPIRED
+}
+
+// ═══════════════════ PATIENT COMMUNICATIONS ═══════════════════
+
+model Communication {
+  id          String              @id @default(cuid())
+  patientId   String
+  patient     Patient             @relation(fields: [patientId], references: [id])
+  providerId  String?
+  provider    Provider?           @relation(fields: [providerId], references: [id])
+  type        CommunicationType
+  direction   CommunicationDirection
+  subject     String?
+  body        String
+  status      CommunicationStatus @default(SENT)
+  metadata    Json?
+  readAt      DateTime?
+  createdAt   DateTime            @default(now())
+
+  @@index([patientId, createdAt])
+  @@index([type, status])
+}
+
+enum CommunicationType {
+  EMAIL
+  SMS
+  PHONE_CALL
+  IN_APP
+  LETTER
+  FAX
+}
+
+enum CommunicationDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum CommunicationStatus {
+  DRAFT
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  BOUNCED
 }
 
 // ═══════════════════ AUDIT & SYSTEM ═══════════════════

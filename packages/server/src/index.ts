@@ -20,6 +20,7 @@ import { initializeWebSocket } from './websocket/liveUpdates';
 import { startAppointmentReminders } from './jobs/appointmentReminder';
 import { startClaimFollowUp } from './jobs/claimFollowUp';
 import { startDailyDigest } from './jobs/dailyDigest';
+import { startRecallReminders } from './jobs/recallReminder';
 
 import authRoutes from './routes/auth';
 import patientRoutes from './routes/patients';
@@ -31,6 +32,10 @@ import imagingRoutes from './routes/imaging';
 import aiRoutes from './routes/ai';
 import reportRoutes from './routes/reports';
 import settingsRoutes from './routes/settings';
+import recallRoutes from './routes/recall';
+import waitlistRoutes from './routes/waitlist';
+import consentRoutes from './routes/consent';
+import communicationRoutes from './routes/communications';
 
 const app = express();
 const httpServer = createServer(app);
@@ -134,6 +139,10 @@ const swaggerSpec = swaggerJsdoc({
       { name: 'AI', description: 'AI-powered analysis & suggestions' },
       { name: 'Reports', description: 'Analytics & reporting' },
       { name: 'Settings', description: 'Practice configuration' },
+      { name: 'Recall', description: 'Patient recall & recare scheduling' },
+      { name: 'Waitlist', description: 'Appointment waitlist management' },
+      { name: 'Consent', description: 'Treatment consent forms' },
+      { name: 'Communications', description: 'Patient communication hub' },
     ],
   },
   apis: [],
@@ -184,6 +193,10 @@ app.use('/api/imaging', imagingRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/recall', recallRoutes);
+app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/consent', consentRoutes);
+app.use('/api/communications', communicationRoutes);
 
 // Error handler
 app.use(errorHandler);
@@ -200,6 +213,7 @@ httpServer.listen(env.PORT, () => {
   startAppointmentReminders();
   startClaimFollowUp();
   startDailyDigest();
+  startRecallReminders();
 });
 
 // Graceful shutdown

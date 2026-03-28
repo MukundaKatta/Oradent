@@ -12,6 +12,10 @@ import {
   Brain,
   ArrowUpRight,
   ArrowDownRight,
+  RefreshCcw,
+  ClipboardList,
+  FileCheck,
+  MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import TodaySchedule from '@/components/dashboard/TodaySchedule';
@@ -172,6 +176,42 @@ export default function DashboardPage() {
                   <Brain className="w-4 h-4 text-purple-600" />
                 </div>
                 <span className="text-sm font-medium text-stone-700">AI Analysis</span>
+              </Link>
+              <Link
+                href="/recall"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+              >
+                <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                  <RefreshCcw className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-sm font-medium text-stone-700">Recall Management</span>
+              </Link>
+              <Link
+                href="/waitlist"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+              >
+                <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
+                  <ClipboardList className="w-4 h-4 text-amber-600" />
+                </div>
+                <span className="text-sm font-medium text-stone-700">Waitlist</span>
+              </Link>
+              <Link
+                href="/consent"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+              >
+                <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                  <FileCheck className="w-4 h-4 text-emerald-600" />
+                </div>
+                <span className="text-sm font-medium text-stone-700">Consent Forms</span>
+              </Link>
+              <Link
+                href="/communications"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+              >
+                <div className="p-2 bg-sky-100 rounded-lg group-hover:bg-sky-200 transition-colors">
+                  <MessageSquare className="w-4 h-4 text-sky-600" />
+                </div>
+                <span className="text-sm font-medium text-stone-700">Communications</span>
               </Link>
             </div>
           </div>

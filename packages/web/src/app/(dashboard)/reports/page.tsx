@@ -56,6 +56,23 @@ interface ProviderProductivity {
   cancellationRate: number;
 }
 
+interface TreatmentAcceptance {
+  total: number;
+  accepted: number;
+  declined: number;
+  pending: number;
+  acceptanceRate: number;
+  totalValue: number;
+  acceptedValue: number;
+}
+
+interface AppointmentTypeBreakdown {
+  type: string;
+  total: number;
+  completed: number;
+  completionRate: number;
+}
+
 // ---------- Constants ----------
 
 const PERIOD_OPTIONS = [
@@ -185,6 +202,24 @@ export default function ReportsPage() {
       apiGet(
         `/api/reports/provider-productivity?startDate=${startDate}&endDate=${endDate}`
       ),
+  });
+
+  const {
+    data: acceptanceData,
+    isLoading: acceptanceLoading,
+  } = useQuery<TreatmentAcceptance>({
+    queryKey: ['reports-treatment-acceptance', startDate],
+    queryFn: () =>
+      apiGet(`/api/reports/treatment-acceptance?start=${startDate}`),
+  });
+
+  const {
+    data: appointmentTypesData,
+    isLoading: appointmentTypesLoading,
+  } = useQuery<AppointmentTypeBreakdown[]>({
+    queryKey: ['reports-appointment-types', startDate],
+    queryFn: () =>
+      apiGet(`/api/reports/appointment-types?start=${startDate}`),
   });
 
   // --- Computed ---
@@ -433,6 +468,117 @@ export default function ReportsPage() {
             ) : (
               <div className="flex h-48 items-center justify-center text-sm text-stone-400">
                 No aging data available.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Treatment Acceptance & Appointment Types Row */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Treatment Acceptance */}
+        <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
+          <div className="flex items-center gap-3 border-b border-stone-100 px-6 py-4">
+            <div className="rounded-lg bg-green-50 p-2">
+              <TrendingUp className="h-5 w-5 text-green-500" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-stone-900">Treatment Acceptance</h2>
+              <p className="text-xs text-stone-500">Treatment plan conversion metrics</p>
+            </div>
+          </div>
+          <div className="p-6">
+            {acceptanceLoading ? (
+              <TableSkeleton rows={3} />
+            ) : acceptanceData ? (
+              <div className="space-y-5">
+                {/* Acceptance rate gauge */}
+                <div className="flex items-center justify-center">
+                  <div className="relative flex h-32 w-32 items-center justify-center">
+                    <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
+                      <circle cx="60" cy="60" r="52" fill="none" stroke="#e7e5e4" strokeWidth="12" />
+                      <circle
+                        cx="60" cy="60" r="52" fill="none" stroke="#0d9488" strokeWidth="12"
+                        strokeDasharray={`${(acceptanceData.acceptanceRate / 100) * 327} 327`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute flex flex-col items-center">
+                      <span className="text-2xl font-bold text-stone-900">{acceptanceData.acceptanceRate}%</span>
+                      <span className="text-[10px] text-stone-500">Acceptance</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg bg-green-50 p-3 text-center">
+                    <p className="text-lg font-bold text-green-700">{acceptanceData.accepted}</p>
+                    <p className="text-xs text-green-600">Accepted</p>
+                  </div>
+                  <div className="rounded-lg bg-amber-50 p-3 text-center">
+                    <p className="text-lg font-bold text-amber-700">{acceptanceData.pending}</p>
+                    <p className="text-xs text-amber-600">Pending</p>
+                  </div>
+                  <div className="rounded-lg bg-red-50 p-3 text-center">
+                    <p className="text-lg font-bold text-red-700">{acceptanceData.declined}</p>
+                    <p className="text-xs text-red-600">Declined</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-stone-100 px-4 py-3">
+                  <span className="text-sm text-stone-500">Accepted Value</span>
+                  <span className="text-sm font-semibold text-stone-900">
+                    {formatCurrency(acceptanceData.acceptedValue)} of {formatCurrency(acceptanceData.totalValue)}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-48 items-center justify-center text-sm text-stone-400">
+                No treatment acceptance data available.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Appointment Types */}
+        <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
+          <div className="flex items-center gap-3 border-b border-stone-100 px-6 py-4">
+            <div className="rounded-lg bg-indigo-50 p-2">
+              <CalendarDays className="h-5 w-5 text-indigo-500" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-stone-900">Appointment Types</h2>
+              <p className="text-xs text-stone-500">Breakdown by type with completion rates</p>
+            </div>
+          </div>
+          <div className="p-4">
+            {appointmentTypesLoading ? (
+              <TableSkeleton rows={5} />
+            ) : appointmentTypesData && appointmentTypesData.length > 0 ? (
+              <div className="space-y-2">
+                {appointmentTypesData.map((apt) => (
+                  <div key={apt.type} className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-stone-50">
+                    <div className="w-28 shrink-0">
+                      <p className="text-sm font-medium text-stone-700">{apt.type.replace(/_/g, ' ')}</p>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex h-5 overflow-hidden rounded-full bg-stone-100">
+                        <div
+                          className="rounded-full bg-teal-500 transition-all"
+                          style={{ width: `${apt.completionRate}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex w-24 items-center justify-end gap-2 shrink-0">
+                      <span className="text-xs font-medium text-stone-900">{apt.total}</span>
+                      <span className={`text-xs font-medium ${apt.completionRate >= 80 ? 'text-green-600' : apt.completionRate >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                        {apt.completionRate}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-48 items-center justify-center text-sm text-stone-400">
+                No appointment data available.
               </div>
             )}
           </div>
