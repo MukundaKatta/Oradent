@@ -1,5 +1,7 @@
 # Oradent — Dental practice management platform for appointments, patient records, and billing
 
+**Live:** <https://mukundakatta.github.io/Oradent/>
+
 Dental practice management platform for appointments, patient records, and billing. Oradent gives you a focused, inspectable implementation of that idea.
 
 ## Why Oradent
