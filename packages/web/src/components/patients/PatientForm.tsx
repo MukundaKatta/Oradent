@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useCreatePatient } from '@/hooks/usePatient';
 
 const patientSchema = z.object({
@@ -32,6 +32,24 @@ interface PatientFormProps {
   onClose: () => void;
 }
 
+function formatPhoneNumber(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length === 0) return '';
+  if (digits.length <= 3) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function RequiredLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="mb-1.5 block text-sm font-medium text-stone-700">
+      {children} <span className="text-red-500">*</span>
+    </label>
+  );
+}
+
 export function PatientForm({ open, onClose }: PatientFormProps) {
   const [step, setStep] = useState<'info' | 'insurance'>('info');
   const createPatient = useCreatePatient();
@@ -39,6 +57,8 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
   const {
     register,
     handleSubmit,
+    setValue,
+    control,
     formState: { errors },
   } = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -51,6 +71,17 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
       email: '',
     },
   });
+
+  const emailValue = useWatch({ control, name: 'email' });
+  const emailIsValid = emailValue ? EMAIL_REGEX.test(emailValue) : null;
+
+  const handlePhoneChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const formatted = formatPhoneNumber(e.target.value);
+      setValue('phone', formatted, { shouldValidate: true });
+    },
+    [setValue]
+  );
 
   const onSubmit = async (data: PatientFormData) => {
     try {
@@ -124,9 +155,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      First Name
-                    </label>
+                    <RequiredLabel>First Name</RequiredLabel>
                     <input
                       type="text"
                       {...register('firstName')}
@@ -137,9 +166,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                     )}
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Last Name
-                    </label>
+                    <RequiredLabel>Last Name</RequiredLabel>
                     <input
                       type="text"
                       {...register('lastName')}
@@ -153,9 +180,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Date of Birth
-                    </label>
+                    <RequiredLabel>Date of Birth</RequiredLabel>
                     <input
                       type="date"
                       {...register('dateOfBirth')}
@@ -166,9 +191,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                     )}
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Gender
-                    </label>
+                    <RequiredLabel>Gender</RequiredLabel>
                     <select
                       {...register('gender')}
                       className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -185,12 +208,12 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Phone
-                  </label>
+                  <RequiredLabel>Phone</RequiredLabel>
                   <input
                     type="tel"
-                    {...register('phone')}
+                    {...register('phone', {
+                      onChange: handlePhoneChange,
+                    })}
                     placeholder="(555) 123-4567"
                     className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                   />
@@ -200,16 +223,34 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    {...register('email')}
-                    className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-                  />
+                  <RequiredLabel>Email</RequiredLabel>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      {...register('email')}
+                      className={`w-full rounded-lg border px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-1 ${
+                        emailValue && !emailIsValid
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : emailIsValid
+                            ? 'border-green-300 focus:border-green-500 focus:ring-green-500'
+                            : 'border-stone-200 focus:border-teal-500 focus:ring-teal-500'
+                      }`}
+                    />
+                    {emailValue && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {emailIsValid ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-red-400" />
+                        )}
+                      </span>
+                    )}
+                  </div>
                   {errors.email && (
                     <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+                  )}
+                  {emailValue && !emailIsValid && !errors.email && (
+                    <p className="mt-1 text-xs text-amber-600">Please enter a valid email address</p>
                   )}
                 </div>
 
