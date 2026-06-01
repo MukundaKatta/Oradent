@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useSocketEvent } from '@/hooks/useSocket';
 import {
   APPOINTMENT_TYPE_LABELS,
   APPOINTMENT_TYPE_COLORS,
@@ -24,6 +25,7 @@ interface Appointment {
   status: string;
   reason?: string;
   notes?: string;
+  seatedAt?: string;
 }
 
 interface ChairViewProps {
@@ -31,19 +33,68 @@ interface ChairViewProps {
   currentDate: Date;
   onEventClick: (appointment: Appointment) => void;
   onSlotClick: (date: string, time: string) => void;
+  onRefresh?: () => void;
+}
+
+type ChairStatus = 'empty' | 'occupied' | 'ready';
+
+interface ChairInfo {
+  status: ChairStatus;
+  currentAppointment: Appointment | null;
+  seatedSince: Date | null;
 }
 
 const HOURS = Array.from({ length: 10 }, (_, i) => i + 8); // 8am - 5pm
 const SLOT_HEIGHT = 60; // px per 30 min
 const CHAIRS = ['Chair 1', 'Chair 2', 'Chair 3'];
 
+function formatDuration(ms: number): string {
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}
+
+const CHAIR_STATUS_STYLES: Record<ChairStatus, string> = {
+  empty: 'bg-stone-100 border-stone-300',
+  occupied: 'bg-teal-50 border-teal-400',
+  ready: 'bg-green-50 border-green-400',
+};
+
+const CHAIR_STATUS_DOT: Record<ChairStatus, string> = {
+  empty: 'bg-stone-400',
+  occupied: 'bg-teal-500',
+  ready: 'bg-green-500',
+};
+
 export function ChairView({
   appointments,
   currentDate,
   onEventClick,
   onSlotClick,
+  onRefresh,
 }: ChairViewProps) {
   const dateStr = format(currentDate, 'yyyy-MM-dd');
+  const [now, setNow] = useState(() => new Date());
+
+  // Update timer every 30 seconds for duration display
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Listen for real-time chair status updates
+  const handleChairStatus = useCallback(() => {
+    onRefresh?.();
+  }, [onRefresh]);
+
+  useSocketEvent('chair:status', handleChairStatus);
+
+  // Also listen for appointment updates to refresh
+  useSocketEvent('appointment:updated', handleChairStatus);
 
   const chairGroups = useMemo(() => {
     const groups: Record<string, Appointment[]> = {};
@@ -64,6 +115,46 @@ export function ChairView({
     return groups;
   }, [appointments, dateStr]);
 
+  // Determine real-time status of each chair
+  const chairInfoMap = useMemo((): Record<string, ChairInfo> => {
+    const infoMap: Record<string, ChairInfo> = {};
+
+    CHAIRS.forEach((chair) => {
+      const chairAppts = chairGroups[chair] || [];
+
+      // Find the current IN_CHAIR appointment
+      const inChairApt = chairAppts.find((apt) => apt.status === 'IN_CHAIR');
+
+      // Find a CHECKED_IN patient ready for this chair
+      const readyApt = chairAppts.find((apt) => apt.status === 'CHECKED_IN');
+
+      if (inChairApt) {
+        const seatedSince = inChairApt.seatedAt
+          ? new Date(inChairApt.seatedAt)
+          : new Date(inChairApt.startTime);
+        infoMap[chair] = {
+          status: 'occupied',
+          currentAppointment: inChairApt,
+          seatedSince,
+        };
+      } else if (readyApt) {
+        infoMap[chair] = {
+          status: 'ready',
+          currentAppointment: readyApt,
+          seatedSince: null,
+        };
+      } else {
+        infoMap[chair] = {
+          status: 'empty',
+          currentAppointment: null,
+          seatedSince: null,
+        };
+      }
+    });
+
+    return infoMap;
+  }, [chairGroups]);
+
   const getPositionStyles = (apt: Appointment) => {
     const start = new Date(apt.startTime);
     const end = new Date(apt.endTime);
@@ -75,7 +166,6 @@ export function ChairView({
   };
 
   const getCurrentTimePosition = () => {
-    const now = new Date();
     const nowDateStr = format(now, 'yyyy-MM-dd');
     if (nowDateStr !== dateStr) return null;
     const hours = now.getHours() + now.getMinutes() / 60;
@@ -88,6 +178,50 @@ export function ChairView({
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[800px]">
+        {/* Chair status indicators */}
+        <div className="grid grid-cols-[80px_1fr_1fr_1fr] mb-2">
+          <div />
+          {CHAIRS.map((chair) => {
+            const info = chairInfoMap[chair];
+            const statusStyle = CHAIR_STATUS_STYLES[info.status];
+            const dotStyle = CHAIR_STATUS_DOT[info.status];
+
+            return (
+              <div
+                key={`status-${chair}`}
+                className={cn(
+                  'mx-1 rounded-lg border p-2 transition-colors',
+                  statusStyle
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={cn('h-2.5 w-2.5 rounded-full', dotStyle)} />
+                  <span className="text-xs font-medium text-stone-700 capitalize">
+                    {info.status === 'ready' ? 'Patient Ready' : info.status}
+                  </span>
+                </div>
+                {info.currentAppointment && (
+                  <div className="mt-1">
+                    <div className="truncate text-xs font-semibold text-stone-800">
+                      {info.currentAppointment.patientName}
+                    </div>
+                    {info.status === 'occupied' && info.seatedSince && (
+                      <div className="text-[10px] text-teal-700 font-medium">
+                        In chair: {formatDuration(now.getTime() - info.seatedSince.getTime())}
+                      </div>
+                    )}
+                    {info.status === 'ready' && (
+                      <div className="text-[10px] text-green-700 font-medium">
+                        Checked in - waiting
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
         {/* Header */}
         <div className="grid grid-cols-[80px_1fr_1fr_1fr] border-b border-stone-200">
           <div className="border-r border-stone-200 bg-stone-50 p-3">
@@ -153,11 +287,16 @@ export function ChairView({
               {chairGroups[chair]?.map((apt) => {
                 const pos = getPositionStyles(apt);
                 const bgColor = apt.providerColor || APPOINTMENT_TYPE_COLORS[apt.type] || '#14b8a6';
+                const isInChair = apt.status === 'IN_CHAIR';
+                const statusLabel = APPOINTMENT_STATUS_LABELS[apt.status] || apt.status;
                 return (
                   <button
                     key={apt.id}
                     onClick={() => onEventClick(apt)}
-                    className="absolute inset-x-1 overflow-hidden rounded-lg p-2 text-left transition-opacity hover:opacity-90"
+                    className={cn(
+                      'absolute inset-x-1 overflow-hidden rounded-lg p-2 text-left transition-opacity hover:opacity-90',
+                      isInChair && 'ring-2 ring-green-400 ring-offset-1'
+                    )}
                     style={{
                       ...pos,
                       backgroundColor: bgColor,
@@ -172,6 +311,11 @@ export function ChairView({
                     <div className="mt-0.5 truncate text-[10px] text-white/70">
                       {format(new Date(apt.startTime), 'h:mm a')} -{' '}
                       {format(new Date(apt.endTime), 'h:mm a')}
+                    </div>
+                    <div className="mt-0.5">
+                      <span className="inline-block rounded-full bg-black/20 px-1.5 py-0.5 text-[9px] font-medium text-white">
+                        {statusLabel}
+                      </span>
                     </div>
                   </button>
                 );
