@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
-import { Search, Bell, ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { Search, Bell, ChevronDown, User, Settings, LogOut, Menu } from "lucide-react";
 import { useAppStore } from "@/stores/appStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { NotificationPanel } from "./NotificationPanel";
@@ -16,7 +16,7 @@ export function TopBar() {
   const [commandOpen, setCommandOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const router = useRouter();
-  const { provider, practice, logout } = useAppStore();
+  const { provider, practice, logout, toggleMobileMenu } = useAppStore();
   const { unreadCount } = useNotificationStore();
   const today = format(new Date(), "EEEE, MMMM d, yyyy");
 
@@ -38,18 +38,25 @@ export function TopBar() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-stone-200 bg-white px-6">
-        {/* Left: Practice name */}
-        <div>
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-stone-200 bg-white px-4 sm:px-6">
+        {/* Left: Hamburger + Practice name */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleMobileMenu}
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700 lg:hidden"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
           <h1 className="text-lg font-semibold text-stone-900">
             {practice?.name || "Oradent"}
           </h1>
         </div>
 
-        {/* Center: Search trigger */}
+        {/* Center: Search trigger - hidden on mobile */}
         <button
           onClick={() => setCommandOpen(true)}
-          className="flex h-9 w-80 items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm text-stone-400 transition-colors hover:border-stone-300 hover:bg-stone-100"
+          className="hidden h-9 w-80 items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm text-stone-400 transition-colors hover:border-stone-300 hover:bg-stone-100 md:flex"
         >
           <Search className="h-4 w-4" />
           <span className="flex-1 text-left">Search patients, actions...</span>

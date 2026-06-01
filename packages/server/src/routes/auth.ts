@@ -7,6 +7,7 @@ import { redis } from '../config/redis';
 import { generateToken, generateRefreshToken, verifyRefreshToken, authenticate, blacklistToken, AuthPayload } from '../middleware/auth';
 import { authLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
+import { sendEmail, generatePasswordResetEmail } from '../services/emailService';
 
 const router = Router();
 
@@ -251,7 +252,14 @@ router.post('/forgot-password', authLimiter, async (req: Request, res: Response)
     // Store in Redis with 1-hour TTL: reset:<token> → providerId
     await redis.set(`reset:${token}`, provider.id, 'EX', 3600);
     logger.info({ providerId: provider.id }, 'Password reset token generated');
-    // In production, send the token via email. Omitted here.
+
+    const resetUrl = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+    const practice = await prisma.practice.findFirst({
+      where: { providers: { some: { id: provider.id } } },
+      select: { name: true },
+    });
+    const html = generatePasswordResetEmail(practice?.name || 'Oradent', resetUrl);
+    await sendEmail(provider.email, 'Password Reset Request', html);
   }
 
   res.json({ message: 'If the email exists, a reset link has been sent' });
