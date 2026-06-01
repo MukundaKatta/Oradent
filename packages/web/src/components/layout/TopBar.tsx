@@ -127,6 +127,16 @@ export function TopBar() {
 
                 <DropdownMenu.Item asChild>
                   <Link
+                    href="/profile"
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100"
+                  >
+                    <User className="h-4 w-4" />
+                    Profile
+                  </Link>
+                </DropdownMenu.Item>
+
+                <DropdownMenu.Item asChild>
+                  <Link
                     href="/settings"
                     className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100"
                   >

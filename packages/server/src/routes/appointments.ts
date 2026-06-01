@@ -300,6 +300,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 });
 
 // Batch status update (for check-in flow)
+// NOTE: Must be registered before /:id to avoid matching "batch-status" as an id param
 router.patch('/batch-status', async (req: Request, res: Response) => {
   const { appointmentIds, status } = z.object({
     appointmentIds: z.array(z.string()).min(1),
@@ -324,6 +325,51 @@ router.patch('/batch-status', async (req: Request, res: Response) => {
   });
 
   res.json({ message: `Updated ${appointmentIds.length} appointments to ${status}` });
+});
+
+// Update appointment status (lightweight PATCH)
+router.patch('/:id', async (req: Request, res: Response) => {
+  const { status } = z.object({
+    status: z.enum([
+      'SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_CHAIR',
+      'COMPLETED', 'CANCELLED', 'NO_SHOW', 'RESCHEDULED',
+    ]),
+  }).parse(req.body);
+
+  const existing = await prisma.appointment.findFirst({
+    where: { id: req.params.id, provider: { practiceId: req.auth!.practiceId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Appointment not found' });
+    return;
+  }
+
+  const updateData: Record<string, unknown> = { status };
+
+  // Status-specific timestamps
+  if (status === 'CONFIRMED') updateData.confirmedAt = new Date();
+  if (status === 'CHECKED_IN') updateData.checkedInAt = new Date();
+  if (status === 'IN_CHAIR') updateData.seatedAt = new Date();
+  if (status === 'COMPLETED') updateData.completedAt = new Date();
+
+  const appointment = await prisma.appointment.update({
+    where: { id: req.params.id },
+    data: updateData as any,
+    include: {
+      patient: { select: { id: true, firstName: true, lastName: true } },
+      provider: { select: { id: true, name: true, color: true } },
+      chair: { select: { id: true, name: true } },
+    },
+  });
+
+  res.json(appointment);
+  invalidateDashboardCache(req.auth!.practiceId);
+  emitAppointmentUpdate(req.auth!.practiceId, { appointmentId: appointment.id });
+  emitNotification(req.auth!.practiceId, {
+    type: 'appointment',
+    title: 'Appointment Updated',
+    message: `Appointment status changed to ${status}`,
+  });
 });
 
 export default router;

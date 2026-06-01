@@ -20,11 +20,15 @@ import {
   Clock,
   Bell,
   X,
+  FileText,
+  ArrowRight,
 } from 'lucide-react';
+import Link from 'next/link';
 import { apiGet, apiPut, apiPost } from '@/lib/api';
+import { formatDateTime } from '@/lib/formatters';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/lib/utils';
-import type { Practice, PracticeSettings, Provider, Chair, ProviderRole } from '@/types';
+import type { Practice, PracticeSettings, Provider, Chair, ProviderRole, AuditLog } from '@/types';
 
 // ═══════════════════ SCHEMAS ═══════════════════
 
@@ -61,6 +65,7 @@ const TABS = [
   { id: 'team', label: 'Team', icon: Users },
   { id: 'chairs', label: 'Chairs', icon: Armchair },
   { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
+  { id: 'audit', label: 'Audit Log', icon: FileText },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -1008,6 +1013,94 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
   );
 }
 
+// ═══════════════════ AUDIT LOG TAB ═══════════════════
+
+const AUDIT_ACTION_COLORS: Record<string, string> = {
+  CREATE: 'bg-green-100 text-green-700 border-green-200',
+  UPDATE: 'bg-blue-100 text-blue-700 border-blue-200',
+  DELETE: 'bg-red-100 text-red-700 border-red-200',
+  READ: 'bg-stone-100 text-stone-600 border-stone-200',
+};
+
+interface AuditLogResponse {
+  logs: AuditLog[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
+function AuditLogTab() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['audit-log', 'recent'],
+    queryFn: () => apiGet<AuditLogResponse>('/api/settings/audit-log?page=1&limit=5'),
+  });
+
+  return (
+    <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">Activity Log</h2>
+          <p className="mt-1 text-sm text-stone-500">
+            View the complete audit trail of all actions in your practice
+          </p>
+        </div>
+        <Link
+          href="/settings/audit-log"
+          className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700"
+        >
+          View Full Log
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+      <div className="p-6">
+        {error ? (
+          <ErrorCard message="Failed to load recent activity. Please try again." />
+        ) : isLoading ? (
+          <CardSkeleton rows={5} />
+        ) : !data || data.logs.length === 0 ? (
+          <div className="py-12 text-center">
+            <FileText className="mx-auto h-12 w-12 text-stone-300" />
+            <h3 className="mt-3 text-sm font-medium text-stone-700">No recent activity</h3>
+            <p className="mt-1 text-xs text-stone-500">
+              No audit log entries have been recorded yet.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {data.logs.map((log) => (
+              <div
+                key={log.id}
+                className="flex items-center justify-between rounded-lg border border-stone-200 px-5 py-4 transition-colors hover:bg-stone-50"
+              >
+                <div className="flex items-center gap-4">
+                  <span
+                    className={cn(
+                      'inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium',
+                      AUDIT_ACTION_COLORS[log.action] || 'bg-stone-100 text-stone-600 border-stone-200'
+                    )}
+                  >
+                    {log.action}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-stone-900">
+                      {log.provider?.name || 'System'}{' '}
+                      <span className="font-normal text-stone-500">
+                        {log.action.toLowerCase()}d {log.resource}
+                      </span>
+                    </p>
+                    <p className="text-xs text-stone-400">{formatDateTime(log.timestamp)}</p>
+                  </div>
+                </div>
+                <span className="font-mono text-xs text-stone-400">
+                  {log.resourceId.length > 12 ? `${log.resourceId.slice(0, 12)}...` : log.resourceId}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ═══════════════════ SHARED COMPONENTS ═══════════════════
 
 function ErrorCard({ message }: { message: string }) {
@@ -1101,6 +1194,7 @@ export default function SettingsPage() {
       {activeTab === 'team' && <TeamTab addToast={addToast} />}
       {activeTab === 'chairs' && <ChairsTab addToast={addToast} />}
       {activeTab === 'preferences' && <PreferencesTab addToast={addToast} />}
+      {activeTab === 'audit' && <AuditLogTab />}
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
