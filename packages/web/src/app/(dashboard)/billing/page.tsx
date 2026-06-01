@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   DollarSign,
   TrendingUp,
   FileText,
   AlertCircle,
   Plus,
+  Download,
+  Filter,
+  X,
 } from 'lucide-react';
 import * as Tabs from '@radix-ui/react-tabs';
 import { apiGet } from '@/lib/api';
@@ -72,6 +75,17 @@ interface FeeScheduleEntry {
 
 const CLAIM_PIPELINE_STAGES = ['DRAFTED', 'SUBMITTED', 'IN_REVIEW', 'APPROVED', 'PAID'];
 
+const INVOICE_STATUS_OPTIONS = [
+  { label: 'All Statuses', value: '' },
+  { label: 'Draft', value: 'DRAFT' },
+  { label: 'Pending', value: 'PENDING' },
+  { label: 'Partially Paid', value: 'PARTIALLY_PAID' },
+  { label: 'Paid', value: 'PAID' },
+  { label: 'Overdue', value: 'OVERDUE' },
+  { label: 'Void', value: 'VOID' },
+  { label: 'Write Off', value: 'WRITE_OFF' },
+];
+
 export default function BillingPage() {
   const [activeTab, setActiveTab] = useState('invoices');
   const [summary, setSummary] = useState<BillingSummary>({
@@ -89,6 +103,12 @@ export default function BillingPage() {
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [editingFee, setEditingFee] = useState<string | null>(null);
+
+  // Invoice filters
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -124,6 +144,59 @@ export default function BillingPage() {
     },
     {} as Record<string, Claim[]>
   );
+
+  // Apply invoice filters
+  const filteredInvoices = useMemo(() => {
+    let result = invoices;
+
+    if (invoiceStatusFilter) {
+      result = result.filter((inv) => inv.status === invoiceStatusFilter);
+    }
+
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      result = result.filter((inv) => new Date(inv.date) >= fromDate);
+    }
+
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      result = result.filter((inv) => new Date(inv.date) <= toDate);
+    }
+
+    return result;
+  }, [invoices, invoiceStatusFilter, dateFrom, dateTo]);
+
+  const hasActiveFilters = invoiceStatusFilter || dateFrom || dateTo;
+
+  const clearFilters = () => {
+    setInvoiceStatusFilter('');
+    setDateFrom('');
+    setDateTo('');
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Invoice #', 'Patient', 'Date', 'Due Date', 'Total', 'Paid', 'Balance', 'Status'];
+    const rows = filteredInvoices.map((inv) => [
+      inv.invoiceNumber,
+      inv.patientName,
+      inv.date,
+      inv.dueDate,
+      inv.total.toFixed(2),
+      inv.amountPaid.toFixed(2),
+      (inv.total - inv.amountPaid).toFixed(2),
+      INVOICE_STATUS_LABELS[inv.status] || inv.status,
+    ]);
+
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `invoices-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6">
@@ -205,25 +278,110 @@ export default function BillingPage() {
             ))}
           </Tabs.List>
 
-          {activeTab === 'invoices' && (
-            <button
-              onClick={() => setShowCreateInvoice(true)}
-              className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
-            >
-              <Plus className="h-4 w-4" />
-              New Invoice
-            </button>
-          )}
-          {activeTab === 'claims' && (
-            <button
-              onClick={() => setShowClaimForm(true)}
-              className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
-            >
-              <Plus className="h-4 w-4" />
-              New Claim
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {activeTab === 'invoices' && (
+              <>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={cn(
+                    'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                    hasActiveFilters
+                      ? 'border-teal-200 bg-teal-50 text-teal-700'
+                      : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                  )}
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  {hasActiveFilters && (
+                    <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-xs text-white">
+                      {[invoiceStatusFilter, dateFrom, dateTo].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={handleExportCSV}
+                  disabled={filteredInvoices.length === 0}
+                  className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </button>
+                <button
+                  onClick={() => setShowCreateInvoice(true)}
+                  className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
+                >
+                  <Plus className="h-4 w-4" />
+                  New Invoice
+                </button>
+              </>
+            )}
+            {activeTab === 'claims' && (
+              <button
+                onClick={() => setShowClaimForm(true)}
+                className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
+              >
+                <Plus className="h-4 w-4" />
+                New Claim
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Invoice Filters Panel */}
+        {activeTab === 'invoices' && showFilters && (
+          <div className="mt-3 flex flex-wrap items-end gap-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-stone-500">
+                Status
+              </label>
+              <select
+                value={invoiceStatusFilter}
+                onChange={(e) => setInvoiceStatusFilter(e.target.value)}
+                className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              >
+                {INVOICE_STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-stone-500">
+                From Date
+              </label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-stone-500">
+                To Date
+              </label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear all
+              </button>
+            )}
+            <div className="ml-auto text-xs text-stone-400">
+              {filteredInvoices.length} invoice{filteredInvoices.length !== 1 ? 's' : ''} matched
+            </div>
+          </div>
+        )}
 
         {/* Invoices Tab */}
         <Tabs.Content value="invoices" className="mt-4">
@@ -235,7 +393,7 @@ export default function BillingPage() {
             </div>
           ) : (
             <InvoiceTable
-              invoices={invoices}
+              invoices={filteredInvoices}
               onRecordPayment={(invoice) => {
                 setSelectedInvoice(invoice);
                 setShowPaymentModal(true);
