@@ -16,6 +16,9 @@ import { startAppointmentReminders } from './jobs/appointmentReminder';
 import { startClaimFollowUp } from './jobs/claimFollowUp';
 import { startDailyDigest } from './jobs/dailyDigest';
 import { startOverdueInvoiceCheck } from './jobs/overdueInvoices';
+import { startReminderJob } from './jobs/reminderJob';
+import { startCleanupJob } from './jobs/cleanupJob';
+import { activityTracker } from './middleware/activityTracker';
 import { auditMiddleware } from './middleware/auditMiddleware';
 import { hipaaHeaders } from './middleware/hipaaHeaders';
 import { errorHandler } from './middleware/errorHandler';
@@ -37,6 +40,17 @@ import imagingRoutes from './routes/imaging';
 import aiRoutes from './routes/ai';
 import reportRoutes from './routes/reports';
 import settingsRoutes from './routes/settings';
+import communicationsRoutes from './routes/communications';
+import inventoryRoutes from './routes/inventory';
+import waitlistRoutes from './routes/waitlist';
+import referralsRoutes from './routes/referrals';
+import labCasesRoutes from './routes/labCases';
+import patientPortalRoutes from './routes/patientPortal';
+import feeScheduleRoutes from './routes/feeSchedule';
+import documentsRoutes from './routes/documents';
+import reportingRoutes from './routes/reporting';
+import searchRoutes from './routes/search';
+import notificationsRoutes from './routes/notifications';
 
 const app = express();
 const httpServer = createServer(app);
@@ -241,6 +255,20 @@ app.use('/api/imaging', uploadLimiter, imagingRoutes);
 app.use('/api/ai', aiLimiter, aiRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/communications', communicationsRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/referrals', referralsRoutes);
+app.use('/api/lab-cases', labCasesRoutes);
+app.use('/api/patient-portal', patientPortalRoutes);
+app.use('/api/fee-schedule', feeScheduleRoutes);
+app.use('/api/documents', documentsRoutes);
+app.use('/api/reporting', reportingRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/notifications', notificationsRoutes);
+
+// Activity tracking
+app.use(activityTracker());
 
 // Error handler
 app.use(errorHandler);
@@ -258,6 +286,8 @@ httpServer.listen(env.PORT, () => {
   startClaimFollowUp();
   startDailyDigest();
   startOverdueInvoiceCheck();
+  startReminderJob();
+  startCleanupJob();
 });
 
 // Graceful shutdown
