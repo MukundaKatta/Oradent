@@ -1,25 +1,23 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { PatientStatus, AppointmentStatus, InvoiceStatus } from "@/types";
 
 export interface PatientFilters {
   search: string;
-  status: PatientStatus | "ALL";
+  status: string;
   sortBy: string;
   sortOrder: "asc" | "desc";
 }
 
 export interface AppointmentFilters {
   providerId: string | null;
-  status: AppointmentStatus | "ALL";
+  status: string;
   dateRange: { start: string; end: string } | null;
-  type: string | "ALL";
+  view: "day" | "week" | "month";
 }
 
 export interface BillingFilters {
-  status: InvoiceStatus | "ALL";
+  status: string;
   dateRange: { start: string; end: string } | null;
-  search: string;
   minAmount: number | null;
   maxAmount: number | null;
 }
@@ -30,15 +28,9 @@ interface FilterState {
   billingFilters: BillingFilters;
 
   setPatientFilters: (filters: Partial<PatientFilters>) => void;
-  resetPatientFilters: () => void;
-
   setAppointmentFilters: (filters: Partial<AppointmentFilters>) => void;
-  resetAppointmentFilters: () => void;
-
   setBillingFilters: (filters: Partial<BillingFilters>) => void;
-  resetBillingFilters: () => void;
-
-  resetAllFilters: () => void;
+  resetFilters: () => void;
 }
 
 const DEFAULT_PATIENT_FILTERS: PatientFilters = {
@@ -52,13 +44,12 @@ const DEFAULT_APPOINTMENT_FILTERS: AppointmentFilters = {
   providerId: null,
   status: "ALL",
   dateRange: null,
-  type: "ALL",
+  view: "day",
 };
 
 const DEFAULT_BILLING_FILTERS: BillingFilters = {
   status: "ALL",
   dateRange: null,
-  search: "",
   minAmount: null,
   maxAmount: null,
 };
@@ -75,26 +66,17 @@ export const useFilterStore = create<FilterState>()(
           patientFilters: { ...state.patientFilters, ...filters },
         })),
 
-      resetPatientFilters: () =>
-        set({ patientFilters: { ...DEFAULT_PATIENT_FILTERS } }),
-
       setAppointmentFilters: (filters) =>
         set((state) => ({
           appointmentFilters: { ...state.appointmentFilters, ...filters },
         })),
-
-      resetAppointmentFilters: () =>
-        set({ appointmentFilters: { ...DEFAULT_APPOINTMENT_FILTERS } }),
 
       setBillingFilters: (filters) =>
         set((state) => ({
           billingFilters: { ...state.billingFilters, ...filters },
         })),
 
-      resetBillingFilters: () =>
-        set({ billingFilters: { ...DEFAULT_BILLING_FILTERS } }),
-
-      resetAllFilters: () =>
+      resetFilters: () =>
         set({
           patientFilters: { ...DEFAULT_PATIENT_FILTERS },
           appointmentFilters: { ...DEFAULT_APPOINTMENT_FILTERS },

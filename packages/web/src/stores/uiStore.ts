@@ -8,25 +8,21 @@ export interface Breadcrumb {
   href?: string;
 }
 
-export interface ActiveModal {
-  id: string;
-  props?: Record<string, unknown>;
-}
-
 interface UIState {
   sidebarCollapsed: boolean;
+  sidebarWidth: number;
   commandPaletteOpen: boolean;
-  activeModal: ActiveModal | null;
+  activeModal: string | null;
   theme: Theme;
   breadcrumbs: Breadcrumb[];
 
   // Actions
   toggleSidebar: () => void;
-  setSidebarCollapsed: (collapsed: boolean) => void;
-  toggleCommandPalette: () => void;
-  setCommandPaletteOpen: (open: boolean) => void;
-  openModal: (id: string, props?: Record<string, unknown>) => void;
-  closeModal: () => void;
+  setSidebarWidth: (width: number) => void;
+  openCommandPalette: () => void;
+  closeCommandPalette: () => void;
+  setActiveModal: (modal: string | null) => void;
+  clearModal: () => void;
   setTheme: (theme: Theme) => void;
   setBreadcrumbs: (breadcrumbs: Breadcrumb[]) => void;
 }
@@ -35,6 +31,7 @@ export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
       sidebarCollapsed: false,
+      sidebarWidth: 256,
       commandPaletteOpen: false,
       activeModal: null,
       theme: "system",
@@ -43,19 +40,15 @@ export const useUIStore = create<UIState>()(
       toggleSidebar: () =>
         set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 
-      setSidebarCollapsed: (collapsed: boolean) =>
-        set({ sidebarCollapsed: collapsed }),
+      setSidebarWidth: (width: number) => set({ sidebarWidth: width }),
 
-      toggleCommandPalette: () =>
-        set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
+      openCommandPalette: () => set({ commandPaletteOpen: true }),
 
-      setCommandPaletteOpen: (open: boolean) =>
-        set({ commandPaletteOpen: open }),
+      closeCommandPalette: () => set({ commandPaletteOpen: false }),
 
-      openModal: (id: string, props?: Record<string, unknown>) =>
-        set({ activeModal: { id, props } }),
+      setActiveModal: (modal: string | null) => set({ activeModal: modal }),
 
-      closeModal: () => set({ activeModal: null }),
+      clearModal: () => set({ activeModal: null }),
 
       setTheme: (theme: Theme) => set({ theme }),
 
@@ -65,6 +58,7 @@ export const useUIStore = create<UIState>()(
       name: "oradent-ui-store",
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
+        sidebarWidth: state.sidebarWidth,
         theme: state.theme,
       }),
     }
