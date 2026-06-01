@@ -218,4 +218,46 @@ router.post('/providers/:id/reset-password', authorize('OWNER'), async (req: Req
   res.json({ message: 'Password reset successfully' });
 });
 
+// Get audit logs (OWNER only)
+router.get('/audit-log', authorize('OWNER'), async (req: Request, res: Response) => {
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+  const { action, resource, providerId, startDate, endDate } = req.query as Record<string, string | undefined>;
+
+  const where: Record<string, unknown> = {
+    provider: { practiceId: req.auth!.practiceId },
+  };
+
+  if (action) where.action = action;
+  if (resource) where.resource = resource;
+  if (providerId) where.providerId = providerId;
+  if (startDate || endDate) {
+    where.timestamp = {
+      ...(startDate ? { gte: new Date(startDate) } : {}),
+      ...(endDate ? { lte: new Date(endDate) } : {}),
+    };
+  }
+
+  const [logs, total] = await Promise.all([
+    prisma.auditLog.findMany({
+      where,
+      include: { provider: { select: { id: true, name: true, email: true } } },
+      orderBy: { timestamp: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.auditLog.count({ where }),
+  ]);
+
+  res.json({
+    logs,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
+  });
+});
+
 export default router;

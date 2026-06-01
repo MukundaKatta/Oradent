@@ -21,6 +21,7 @@ import { apiLimiter, authLimiter, uploadLimiter, aiLimiter } from './middleware/
 import { requestId } from './middleware/requestId';
 import { requestLogger } from './middleware/requestLogger';
 import { sanitizeInput } from './middleware/sanitize';
+import { requestTimeout } from './middleware/timeout';
 import { logger } from './utils/logger';
 import { initializeWebSocket } from './websocket/liveUpdates';
 
@@ -64,18 +65,16 @@ app.use(helmet({
   xContentTypeOptions: true,
 }));
 app.use(cors({
-  origin: env.NODE_ENV === 'production'
-    ? env.CORS_ORIGINS.split(',').map((s) => s.trim())
-    : ['http://localhost:3000', 'http://localhost:4000'],
+  origin: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? false : '*'),
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
 }));
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(sanitizeInput);
+app.use(requestTimeout(30000));
 app.use(apiLimiter);
 app.use(auditMiddleware);
 
@@ -170,9 +169,37 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'Oradent API Docs',
 }));
 
-// Health check — liveness probe
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
+// Health check
+app.get('/api/health', async (_req, res) => {
+  let database: 'connected' | 'disconnected' = 'disconnected';
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    database = 'connected';
+  } catch {
+    database = 'disconnected';
+  }
+
+  let redisStatus: 'connected' | 'disconnected' = 'disconnected';
+  try {
+    await redis.ping();
+    redisStatus = 'connected';
+  } catch {
+    redisStatus = 'disconnected';
+  }
+
+  const memUsage = process.memoryUsage();
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    database,
+    redis: redisStatus,
+    version: process.env.npm_package_version || '1.0.0',
+    memory: {
+      used: memUsage.heapUsed,
+      total: memUsage.heapTotal,
+    },
+  });
 });
 
 // Readiness check — verifies database and Redis connectivity
@@ -230,12 +257,20 @@ httpServer.listen(env.PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  httpServer.close();
-  await prisma.$disconnect();
-  redis.disconnect();
-  process.exit(0);
-});
+function gracefulShutdown(signal: string) {
+  logger.info(`${signal} received, starting graceful shutdown...`);
+  httpServer.close(async () => {
+    await prisma.$disconnect();
+    logger.info('Server shut down gracefully');
+    process.exit(0);
+  });
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 export default app;
