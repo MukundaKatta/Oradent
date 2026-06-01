@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
+import { normalizeEmail, sanitizePhoneNumber } from '../utils/validators';
 
 const router = Router();
 router.use(authenticate);
@@ -32,7 +33,9 @@ router.get('/', async (req: Request, res: Response) => {
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
   const search = (req.query.search as string) || '';
   const status = req.query.status as string;
-  const sortBy = (req.query.sortBy as string) || 'lastName';
+  const allowedSortFields = ['lastName', 'firstName', 'dateOfBirth', 'createdAt', 'updatedAt', 'lastVisit'];
+  const sortByRaw = (req.query.sortBy as string) || 'lastName';
+  const sortBy = allowedSortFields.includes(sortByRaw) ? sortByRaw : 'lastName';
   const sortOrder = (req.query.sortOrder as string) === 'desc' ? 'desc' : 'asc';
 
   const where: Record<string, unknown> = {
@@ -43,7 +46,7 @@ router.get('/', async (req: Request, res: Response) => {
     where.OR = [
       { firstName: { contains: search, mode: 'insensitive' } },
       { lastName: { contains: search, mode: 'insensitive' } },
-      { phone: { contains: search } },
+      { phone: { contains: search, mode: 'insensitive' } },
       { email: { contains: search, mode: 'insensitive' } },
     ];
   }

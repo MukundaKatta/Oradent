@@ -23,8 +23,12 @@ export default function DashboardLayout({
   useKeyboardShortcuts();
   useSessionTimeout();
   useSocket();
-  useSocketEvent("notification", (data) => {
-    useNotificationStore.getState().addNotification(data);
+  useSocketEvent<{ type: string; title: string; message: string }>("notification", (data) => {
+    useNotificationStore.getState().addNotification({
+      type: data.type as "success" | "error" | "warning" | "info",
+      title: data.title,
+      message: data.message,
+    });
   });
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const { login, provider } = useAppStore();
