@@ -15,7 +15,9 @@ import { ensureUploadDir, uploadDir } from './config/storage';
 import { startAppointmentReminders } from './jobs/appointmentReminder';
 import { startClaimFollowUp } from './jobs/claimFollowUp';
 import { startDailyDigest } from './jobs/dailyDigest';
+import { startOverdueInvoiceCheck } from './jobs/overdueInvoices';
 import { auditMiddleware } from './middleware/auditMiddleware';
+import { hipaaHeaders } from './middleware/hipaaHeaders';
 import { errorHandler } from './middleware/errorHandler';
 import { apiLimiter, authLimiter, uploadLimiter, aiLimiter } from './middleware/rateLimiter';
 import { requestId } from './middleware/requestId';
@@ -42,6 +44,7 @@ const httpServer = createServer(app);
 // Middleware
 app.use(requestId);
 app.use(requestLogger);
+app.use(hipaaHeaders);
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: {
@@ -254,6 +257,7 @@ httpServer.listen(env.PORT, () => {
   startAppointmentReminders();
   startClaimFollowUp();
   startDailyDigest();
+  startOverdueInvoiceCheck();
 });
 
 // Graceful shutdown

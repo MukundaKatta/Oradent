@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { ArrowLeft, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { apiGet } from '@/lib/api';
@@ -54,6 +54,20 @@ export function LedgerView({ patientId, patientName, onBack }: LedgerViewProps) 
   };
 
   const currentBalance = entries.length > 0 ? entries[entries.length - 1].balance : 0;
+
+  // Compute running balance and totals
+  const totals = useMemo(() => {
+    let totalCharges = 0;
+    let totalPayments = 0;
+    for (const entry of entries) {
+      if (entry.type === 'charge') {
+        totalCharges += Math.abs(entry.amount);
+      } else {
+        totalPayments += Math.abs(entry.amount);
+      }
+    }
+    return { totalCharges, totalPayments };
+  }, [entries]);
 
   return (
     <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
@@ -133,13 +147,38 @@ export function LedgerView({ patientId, patientName, onBack }: LedgerViewProps) 
                     {entry.type === 'charge' ? '' : '-'}
                     {formatCurrency(Math.abs(entry.amount))}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-stone-900">
+                  <td
+                    className={cn(
+                      'px-4 py-3 text-right font-medium',
+                      entry.balance > 0 ? 'text-red-600' : entry.balance === 0 ? 'text-green-600' : 'text-stone-900'
+                    )}
+                  >
                     {formatCurrency(entry.balance)}
                   </td>
                 </tr>
               );
             })}
           </tbody>
+          {entries.length > 0 && (
+            <tfoot>
+              <tr className="border-t-2 border-stone-300 bg-stone-50 font-semibold">
+                <td className="px-4 py-3 text-stone-700" colSpan={4}>
+                  Totals
+                </td>
+                <td className="px-4 py-3 text-right text-stone-700">
+                  {formatCurrency(totals.totalCharges)}
+                </td>
+                <td
+                  className={cn(
+                    'px-4 py-3 text-right',
+                    currentBalance > 0 ? 'text-red-600' : 'text-green-600'
+                  )}
+                >
+                  {formatCurrency(currentBalance)}
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       )}
       {!loading && entries.length === 0 && (

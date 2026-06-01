@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { normalizeEmail, sanitizePhoneNumber } from '../utils/validators';
+import { toCSV } from '../utils/csvExporter';
 import { getPatientsForRecall, getRecallStats } from '../services/recallService';
 
 const router = Router();
@@ -84,48 +85,44 @@ router.get('/', async (req: Request, res: Response) => {
 // Export patients as CSV
 router.get('/export/csv', async (req: Request, res: Response) => {
   const patients = await prisma.patient.findMany({
-    where: { practiceId: req.auth!.practiceId },
+    where: { practiceId: req.auth!.practiceId, status: 'ACTIVE' },
     select: {
       firstName: true,
       lastName: true,
       dateOfBirth: true,
-      gender: true,
-      email: true,
       phone: true,
-      phoneSecondary: true,
-      address: true,
-      city: true,
-      state: true,
-      zipCode: true,
+      email: true,
       status: true,
       lastVisit: true,
-      createdAt: true,
     },
     orderBy: { lastName: 'asc' },
   });
 
-  const headers = [
-    'First Name', 'Last Name', 'Date of Birth', 'Gender', 'Email',
-    'Phone', 'Secondary Phone', 'Address', 'City', 'State', 'Zip',
-    'Status', 'Last Visit', 'Created',
+  const columns = [
+    { key: 'firstName', header: 'First Name' },
+    { key: 'lastName', header: 'Last Name' },
+    { key: 'dateOfBirth', header: 'DOB' },
+    { key: 'phone', header: 'Phone' },
+    { key: 'email', header: 'Email' },
+    { key: 'status', header: 'Status' },
+    { key: 'lastVisit', header: 'Last Visit' },
   ];
 
-  const csvRows = [
-    headers.join(','),
-    ...patients.map((p) => [
-      p.firstName, p.lastName,
-      p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().split('T')[0] : '',
-      p.gender || '', p.email || '', p.phone, p.phoneSecondary || '',
-      `"${(p.address || '').replace(/"/g, '""')}"`,
-      p.city || '', p.state || '', p.zipCode || '', p.status,
-      p.lastVisit ? new Date(p.lastVisit).toISOString().split('T')[0] : '',
-      new Date(p.createdAt).toISOString().split('T')[0],
-    ].join(',')),
-  ];
+  const rows = patients.map((p) => ({
+    firstName: p.firstName,
+    lastName: p.lastName,
+    dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().split('T')[0] : '',
+    phone: p.phone,
+    email: p.email || '',
+    status: p.status,
+    lastVisit: p.lastVisit ? new Date(p.lastVisit).toISOString().split('T')[0] : '',
+  }));
+
+  const csv = toCSV(rows, columns);
 
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', `attachment; filename="patients-${new Date().toISOString().split('T')[0]}.csv"`);
-  res.send(csvRows.join('\n'));
+  res.send(csv);
 });
 
 // Patient statistics

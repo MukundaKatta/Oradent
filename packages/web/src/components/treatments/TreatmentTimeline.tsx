@@ -71,7 +71,7 @@ export function TreatmentTimeline({ treatments }: TreatmentTimelineProps) {
 
   return (
     <div className="space-y-6">
-      {sortedDates.map((dateKey, dateIdx) => (
+      {sortedDates.map((dateKey) => (
         <div key={dateKey} className="relative">
           {/* Date header */}
           <div className="mb-3 flex items-center gap-3">
@@ -88,7 +88,7 @@ export function TreatmentTimeline({ treatments }: TreatmentTimelineProps) {
 
           {/* Treatments for this date */}
           <div className="ml-4 space-y-3 border-l-2 border-stone-200 pl-7">
-            {grouped[dateKey].map((treatment, idx) => {
+            {grouped[dateKey].map((treatment) => {
               const config = STATUS_CONFIG[treatment.status];
               const Icon = config.icon;
 
@@ -108,7 +108,7 @@ export function TreatmentTimeline({ treatments }: TreatmentTimelineProps) {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-xs font-medium text-stone-600">
+                        <span className="rounded bg-teal-50 px-1.5 py-0.5 font-mono text-xs font-semibold text-teal-700 border border-teal-200">
                           {treatment.procedureCode}
                         </span>
                         <h4 className="text-sm font-medium text-stone-900">
@@ -123,7 +123,10 @@ export function TreatmentTimeline({ treatments }: TreatmentTimelineProps) {
                         {treatment.surface && (
                           <span>Surface: {treatment.surface}</span>
                         )}
-                        <span>Provider: {treatment.provider}</span>
+                        <span className="flex items-center gap-1">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-stone-400" />
+                          {treatment.provider}
+                        </span>
                       </div>
 
                       {treatment.notes && (

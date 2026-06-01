@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,13 +10,13 @@ import {
   User,
   Heart,
   Shield,
-  FileCheck,
   ChevronRight,
   ChevronLeft,
   Check,
   AlertCircle,
   Save,
   Loader2,
+  X,
 } from 'lucide-react';
 import { apiPost } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -33,49 +33,28 @@ const personalInfoSchema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
-  zip: z.string().optional(),
-  emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional(),
-  emergencyContactRelationship: z.string().optional(),
+  zipCode: z.string().optional(),
 });
 
 const medicalHistorySchema = z.object({
-  allergies: z.string().optional(),
-  medications: z.string().optional(),
-  conditions: z.string().optional(),
-  smoking: z.boolean(),
-  alcohol: z.boolean(),
-  pregnancy: z.boolean(),
-  previousSurgeries: z.string().optional(),
-  familyHistory: z.string().optional(),
-  bloodType: z.string().optional(),
-  lastPhysical: z.string().optional(),
-  medicalNotes: z.string().optional(),
+  allergies: z.array(z.string()),
+  medications: z.array(z.string()),
+  conditions: z.array(z.string()),
+  smokingStatus: z.string(),
+  pregnancyStatus: z.string(),
 });
 
 const insuranceSchema = z.object({
   insuranceCompany: z.string().optional(),
-  insurancePlan: z.string().optional(),
-  groupNumber: z.string().optional(),
   memberId: z.string().optional(),
+  groupNumber: z.string().optional(),
   subscriberName: z.string().optional(),
-  subscriberDob: z.string().optional(),
   relationship: z.string().optional(),
-  coveragePercent: z.coerce.number().min(0).max(100).optional(),
-});
-
-const consentSchema = z.object({
-  consentTreatment: z.boolean().refine((v) => v, 'You must consent to treatment'),
-  consentPrivacy: z.boolean().refine((v) => v, 'You must acknowledge the privacy policy'),
-  consentFinancial: z.boolean().refine((v) => v, 'You must acknowledge financial responsibility'),
-  signatureText: z.string().min(2, 'Signature is required'),
-  signatureDate: z.string().min(1, 'Date is required'),
 });
 
 type PersonalInfoData = z.infer<typeof personalInfoSchema>;
 type MedicalHistoryData = z.infer<typeof medicalHistorySchema>;
 type InsuranceData = z.infer<typeof insuranceSchema>;
-type ConsentData = z.infer<typeof consentSchema>;
 
 // ═══════════════════ STEPS ═══════════════════
 
@@ -83,10 +62,22 @@ const STEPS = [
   { id: 'personal', label: 'Personal Info', icon: User },
   { id: 'medical', label: 'Medical History', icon: Heart },
   { id: 'insurance', label: 'Insurance', icon: Shield },
-  { id: 'consent', label: 'Consent', icon: FileCheck },
 ] as const;
 
-type StepId = (typeof STEPS)[number]['id'];
+const CONDITIONS_LIST = [
+  'Diabetes',
+  'Heart Disease',
+  'Hypertension',
+  'Asthma',
+  'Epilepsy',
+  'Bleeding Disorders',
+  'HIV/AIDS',
+  'Hepatitis',
+  'Thyroid Disorder',
+  'Kidney Disease',
+  'Liver Disease',
+  'Cancer',
+];
 
 // ═══════════════════ FORM FIELD HELPERS ═══════════════════
 
@@ -96,6 +87,72 @@ const inputClass = (hasError: boolean) =>
     'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
     hasError ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
   );
+
+// ═══════════════════ TAG INPUT ═══════════════════
+
+function TagInput({
+  tags,
+  onChange,
+  placeholder,
+}: {
+  tags: string[];
+  onChange: (tags: string[]) => void;
+  placeholder: string;
+}) {
+  const [input, setInput] = useState('');
+
+  const addTag = () => {
+    const trimmed = input.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      onChange([...tags, trimmed]);
+    }
+    setInput('');
+  };
+
+  const removeTag = (index: number) => {
+    onChange(tags.filter((_, i) => i !== index));
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    } else if (e.key === 'Backspace' && input === '' && tags.length > 0) {
+      removeTag(tags.length - 1);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-stone-300 bg-white px-3 py-2 focus-within:border-teal-500 focus-within:ring-1 focus-within:ring-teal-500 transition-colors">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {tags.map((tag, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200 px-2.5 py-0.5 text-xs font-medium text-teal-700"
+          >
+            {tag}
+            <button
+              type="button"
+              onClick={() => removeTag(i)}
+              className="rounded-full p-0.5 hover:bg-teal-100 transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={addTag}
+          placeholder={tags.length === 0 ? placeholder : ''}
+          className="flex-1 min-w-[120px] border-none bg-transparent py-0.5 text-sm text-stone-900 placeholder:text-stone-400 outline-none"
+        />
+      </div>
+    </div>
+  );
+}
 
 // ═══════════════════ STEP COMPONENTS ═══════════════════
 
@@ -178,25 +235,7 @@ function PersonalInfoStep({
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-stone-700">ZIP Code</label>
-          <input {...register('zip')} className={inputClass(false)} placeholder="12345" />
-        </div>
-      </div>
-
-      <div className="border-t border-stone-200 pt-5">
-        <h3 className="mb-4 text-sm font-semibold text-stone-800">Emergency Contact</h3>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-stone-700">Name</label>
-            <input {...register('emergencyContactName')} className={inputClass(false)} placeholder="Jane Doe" />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-stone-700">Phone</label>
-            <input {...register('emergencyContactPhone')} className={inputClass(false)} placeholder="(555) 987-6543" />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-stone-700">Relationship</label>
-            <input {...register('emergencyContactRelationship')} className={inputClass(false)} placeholder="Spouse" />
-          </div>
+          <input {...register('zipCode')} className={inputClass(false)} placeholder="12345" />
         </div>
       </div>
     </form>
@@ -211,82 +250,101 @@ function MedicalHistoryStep({
   onSave: (data: MedicalHistoryData) => void;
 }) {
   const {
-    register,
     handleSubmit,
-    formState: { errors },
+    setValue,
+    watch,
+    register,
   } = useForm<MedicalHistoryData>({
     resolver: zodResolver(medicalHistorySchema),
-    defaultValues: { smoking: false, alcohol: false, pregnancy: false, ...data },
+    defaultValues: {
+      allergies: [],
+      medications: [],
+      conditions: [],
+      smokingStatus: 'never',
+      pregnancyStatus: 'no',
+      ...data,
+    },
   });
+
+  const allergies = watch('allergies');
+  const medications = watch('medications');
+  const conditions = watch('conditions');
+
+  const toggleCondition = (condition: string) => {
+    const current = conditions || [];
+    if (current.includes(condition)) {
+      setValue('conditions', current.filter((c) => c !== condition));
+    } else {
+      setValue('conditions', [...current, condition]);
+    }
+  };
 
   return (
     <form id="step-form" onSubmit={handleSubmit(onSave)} className="space-y-5">
       <div>
         <label className="mb-1.5 block text-sm font-medium text-stone-700">
-          Allergies <span className="text-stone-400">(separate with commas)</span>
+          Allergies <span className="text-stone-400">(press Enter to add)</span>
         </label>
-        <textarea {...register('allergies')} rows={2} className={inputClass(false)} placeholder="Penicillin, Latex, etc." />
+        <TagInput
+          tags={allergies || []}
+          onChange={(v) => setValue('allergies', v)}
+          placeholder="Type an allergy and press Enter..."
+        />
       </div>
+
       <div>
         <label className="mb-1.5 block text-sm font-medium text-stone-700">
-          Current Medications <span className="text-stone-400">(separate with commas)</span>
+          Current Medications <span className="text-stone-400">(press Enter to add)</span>
         </label>
-        <textarea {...register('medications')} rows={2} className={inputClass(false)} placeholder="Lisinopril 10mg, Metformin 500mg, etc." />
+        <TagInput
+          tags={medications || []}
+          onChange={(v) => setValue('medications', v)}
+          placeholder="Type a medication and press Enter..."
+        />
       </div>
+
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-stone-700">
-          Medical Conditions <span className="text-stone-400">(separate with commas)</span>
-        </label>
-        <textarea {...register('conditions')} rows={2} className={inputClass(false)} placeholder="Diabetes, Hypertension, etc." />
+        <label className="mb-2 block text-sm font-medium text-stone-700">Medical Conditions</label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {CONDITIONS_LIST.map((condition) => (
+            <label
+              key={condition}
+              className={cn(
+                'flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm cursor-pointer transition-colors',
+                (conditions || []).includes(condition)
+                  ? 'border-teal-300 bg-teal-50 text-teal-800'
+                  : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={(conditions || []).includes(condition)}
+                onChange={() => toggleCondition(condition)}
+                className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500"
+              />
+              {condition}
+            </label>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-stone-700">Blood Type</label>
-          <select {...register('bloodType')} className={inputClass(false)}>
-            <option value="">Unknown</option>
-            <option value="A+">A+</option>
-            <option value="A-">A-</option>
-            <option value="B+">B+</option>
-            <option value="B-">B-</option>
-            <option value="AB+">AB+</option>
-            <option value="AB-">AB-</option>
-            <option value="O+">O+</option>
-            <option value="O-">O-</option>
+          <label className="mb-1.5 block text-sm font-medium text-stone-700">Smoking Status</label>
+          <select {...register('smokingStatus')} className={inputClass(false)}>
+            <option value="never">Never</option>
+            <option value="former">Former Smoker</option>
+            <option value="current">Current Smoker</option>
           </select>
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-stone-700">Last Physical Exam</label>
-          <input type="date" {...register('lastPhysical')} className={inputClass(false)} />
+          <label className="mb-1.5 block text-sm font-medium text-stone-700">Pregnancy Status</label>
+          <select {...register('pregnancyStatus')} className={inputClass(false)}>
+            <option value="no">Not Pregnant</option>
+            <option value="yes">Currently Pregnant</option>
+            <option value="na">Not Applicable</option>
+          </select>
         </div>
-      </div>
-
-      <div className="flex flex-wrap gap-6">
-        <label className="flex items-center gap-2 text-sm text-stone-700">
-          <input type="checkbox" {...register('smoking')} className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500" />
-          Current smoker
-        </label>
-        <label className="flex items-center gap-2 text-sm text-stone-700">
-          <input type="checkbox" {...register('alcohol')} className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500" />
-          Regular alcohol use
-        </label>
-        <label className="flex items-center gap-2 text-sm text-stone-700">
-          <input type="checkbox" {...register('pregnancy')} className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500" />
-          Currently pregnant
-        </label>
-      </div>
-
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-stone-700">Previous Surgeries</label>
-        <textarea {...register('previousSurgeries')} rows={2} className={inputClass(false)} placeholder="Appendectomy (2015), etc." />
-      </div>
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-stone-700">Family Medical History</label>
-        <textarea {...register('familyHistory')} rows={2} className={inputClass(false)} placeholder="Heart disease, Diabetes, etc." />
-      </div>
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-stone-700">Additional Notes</label>
-        <textarea {...register('medicalNotes')} rows={2} className={inputClass(false)} placeholder="Any other relevant medical information..." />
       </div>
     </form>
   );
@@ -302,7 +360,6 @@ function InsuranceStep({
   const {
     register,
     handleSubmit,
-    formState: { errors },
   } = useForm<InsuranceData>({
     resolver: zodResolver(insuranceSchema),
     defaultValues: data,
@@ -312,36 +369,26 @@ function InsuranceStep({
     <form id="step-form" onSubmit={handleSubmit(onSave)} className="space-y-5">
       <p className="text-sm text-stone-500">Leave blank if patient does not have dental insurance.</p>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-stone-700">Insurance Company</label>
-          <input {...register('insuranceCompany')} className={inputClass(false)} placeholder="Delta Dental" />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-stone-700">Plan Name</label>
-          <input {...register('insurancePlan')} className={inputClass(false)} placeholder="PPO Premium" />
-        </div>
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-stone-700">Insurance Company</label>
+        <input {...register('insuranceCompany')} className={inputClass(false)} placeholder="Delta Dental" />
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-stone-700">Group Number</label>
-          <input {...register('groupNumber')} className={inputClass(false)} placeholder="GRP-12345" />
-        </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-stone-700">Member ID</label>
           <input {...register('memberId')} className={inputClass(false)} placeholder="MEM-67890" />
         </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-stone-700">Group Number</label>
+          <input {...register('groupNumber')} className={inputClass(false)} placeholder="GRP-12345" />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-sm font-medium text-stone-700">Subscriber Name</label>
           <input {...register('subscriberName')} className={inputClass(false)} placeholder="John Doe" />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-stone-700">Subscriber DOB</label>
-          <input type="date" {...register('subscriberDob')} className={inputClass(false)} />
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-stone-700">Relationship to Subscriber</label>
@@ -354,106 +401,6 @@ function InsuranceStep({
           </select>
         </div>
       </div>
-
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-stone-700">Coverage Percentage</label>
-        <input
-          type="number"
-          {...register('coveragePercent')}
-          className={cn(inputClass(!!errors.coveragePercent), 'max-w-[200px]')}
-          placeholder="80"
-          min={0}
-          max={100}
-        />
-        {errors.coveragePercent && <p className="mt-1 text-xs text-red-600">{errors.coveragePercent.message}</p>}
-      </div>
-    </form>
-  );
-}
-
-function ConsentStep({
-  data,
-  onSave,
-}: {
-  data: Partial<ConsentData>;
-  onSave: (data: ConsentData) => void;
-}) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ConsentData>({
-    resolver: zodResolver(consentSchema),
-    defaultValues: {
-      consentTreatment: false,
-      consentPrivacy: false,
-      consentFinancial: false,
-      signatureDate: new Date().toISOString().split('T')[0],
-      ...data,
-    },
-  });
-
-  return (
-    <form id="step-form" onSubmit={handleSubmit(onSave)} className="space-y-6">
-      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-        <h3 className="text-sm font-semibold text-stone-800">Consent for Treatment</h3>
-        <p className="mt-1 text-xs text-stone-500">
-          I consent to the dental treatments and procedures recommended by my dentist. I understand that
-          the practice of dentistry is not an exact science and acknowledge that no guarantees have been
-          made to me concerning the results of any dental treatment or procedure.
-        </p>
-        <label className="mt-3 flex items-center gap-2 text-sm text-stone-700">
-          <input type="checkbox" {...register('consentTreatment')} className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500" />
-          I agree to the above
-        </label>
-        {errors.consentTreatment && <p className="mt-1 text-xs text-red-600">{errors.consentTreatment.message}</p>}
-      </div>
-
-      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-        <h3 className="text-sm font-semibold text-stone-800">Privacy Policy Acknowledgment</h3>
-        <p className="mt-1 text-xs text-stone-500">
-          I acknowledge that I have received a copy of the Notice of Privacy Practices. I understand that
-          this practice may use and disclose my health information for treatment, payment, and healthcare operations.
-        </p>
-        <label className="mt-3 flex items-center gap-2 text-sm text-stone-700">
-          <input type="checkbox" {...register('consentPrivacy')} className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500" />
-          I acknowledge the privacy policy
-        </label>
-        {errors.consentPrivacy && <p className="mt-1 text-xs text-red-600">{errors.consentPrivacy.message}</p>}
-      </div>
-
-      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-        <h3 className="text-sm font-semibold text-stone-800">Financial Responsibility</h3>
-        <p className="mt-1 text-xs text-stone-500">
-          I understand that I am financially responsible for all charges incurred whether or not covered by insurance.
-          I authorize the release of any information necessary to process insurance claims on my behalf.
-        </p>
-        <label className="mt-3 flex items-center gap-2 text-sm text-stone-700">
-          <input type="checkbox" {...register('consentFinancial')} className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500" />
-          I accept financial responsibility
-        </label>
-        {errors.consentFinancial && <p className="mt-1 text-xs text-red-600">{errors.consentFinancial.message}</p>}
-      </div>
-
-      <div className="border-t border-stone-200 pt-5">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-stone-700">Signature (Type Full Name) *</label>
-            <input
-              {...register('signatureText')}
-              className={inputClass(!!errors.signatureText)}
-              placeholder="John Doe"
-              style={{ fontFamily: 'cursive' }}
-            />
-            {errors.signatureText && <p className="mt-1 text-xs text-red-600">{errors.signatureText.message}</p>}
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-stone-700">Date *</label>
-            <input type="date" {...register('signatureDate')} className={inputClass(!!errors.signatureDate)} />
-            {errors.signatureDate && <p className="mt-1 text-xs text-red-600">{errors.signatureDate.message}</p>}
-          </div>
-        </div>
-      </div>
     </form>
   );
 }
@@ -464,7 +411,6 @@ interface IntakeFormData {
   personal: PersonalInfoData;
   medical: MedicalHistoryData;
   insurance: InsuranceData;
-  consent: ConsentData;
 }
 
 export default function PatientIntakePage() {
@@ -485,23 +431,17 @@ export default function PatientIntakePage() {
         address: data.personal.address,
         city: data.personal.city,
         state: data.personal.state,
-        zip: data.personal.zip,
-        emergencyContactName: data.personal.emergencyContactName,
-        emergencyContactPhone: data.personal.emergencyContactPhone,
-        emergencyContactRelationship: data.personal.emergencyContactRelationship,
-        allergies: data.medical.allergies?.split(',').map((s) => s.trim()).filter(Boolean) ?? [],
-        medications: data.medical.medications?.split(',').map((s) => s.trim()).filter(Boolean) ?? [],
-        conditions: data.medical.conditions?.split(',').map((s) => s.trim()).filter(Boolean) ?? [],
-        smoking: data.medical.smoking,
-        alcohol: data.medical.alcohol,
-        pregnancy: data.medical.pregnancy,
+        zip: data.personal.zipCode,
+        allergies: data.medical.allergies,
+        medications: data.medical.medications,
+        conditions: data.medical.conditions,
+        smoking: data.medical.smokingStatus === 'current',
+        alcohol: false,
+        pregnancy: data.medical.pregnancyStatus === 'yes',
         insuranceCompany: data.insurance.insuranceCompany,
-        insurancePlan: data.insurance.insurancePlan,
-        groupNumber: data.insurance.groupNumber,
         memberId: data.insurance.memberId,
+        groupNumber: data.insurance.groupNumber,
         subscriberName: data.insurance.subscriberName,
-        subscriberDob: data.insurance.subscriberDob,
-        coveragePercent: data.insurance.coveragePercent,
         status: 'active' as const,
       };
       return apiPost<{ id: string }>('/api/patients', payload);
@@ -522,7 +462,6 @@ export default function PatientIntakePage() {
       if (currentStep < STEPS.length - 1) {
         setCurrentStep((s) => s + 1);
       } else {
-        // Final step - submit
         submitMutation.mutate(updated as IntakeFormData);
       }
     },
@@ -533,7 +472,7 @@ export default function PatientIntakePage() {
     if (currentStep > 0) setCurrentStep((s) => s - 1);
   };
 
-  const stepKeys: (keyof IntakeFormData)[] = ['personal', 'medical', 'insurance', 'consent'];
+  const stepKeys: (keyof IntakeFormData)[] = ['personal', 'medical', 'insurance'];
   const currentStepKey = stepKeys[currentStep];
 
   return (
@@ -609,12 +548,6 @@ export default function PatientIntakePage() {
           <InsuranceStep
             data={formData.insurance ?? {}}
             onSave={(d) => handleStepSave('insurance', d)}
-          />
-        )}
-        {currentStepKey === 'consent' && (
-          <ConsentStep
-            data={formData.consent ?? {}}
-            onSave={(d) => handleStepSave('consent', d)}
           />
         )}
 

@@ -1,9 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { invalidateDashboardCache } from '../utils/cache';
 import { generateInvoiceNumber } from '../utils/formatters';
+import { generateInvoicePDF } from '../services/pdfGenerator';
 
 const router = Router();
 router.use(authenticate);
@@ -155,6 +159,71 @@ router.get('/invoices/:id', async (req: Request, res: Response) => {
   }
 
   res.json(invoice);
+});
+
+// Download invoice as PDF
+router.get('/invoices/:id/pdf', async (req: Request, res: Response) => {
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+    include: {
+      patient: true,
+      treatments: true,
+    },
+  });
+
+  if (!invoice) {
+    res.status(404).json({ error: 'Invoice not found' });
+    return;
+  }
+
+  const practice = await prisma.practice.findUnique({
+    where: { id: req.auth!.practiceId },
+  });
+
+  if (!practice) {
+    res.status(404).json({ error: 'Practice not found' });
+    return;
+  }
+
+  const outputPath = path.join(os.tmpdir(), `invoice-${invoice.invoiceNumber}.pdf`);
+
+  await generateInvoicePDF(
+    {
+      invoiceNumber: invoice.invoiceNumber,
+      date: invoice.date,
+      dueDate: invoice.dueDate,
+      practice: {
+        name: practice.name,
+        address: practice.address,
+        phone: practice.phone,
+        email: practice.email,
+        npi: practice.npi,
+      },
+      patient: {
+        firstName: invoice.patient.firstName,
+        lastName: invoice.patient.lastName,
+        address: invoice.patient.address,
+        phone: invoice.patient.phone,
+      },
+      treatments: invoice.treatments.map((t) => ({
+        cdtCode: t.cdtCode,
+        description: t.description,
+        toothNumber: t.toothNumber,
+        fee: t.fee,
+      })),
+      subtotal: invoice.subtotal,
+      discount: invoice.discount,
+      taxAmount: invoice.taxAmount,
+      total: invoice.total,
+      insurancePortion: invoice.insurancePortion,
+      patientPortion: invoice.patientPortion,
+    },
+    outputPath,
+  );
+
+  res.download(outputPath, `invoice-${invoice.invoiceNumber}.pdf`, () => {
+    fs.unlink(outputPath, () => {});
+  });
 });
 
 // Void an invoice

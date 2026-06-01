@@ -345,4 +345,35 @@ router.patch('/notes/:id/sign', async (req: Request, res: Response) => {
   res.json(note);
 });
 
+// Add addendum to a signed note
+router.post('/notes/:id/addendum', async (req: Request, res: Response) => {
+  const { text } = z.object({
+    text: z.string().min(1),
+  }).parse(req.body);
+
+  const note = await prisma.clinicalNote.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!note) {
+    res.status(404).json({ error: 'Clinical note not found' });
+    return;
+  }
+
+  if (!note.signedAt) {
+    res.status(400).json({ error: 'Cannot add addendum to an unsigned note' });
+    return;
+  }
+
+  const timestamp = new Date().toISOString();
+  const addendum = `\n\n--- Addendum (${timestamp}) ---\n${text}`;
+  const updatedPlan = (note.plan || '') + addendum;
+
+  const updated = await prisma.clinicalNote.update({
+    where: { id: req.params.id },
+    data: { plan: updatedPlan },
+  });
+
+  res.json(updated);
+});
+
 export default router;

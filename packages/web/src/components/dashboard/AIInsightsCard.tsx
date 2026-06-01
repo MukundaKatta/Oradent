@@ -1,5 +1,9 @@
 'use client';
 
+import { useState } from 'react';
+import Link from 'next/link';
+import { X } from 'lucide-react';
+
 interface AIInsight {
   id: string;
   type: 'reminder' | 'alert' | 'suggestion';
@@ -20,7 +24,19 @@ const typeIcons: Record<string, { bg: string; text: string }> = {
   suggestion: { bg: 'bg-teal-100', text: 'text-teal-600' },
 };
 
+const priorityBorder: Record<string, string> = {
+  high: 'border-l-4 border-l-red-500',
+  medium: 'border-l-4 border-l-amber-500',
+  low: 'border-l-4 border-l-teal-500',
+};
+
 export default function AIInsightsCard({ insights, isLoading }: AIInsightsCardProps) {
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+
+  const handleDismiss = (id: string) => {
+    setDismissedIds((prev) => new Set(prev).add(id));
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
@@ -39,6 +55,8 @@ export default function AIInsightsCard({ insights, isLoading }: AIInsightsCardPr
       </div>
     );
   }
+
+  const visibleInsights = insights?.filter((i) => !dismissedIds.has(i.id));
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
@@ -59,7 +77,7 @@ export default function AIInsightsCard({ insights, isLoading }: AIInsightsCardPr
         <h3 className="text-lg font-semibold text-stone-900">AI Insights</h3>
       </div>
 
-      {!insights || insights.length === 0 ? (
+      {!visibleInsights || visibleInsights.length === 0 ? (
         <div className="py-8 text-center">
           <svg
             className="w-10 h-10 text-stone-300 mx-auto mb-3"
@@ -71,7 +89,7 @@ export default function AIInsightsCard({ insights, isLoading }: AIInsightsCardPr
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"
+              d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
             />
           </svg>
           <p className="text-sm text-stone-500">
@@ -83,27 +101,42 @@ export default function AIInsightsCard({ insights, isLoading }: AIInsightsCardPr
         </div>
       ) : (
         <div className="space-y-3">
-          {insights.map((insight) => {
+          {visibleInsights.map((insight) => {
             const colors = typeIcons[insight.type] || typeIcons.suggestion;
             return (
               <div
                 key={insight.id}
                 className={`p-3 rounded-lg border border-stone-100 hover:bg-stone-50 transition-colors ${
-                  insight.actionUrl ? 'cursor-pointer' : ''
+                  priorityBorder[insight.priority] || ''
                 }`}
               >
                 <div className="flex items-start gap-2">
                   <span
                     className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${colors.bg.replace('100', '500')}`}
                   />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-stone-900">
                       {insight.title}
                     </p>
                     <p className="text-xs text-stone-500 mt-0.5">
                       {insight.description}
                     </p>
+                    {insight.actionUrl && (
+                      <Link
+                        href={insight.actionUrl}
+                        className="mt-1.5 inline-block text-xs font-medium text-teal-600 hover:text-teal-700 transition-colors"
+                      >
+                        Take action &rarr;
+                      </Link>
+                    )}
                   </div>
+                  <button
+                    onClick={() => handleDismiss(insight.id)}
+                    className="shrink-0 rounded p-0.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600 transition-colors"
+                    title="Dismiss"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             );

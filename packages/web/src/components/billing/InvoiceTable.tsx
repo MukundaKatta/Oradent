@@ -8,6 +8,7 @@ import {
   CreditCard,
   Eye,
   MoreHorizontal,
+  Printer,
   Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,11 @@ const STATUS_STYLES: Record<string, string> = {
   WRITE_OFF: 'bg-purple-100 text-purple-700',
 };
 
+function isOverdue(invoice: Invoice): boolean {
+  if (invoice.status === 'PAID' || invoice.status === 'VOID') return false;
+  return invoice.status === 'OVERDUE' || new Date(invoice.dueDate) < new Date();
+}
+
 export function InvoiceTable({
   invoices,
   onRecordPayment,
@@ -60,6 +66,7 @@ export function InvoiceTable({
   const [sortField, setSortField] = useState<'date' | 'total' | 'status'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -76,6 +83,28 @@ export function InvoiceTable({
       if (sortField === 'total') return dir * (a.total - b.total);
       return dir * a.status.localeCompare(b.status);
     });
+
+  const allSelected = filtered.length > 0 && filtered.every((inv) => selectedIds.has(inv.id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((inv) => inv.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const toggleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -115,6 +144,14 @@ export function InvoiceTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-stone-200">
+            <th className="px-4 py-3 text-left">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={toggleSelectAll}
+                className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500"
+              />
+            </th>
             <th className="px-4 py-3 text-left font-medium text-stone-500">Invoice #</th>
             <th className="px-4 py-3 text-left font-medium text-stone-500">Patient</th>
             <th
@@ -149,8 +186,20 @@ export function InvoiceTable({
           {filtered.map((invoice) => (
             <Fragment key={invoice.id}>
               <tr
-                className="border-b border-stone-100 hover:bg-stone-50 transition-colors"
+                className={cn(
+                  'border-b border-stone-100 hover:bg-stone-50 transition-colors',
+                  isOverdue(invoice) && 'bg-red-50',
+                  selectedIds.has(invoice.id) && 'bg-teal-50'
+                )}
               >
+                <td className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(invoice.id)}
+                    onChange={() => toggleSelect(invoice.id)}
+                    className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500"
+                  />
+                </td>
                 <td className="px-4 py-3 font-mono text-xs font-medium text-teal-600">
                   {invoice.invoiceNumber}
                 </td>
@@ -187,6 +236,13 @@ export function InvoiceTable({
                     >
                       <Eye className="h-4 w-4" />
                     </button>
+                    <button
+                      onClick={() => window.print()}
+                      className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+                      title="Print invoice"
+                    >
+                      <Printer className="h-4 w-4" />
+                    </button>
                     {invoice.status !== 'PAID' && invoice.status !== 'VOID' && (
                       <button
                         onClick={() => onRecordPayment(invoice)}
@@ -208,7 +264,7 @@ export function InvoiceTable({
               </tr>
               {expandedId === invoice.id && (
                 <tr className="border-b border-stone-100 bg-stone-50">
-                  <td colSpan={7} className="px-8 py-4">
+                  <td colSpan={8} className="px-8 py-4">
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
                       Line Items
                     </h4>
