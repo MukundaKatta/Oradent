@@ -4,6 +4,7 @@ import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { invalidateDashboardCache } from '../utils/cache';
 import { emitAppointmentUpdate, emitNotification } from '../websocket/liveUpdates';
+import { getAvailableSlots } from '../services/schedulingHelper';
 
 class ConflictError extends Error {
   constructor(message: string) {
@@ -155,6 +156,21 @@ router.get('/check-conflict', async (req: Request, res: Response) => {
   } else {
     res.json({ hasConflict: false });
   }
+});
+
+// Get available time slots
+router.get('/availability', async (req: Request, res: Response) => {
+  const providerId = req.query.providerId as string;
+  const date = req.query.date as string;
+  const duration = parseInt(req.query.duration as string) || 30;
+
+  if (!providerId || !date) {
+    res.status(400).json({ error: 'providerId and date are required' });
+    return;
+  }
+
+  const slots = await getAvailableSlots(req.auth!.practiceId, providerId, new Date(date), duration);
+  res.json(slots);
 });
 
 // Get single appointment

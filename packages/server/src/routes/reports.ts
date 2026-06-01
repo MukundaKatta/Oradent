@@ -2,6 +2,12 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { cached } from '../utils/cache';
+import {
+  getPatientGrowthTrend,
+  getAppointmentCompletionRate,
+  getTopProcedures,
+  getPatientDemographics,
+} from '../services/analyticsService';
 
 const router = Router();
 router.use(authenticate);
@@ -461,6 +467,36 @@ router.get('/morning-huddle', async (req: Request, res: Response) => {
       recallsDue: recalls,
     },
   });
+});
+
+// Patient growth trend
+router.get('/patient-growth', async (req: Request, res: Response) => {
+  const months = parseInt(req.query.months as string) || 12;
+  const trend = await getPatientGrowthTrend(req.auth!.practiceId, months);
+  res.json(trend);
+});
+
+// Appointment completion rate
+router.get('/completion-rate', async (req: Request, res: Response) => {
+  const startDate = req.query.start
+    ? new Date(req.query.start as string)
+    : new Date(new Date().getFullYear(), 0, 1);
+  const endDate = req.query.end ? new Date(req.query.end as string) : new Date();
+  const rate = await getAppointmentCompletionRate(req.auth!.practiceId, startDate, endDate);
+  res.json(rate);
+});
+
+// Top procedures
+router.get('/top-procedures', async (req: Request, res: Response) => {
+  const limit = parseInt(req.query.limit as string) || 10;
+  const procedures = await getTopProcedures(req.auth!.practiceId, limit);
+  res.json(procedures);
+});
+
+// Patient demographics
+router.get('/demographics', async (req: Request, res: Response) => {
+  const demographics = await getPatientDemographics(req.auth!.practiceId);
+  res.json(demographics);
 });
 
 export default router;

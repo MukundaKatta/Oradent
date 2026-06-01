@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { normalizeEmail, sanitizePhoneNumber } from '../utils/validators';
+import { getPatientsForRecall, getRecallStats } from '../services/recallService';
 
 const router = Router();
 router.use(authenticate);
@@ -125,6 +126,19 @@ router.get('/export/csv', async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', `attachment; filename="patients-${new Date().toISOString().split('T')[0]}.csv"`);
   res.send(csvRows.join('\n'));
+});
+
+// Get patients due for recall
+router.get('/recall', async (req: Request, res: Response) => {
+  const daysAhead = parseInt(req.query.daysAhead as string) || 30;
+  const patients = await getPatientsForRecall(req.auth!.practiceId, daysAhead);
+  res.json({ patients, total: patients.length });
+});
+
+// Get recall statistics
+router.get('/recall/stats', async (req: Request, res: Response) => {
+  const stats = await getRecallStats(req.auth!.practiceId);
+  res.json(stats);
 });
 
 // Get patient by ID
