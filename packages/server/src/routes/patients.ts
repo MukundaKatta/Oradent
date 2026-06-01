@@ -128,6 +128,25 @@ router.get('/export/csv', async (req: Request, res: Response) => {
   res.send(csvRows.join('\n'));
 });
 
+// Patient statistics
+router.get('/stats', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+
+  const [total, active, newThisMonth, newThisWeek] = await Promise.all([
+    prisma.patient.count({ where: { practiceId } }),
+    prisma.patient.count({ where: { practiceId, status: 'ACTIVE' } }),
+    prisma.patient.count({ where: { practiceId, createdAt: { gte: monthStart } } }),
+    prisma.patient.count({ where: { practiceId, createdAt: { gte: weekStart } } }),
+  ]);
+
+  res.json({ total, active, newThisMonth, newThisWeek });
+});
+
 // Get patients due for recall
 router.get('/recall', async (req: Request, res: Response) => {
   const daysAhead = parseInt(req.query.daysAhead as string) || 30;
@@ -139,6 +158,28 @@ router.get('/recall', async (req: Request, res: Response) => {
 router.get('/recall/stats', async (req: Request, res: Response) => {
   const stats = await getRecallStats(req.auth!.practiceId);
   res.json(stats);
+});
+
+// Update patient status only
+router.patch('/:id/status', async (req: Request, res: Response) => {
+  const { status } = z.object({
+    status: z.enum(['ACTIVE', 'INACTIVE', 'ARCHIVED']),
+  }).parse(req.body);
+
+  const existing = await prisma.patient.findFirst({
+    where: { id: req.params.id, practiceId: req.auth!.practiceId },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
+
+  const patient = await prisma.patient.update({
+    where: { id: req.params.id },
+    data: { status },
+  });
+
+  res.json(patient);
 });
 
 // Get patient by ID

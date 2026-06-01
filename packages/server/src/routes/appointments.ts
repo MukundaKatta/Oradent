@@ -158,6 +158,75 @@ router.get('/check-conflict', async (req: Request, res: Response) => {
   }
 });
 
+// Next 10 upcoming appointments
+router.get('/upcoming', async (req: Request, res: Response) => {
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      provider: { practiceId: req.auth!.practiceId },
+      startTime: { gte: new Date() },
+      status: { notIn: ['CANCELLED', 'NO_SHOW', 'RESCHEDULED'] },
+    },
+    include: {
+      patient: { select: { id: true, firstName: true, lastName: true, phone: true } },
+      provider: { select: { id: true, name: true, color: true } },
+      chair: { select: { id: true, name: true } },
+    },
+    orderBy: { startTime: 'asc' },
+    take: 10,
+  });
+
+  res.json(appointments);
+});
+
+// Appointment statistics
+router.get('/stats', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+  const now = new Date();
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  const [todayCount, thisWeekCount, allAppointments] = await Promise.all([
+    prisma.appointment.count({
+      where: {
+        provider: { practiceId },
+        startTime: { gte: todayStart, lt: todayEnd },
+        status: { notIn: ['CANCELLED'] },
+      },
+    }),
+    prisma.appointment.count({
+      where: {
+        provider: { practiceId },
+        startTime: { gte: weekStart, lt: weekEnd },
+        status: { notIn: ['CANCELLED'] },
+      },
+    }),
+    prisma.appointment.findMany({
+      where: {
+        provider: { practiceId },
+        startTime: { gte: todayStart, lt: weekEnd },
+        status: { notIn: ['CANCELLED'] },
+      },
+      select: { type: true, status: true },
+    }),
+  ]);
+
+  const byType: Record<string, number> = {};
+  const byStatus: Record<string, number> = {};
+  for (const apt of allAppointments) {
+    byType[apt.type] = (byType[apt.type] || 0) + 1;
+    byStatus[apt.status] = (byStatus[apt.status] || 0) + 1;
+  }
+
+  res.json({ todayCount, thisWeekCount, byType, byStatus });
+});
+
 // Get available time slots
 router.get('/availability', async (req: Request, res: Response) => {
   const providerId = req.query.providerId as string;
@@ -252,6 +321,49 @@ router.post('/', async (req: Request, res: Response) => {
     }
     throw error;
   }
+});
+
+// Reschedule appointment
+router.post('/:id/reschedule', async (req: Request, res: Response) => {
+  const { startTime, duration } = z.object({
+    startTime: z.string().transform((s) => new Date(s)),
+    duration: z.number().min(15).max(480).optional(),
+  }).parse(req.body);
+
+  const existing = await prisma.appointment.findFirst({
+    where: { id: req.params.id, provider: { practiceId: req.auth!.practiceId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Appointment not found' });
+    return;
+  }
+
+  const newDuration = duration || existing.duration;
+  const endTime = new Date(startTime.getTime() + newDuration * 60 * 1000);
+
+  const appointment = await prisma.appointment.update({
+    where: { id: req.params.id },
+    data: {
+      startTime,
+      endTime,
+      duration: newDuration,
+      status: 'SCHEDULED',
+    },
+    include: {
+      patient: { select: { id: true, firstName: true, lastName: true } },
+      provider: { select: { id: true, name: true, color: true } },
+      chair: { select: { id: true, name: true } },
+    },
+  });
+
+  res.json(appointment);
+  invalidateDashboardCache(req.auth!.practiceId);
+  emitAppointmentUpdate(req.auth!.practiceId, { appointmentId: appointment.id });
+  emitNotification(req.auth!.practiceId, {
+    type: 'appointment',
+    title: 'Appointment Rescheduled',
+    message: `Appointment rescheduled to ${startTime.toISOString()}`,
+  });
 });
 
 // Update appointment

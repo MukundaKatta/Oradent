@@ -107,6 +107,72 @@ router.patch('/plans/:id/status', async (req: Request, res: Response) => {
   res.json(plan);
 });
 
+// List items for a treatment plan
+router.get('/plans/:planId/items', async (req: Request, res: Response) => {
+  const plan = await prisma.treatmentPlan.findFirst({
+    where: { id: req.params.planId, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!plan) {
+    res.status(404).json({ error: 'Treatment plan not found' });
+    return;
+  }
+
+  const items = await prisma.treatmentPlanItem.findMany({
+    where: { treatmentPlanId: req.params.planId },
+    orderBy: { sortOrder: 'asc' },
+  });
+
+  res.json(items);
+});
+
+// Update single treatment plan item status
+router.patch('/plans/:id/items/:itemId', async (req: Request, res: Response) => {
+  const { status } = z.object({
+    status: z.string().min(1),
+  }).parse(req.body);
+
+  const plan = await prisma.treatmentPlan.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!plan) {
+    res.status(404).json({ error: 'Treatment plan not found' });
+    return;
+  }
+
+  const item = await prisma.treatmentPlanItem.findFirst({
+    where: { id: req.params.itemId, treatmentPlanId: req.params.id },
+  });
+  if (!item) {
+    res.status(404).json({ error: 'Treatment plan item not found' });
+    return;
+  }
+
+  const updated = await prisma.treatmentPlanItem.update({
+    where: { id: req.params.itemId },
+    data: { status },
+  });
+
+  res.json(updated);
+});
+
+// Soft delete treatment plan (set status DECLINED)
+router.delete('/plans/:id', async (req: Request, res: Response) => {
+  const plan = await prisma.treatmentPlan.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!plan) {
+    res.status(404).json({ error: 'Treatment plan not found' });
+    return;
+  }
+
+  const updated = await prisma.treatmentPlan.update({
+    where: { id: req.params.id },
+    data: { status: 'DECLINED' },
+  });
+
+  res.json(updated);
+});
+
 // Generate treatment plan PDF
 router.get('/plans/:id/pdf', async (req: Request, res: Response) => {
   const plan = await prisma.treatmentPlan.findFirst({

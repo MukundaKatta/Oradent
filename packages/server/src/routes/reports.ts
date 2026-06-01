@@ -499,4 +499,43 @@ router.get('/demographics', async (req: Request, res: Response) => {
   res.json(demographics);
 });
 
+// No-show rate by month
+router.get('/no-show-rate', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+  const months = parseInt(req.query.months as string) || 12;
+  const now = new Date();
+  const results: Array<{ month: string; total: number; noShows: number; rate: number }> = [];
+
+  for (let i = months - 1; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+
+    const [total, noShows] = await Promise.all([
+      prisma.appointment.count({
+        where: {
+          provider: { practiceId },
+          startTime: { gte: start, lt: end },
+          status: { notIn: ['CANCELLED', 'RESCHEDULED'] },
+        },
+      }),
+      prisma.appointment.count({
+        where: {
+          provider: { practiceId },
+          startTime: { gte: start, lt: end },
+          status: 'NO_SHOW',
+        },
+      }),
+    ]);
+
+    results.push({
+      month: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`,
+      total,
+      noShows,
+      rate: total > 0 ? Math.round((noShows / total) * 10000) / 100 : 0,
+    });
+  }
+
+  res.json(results);
+});
+
 export default router;

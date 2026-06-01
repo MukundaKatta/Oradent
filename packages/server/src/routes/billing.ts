@@ -27,6 +27,84 @@ const paymentSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Billing summary
+router.get('/summary', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+  const [outstandingAgg, mtdRevenue, totalInvoiced, totalCollected] = await Promise.all([
+    prisma.invoice.aggregate({
+      _sum: { patientPortion: true },
+      where: {
+        patient: { practiceId },
+        status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] },
+      },
+    }),
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: {
+        invoice: { patient: { practiceId } },
+        date: { gte: monthStart },
+      },
+    }),
+    prisma.invoice.aggregate({
+      _sum: { total: true },
+      where: { patient: { practiceId } },
+    }),
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: { invoice: { patient: { practiceId } } },
+    }),
+  ]);
+
+  const totalInv = totalInvoiced._sum.total || 0;
+  const totalCol = totalCollected._sum.amount || 0;
+  const collectionRate = totalInv > 0 ? Math.round((totalCol / totalInv) * 10000) / 100 : 0;
+
+  res.json({
+    outstandingTotal: outstandingAgg._sum.patientPortion || 0,
+    mtdRevenue: mtdRevenue._sum.amount || 0,
+    collectionRate,
+  });
+});
+
+// Overdue invoices
+router.get('/overdue', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+  const now = new Date();
+
+  const invoices = await prisma.invoice.findMany({
+    where: {
+      patient: { practiceId },
+      status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] },
+      dueDate: { lt: now },
+    },
+    include: {
+      patient: { select: { id: true, firstName: true, lastName: true } },
+      payments: { select: { amount: true } },
+    },
+    orderBy: { dueDate: 'asc' },
+  });
+
+  const result = invoices.map((inv) => {
+    const paid = inv.payments.reduce((s, p) => s + p.amount, 0);
+    const balance = Math.round((inv.total - paid) * 100) / 100;
+    const daysOverdue = Math.floor((now.getTime() - inv.dueDate.getTime()) / (1000 * 60 * 60 * 24));
+    return {
+      id: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      patient: inv.patient,
+      total: inv.total,
+      paid,
+      balance,
+      dueDate: inv.dueDate,
+      daysOverdue,
+    };
+  }).filter((inv) => inv.balance > 0);
+
+  res.json({ invoices: result, total: result.length });
+});
+
 // List invoices
 router.get('/invoices', async (req: Request, res: Response) => {
   const patientId = req.query.patientId as string;
@@ -77,6 +155,31 @@ router.get('/invoices/:id', async (req: Request, res: Response) => {
   }
 
   res.json(invoice);
+});
+
+// Void an invoice
+router.post('/invoices/:id/void', async (req: Request, res: Response) => {
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+    include: { payments: true },
+  });
+
+  if (!invoice) {
+    res.status(404).json({ error: 'Invoice not found' });
+    return;
+  }
+
+  if (invoice.payments.length > 0) {
+    res.status(400).json({ error: 'Cannot void an invoice that has payments' });
+    return;
+  }
+
+  const voided = await prisma.invoice.update({
+    where: { id: req.params.id },
+    data: { status: 'VOID' },
+  });
+
+  res.json(voided);
 });
 
 // Create invoice
