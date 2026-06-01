@@ -11,6 +11,7 @@ interface AuthState {
 
 interface SidebarState {
   isCollapsed: boolean;
+  isMobileMenuOpen: boolean;
 }
 
 interface AppState extends AuthState, SidebarState {
@@ -23,6 +24,10 @@ interface AppState extends AuthState, SidebarState {
   // Sidebar actions
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+
+  // Mobile menu actions
+  toggleMobileMenu: () => void;
+  closeMobileMenu: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -36,6 +41,7 @@ export const useAppStore = create<AppState>()(
 
       // Sidebar state
       isCollapsed: false,
+      isMobileMenuOpen: false,
 
       // Auth actions
       login: (token: string, provider: Provider, practice: Practice) => {
@@ -83,6 +89,15 @@ export const useAppStore = create<AppState>()(
 
       setSidebarCollapsed: (collapsed: boolean) => {
         set({ isCollapsed: collapsed });
+      },
+
+      // Mobile menu actions
+      toggleMobileMenu: () => {
+        set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen }));
+      },
+
+      closeMobileMenu: () => {
+        set({ isMobileMenuOpen: false });
       },
     }),
     {

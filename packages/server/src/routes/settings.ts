@@ -43,6 +43,20 @@ router.put('/practice', authorize('OWNER'), async (req: Request, res: Response) 
   res.json(practice);
 });
 
+// Get practice settings
+router.get('/practice/settings', async (req: Request, res: Response) => {
+  const settings = await prisma.practiceSettings.findUnique({
+    where: { practiceId: req.auth!.practiceId },
+  });
+
+  if (!settings) {
+    res.status(404).json({ error: 'Practice settings not found' });
+    return;
+  }
+
+  res.json(settings);
+});
+
 // Update practice settings
 router.put('/practice/settings', authorize('OWNER'), async (req: Request, res: Response) => {
   const schema = z.object({

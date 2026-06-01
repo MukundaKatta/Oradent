@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { invalidateDashboardCache } from '../utils/cache';
+import { emitAppointmentUpdate, emitNotification } from '../websocket/liveUpdates';
 
 class ConflictError extends Error {
   constructor(message: string) {
@@ -226,6 +227,8 @@ router.post('/', async (req: Request, res: Response) => {
 
     res.status(201).json(appointment);
     invalidateDashboardCache(req.auth!.practiceId);
+    emitAppointmentUpdate(req.auth!.practiceId, { appointmentId: appointment.id });
+    emitNotification(req.auth!.practiceId, { type: 'appointment', title: 'New Appointment', message: `Appointment scheduled for ${appointment.startTime}` });
   } catch (error) {
     if (error instanceof ConflictError) {
       res.status(409).json({ error: error.message });
@@ -274,6 +277,10 @@ router.put('/:id', async (req: Request, res: Response) => {
   });
 
   res.json(appointment);
+  emitAppointmentUpdate(req.auth!.practiceId, { appointmentId: appointment.id });
+  if (data.status) {
+    emitNotification(req.auth!.practiceId, { type: 'appointment', title: 'Appointment Updated', message: `Appointment status changed to ${data.status}` });
+  }
 });
 
 // Delete appointment
@@ -288,6 +295,8 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
   await prisma.appointment.delete({ where: { id: req.params.id } });
   res.json({ message: 'Appointment deleted' });
+  emitAppointmentUpdate(req.auth!.practiceId, { appointmentId: req.params.id });
+  emitNotification(req.auth!.practiceId, { type: 'appointment', title: 'Appointment Cancelled', message: 'An appointment has been cancelled' });
 });
 
 // Batch status update (for check-in flow)

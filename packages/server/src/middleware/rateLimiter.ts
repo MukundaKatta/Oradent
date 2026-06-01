@@ -9,15 +9,6 @@ function keyGenerator(req: Request): string {
   return req.ip || req.socket.remoteAddress || 'unknown';
 }
 
-export const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 500,
-  keyGenerator,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests, please try again later' },
-});
-
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -26,20 +17,29 @@ export const authLimiter = rateLimit({
   message: { error: 'Too many login attempts, please try again later' },
 });
 
-export const aiLimiter = rateLimit({
+export const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  keyGenerator,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' },
+});
+
+export const uploadLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
   keyGenerator,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'AI request rate limit exceeded. Please wait before trying again.' },
+  message: { error: 'Upload rate limit exceeded' },
 });
 
-export const uploadLimiter = rateLimit({
+export const aiLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 20,
   keyGenerator,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Upload rate limit exceeded' },
+  message: { error: 'AI request rate limit exceeded. Please wait before trying again.' },
 });

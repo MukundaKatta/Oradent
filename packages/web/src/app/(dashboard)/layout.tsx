@@ -9,6 +9,8 @@ import { SkipNavigation } from "@/components/layout/SkipNavigation";
 import { useAppStore } from "@/stores/appStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
+import { useSocket, useSocketEvent } from "@/hooks/useSocket";
+import { useNotificationStore } from "@/stores/notificationStore";
 import { apiGet } from "@/lib/api";
 
 export default function DashboardLayout({
@@ -19,6 +21,10 @@ export default function DashboardLayout({
   const router = useRouter();
   useKeyboardShortcuts();
   useSessionTimeout();
+  useSocket();
+  useSocketEvent("notification", (data) => {
+    useNotificationStore.getState().addNotification(data);
+  });
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const { login, provider } = useAppStore();
 

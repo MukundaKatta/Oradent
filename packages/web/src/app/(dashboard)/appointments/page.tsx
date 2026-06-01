@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useSocketEvent } from '@/hooks/useSocket';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -68,6 +69,30 @@ export default function AppointmentsPage() {
       setLoading(false);
     }
   }, []);
+
+  const refetchCurrentMonth = useCallback(() => {
+    const start = format(
+      new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
+      'yyyy-MM-dd'
+    );
+    const end = format(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0),
+      'yyyy-MM-dd'
+    );
+    fetchAppointments(start, end);
+  }, [currentDate, fetchAppointments]);
+
+  useSocketEvent('appointment:created', () => {
+    refetchCurrentMonth();
+  });
+
+  useSocketEvent('appointment:updated', () => {
+    refetchCurrentMonth();
+  });
+
+  useSocketEvent('appointment:cancelled', () => {
+    refetchCurrentMonth();
+  });
 
   useEffect(() => {
     const start = format(

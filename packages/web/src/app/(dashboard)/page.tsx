@@ -1,7 +1,8 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
+import { useSocketEvent } from '@/hooks/useSocket';
 import { formatCurrency } from '@/lib/formatters';
 import {
   Calendar,
@@ -62,9 +63,14 @@ function getGreeting(): string {
 
 export default function DashboardPage() {
   const { provider } = useAppStore();
+  const queryClient = useQueryClient();
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
     queryFn: () => apiGet('/api/reports/dashboard'),
+  });
+
+  useSocketEvent('appointment:updated', () => {
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
   });
 
   const firstName = provider?.name?.split(' ')[0] || 'Doctor';

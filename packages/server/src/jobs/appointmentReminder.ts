@@ -1,13 +1,19 @@
 import cron from 'node-cron';
+import { format } from 'date-fns';
 import { prisma } from '../config/database';
 import { logger } from '../utils/logger';
+import { sendEmail, generateAppointmentReminderEmail } from '../services/emailService';
 
 export function startAppointmentReminders(): void {
   // Run every hour
   cron.schedule('0 * * * *', async () => {
     try {
-      const settings = await prisma.practiceSettings.findFirst();
+      const settings = await prisma.practiceSettings.findFirst({
+        include: { practice: { select: { name: true, phone: true } } },
+      });
       const hoursAhead = settings?.reminderHoursBefore || 24;
+      const practiceName = settings?.practice?.name || 'Our Dental Practice';
+      const practicePhone = settings?.practice?.phone || '';
       const now = new Date();
       const reminderTime = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
       const reminderWindowEnd = new Date(reminderTime.getTime() + 60 * 60 * 1000);
@@ -26,11 +32,22 @@ export function startAppointmentReminders(): void {
       });
 
       for (const apt of appointments) {
-        // In production, send email/SMS here
         logger.info(
           { appointmentId: apt.id, patientName: `${apt.patient.firstName} ${apt.patient.lastName}` },
-          'Would send appointment reminder'
+          'Sending appointment reminder'
         );
+
+        if (apt.patient.email) {
+          const html = generateAppointmentReminderEmail(
+            `${apt.patient.firstName} ${apt.patient.lastName}`,
+            format(apt.startTime, 'EEEE, MMMM d, yyyy'),
+            format(apt.startTime, 'h:mm a'),
+            apt.provider.name,
+            practiceName,
+            practicePhone
+          );
+          await sendEmail(apt.patient.email, 'Appointment Reminder', html);
+        }
 
         await prisma.appointment.update({
           where: { id: apt.id },

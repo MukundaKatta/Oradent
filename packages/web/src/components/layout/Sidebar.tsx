@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  X,
 } from "lucide-react";
 
 const navigation = [
@@ -33,7 +34,7 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { provider, isCollapsed, toggleSidebar, logout } = useAppStore();
+  const { provider, isCollapsed, toggleSidebar, isMobileMenuOpen, closeMobileMenu, logout } = useAppStore();
 
   const initials = provider?.name
     ? provider.name

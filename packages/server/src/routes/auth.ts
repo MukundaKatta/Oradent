@@ -285,7 +285,7 @@ router.post('/reset-password', authLimiter, async (req: Request, res: Response) 
 });
 
 // Change password
-router.put('/password', authenticate, async (req: Request, res: Response) => {
+const changePasswordHandler = async (req: Request, res: Response) => {
   const schema = z.object({
     currentPassword: z.string(),
     newPassword: passwordSchema,
@@ -312,7 +312,10 @@ router.put('/password', authenticate, async (req: Request, res: Response) => {
     data: { passwordHash },
   });
 
-  res.json({ message: 'Password updated successfully' });
-});
+  res.json({ message: 'Password changed successfully' });
+};
+
+router.put('/password', authenticate, changePasswordHandler);
+router.post('/change-password', authenticate, changePasswordHandler);
 
 export default router;

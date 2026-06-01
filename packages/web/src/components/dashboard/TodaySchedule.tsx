@@ -3,6 +3,8 @@
 import { useTodaySchedule, type TodayScheduleItem } from '@/hooks/useAppointments';
 import { useRouter } from 'next/navigation';
 import { Clock } from 'lucide-react';
+import { useSocketEvent } from '@/hooks/useSocket';
+import { useQueryClient } from '@tanstack/react-query';
 
 const statusColors: Record<string, string> = {
   scheduled: 'bg-stone-100 text-stone-700',
@@ -64,6 +66,15 @@ function ScheduleRow({ item }: { item: TodayScheduleItem }) {
 
 export default function TodaySchedule() {
   const { data: schedule, isLoading } = useTodaySchedule();
+  const queryClient = useQueryClient();
+
+  useSocketEvent('appointment:updated', () => {
+    queryClient.invalidateQueries({ queryKey: ['today-schedule'] });
+  });
+
+  useSocketEvent('schedule:refresh', () => {
+    queryClient.invalidateQueries({ queryKey: ['today-schedule'] });
+  });
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-stone-200">

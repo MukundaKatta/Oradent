@@ -17,7 +17,7 @@ import { startClaimFollowUp } from './jobs/claimFollowUp';
 import { startDailyDigest } from './jobs/dailyDigest';
 import { auditMiddleware } from './middleware/auditMiddleware';
 import { errorHandler } from './middleware/errorHandler';
-import { apiLimiter } from './middleware/rateLimiter';
+import { apiLimiter, authLimiter, uploadLimiter, aiLimiter } from './middleware/rateLimiter';
 import { requestId } from './middleware/requestId';
 import { requestLogger } from './middleware/requestLogger';
 import { sanitizeInput } from './middleware/sanitize';
@@ -201,14 +201,14 @@ app.get('/api/health/ready', async (_req, res) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/dental-chart', dentalChartRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/treatments', treatmentRoutes);
 app.use('/api/billing', billingRoutes);
-app.use('/api/imaging', imagingRoutes);
-app.use('/api/ai', aiRoutes);
+app.use('/api/imaging', uploadLimiter, imagingRoutes);
+app.use('/api/ai', aiLimiter, aiRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
 
