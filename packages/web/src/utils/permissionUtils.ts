@@ -1,194 +1,163 @@
-import type { ProviderRole } from "@/types";
+export type Role = "OWNER" | "DENTIST" | "HYGIENIST" | "ASSISTANT" | "FRONT_DESK";
+
+export type Permission =
+  | "patients:read"
+  | "patients:write"
+  | "patients:delete"
+  | "appointments:read"
+  | "appointments:write"
+  | "appointments:delete"
+  | "clinical:read"
+  | "clinical:write"
+  | "clinical:sign"
+  | "charting:read"
+  | "charting:write"
+  | "treatments:read"
+  | "treatments:write"
+  | "imaging:read"
+  | "imaging:write"
+  | "imaging:delete"
+  | "billing:read"
+  | "billing:write"
+  | "claims:manage"
+  | "reports:read"
+  | "settings:manage"
+  | "providers:manage"
+  | "inventory:read"
+  | "inventory:write"
+  | "audit:read";
 
 /**
- * Actions that can be performed in the system.
+ * Maps each role to the set of permissions it is granted.
  */
-export type PermissionAction =
-  | "view_dashboard"
-  | "view_schedule"
-  | "manage_schedule"
-  | "view_patients"
-  | "create_patient"
-  | "edit_patient"
-  | "delete_patient"
-  | "view_clinical"
-  | "create_clinical_note"
-  | "edit_clinical_note"
-  | "sign_clinical_note"
-  | "view_dental_chart"
-  | "edit_dental_chart"
-  | "view_treatment_plans"
-  | "create_treatment_plan"
-  | "edit_treatment_plan"
-  | "view_imaging"
-  | "upload_image"
-  | "delete_image"
-  | "run_ai_analysis"
-  | "view_billing"
-  | "create_invoice"
-  | "edit_invoice"
-  | "process_payment"
-  | "manage_claims"
-  | "view_reports"
-  | "manage_settings"
-  | "manage_providers"
-  | "manage_chairs"
-  | "manage_fee_schedule"
-  | "view_audit_log";
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+  OWNER: [
+    "patients:read",
+    "patients:write",
+    "patients:delete",
+    "appointments:read",
+    "appointments:write",
+    "appointments:delete",
+    "clinical:read",
+    "clinical:write",
+    "clinical:sign",
+    "charting:read",
+    "charting:write",
+    "treatments:read",
+    "treatments:write",
+    "imaging:read",
+    "imaging:write",
+    "imaging:delete",
+    "billing:read",
+    "billing:write",
+    "claims:manage",
+    "reports:read",
+    "settings:manage",
+    "providers:manage",
+    "inventory:read",
+    "inventory:write",
+    "audit:read",
+  ],
 
-/**
- * Maps each role to the set of actions it is allowed to perform.
- */
-export const ROLE_PERMISSIONS: Record<ProviderRole, Set<PermissionAction>> = {
-  OWNER: new Set<PermissionAction>([
-    "view_dashboard",
-    "view_schedule",
-    "manage_schedule",
-    "view_patients",
-    "create_patient",
-    "edit_patient",
-    "delete_patient",
-    "view_clinical",
-    "create_clinical_note",
-    "edit_clinical_note",
-    "sign_clinical_note",
-    "view_dental_chart",
-    "edit_dental_chart",
-    "view_treatment_plans",
-    "create_treatment_plan",
-    "edit_treatment_plan",
-    "view_imaging",
-    "upload_image",
-    "delete_image",
-    "run_ai_analysis",
-    "view_billing",
-    "create_invoice",
-    "edit_invoice",
-    "process_payment",
-    "manage_claims",
-    "view_reports",
-    "manage_settings",
-    "manage_providers",
-    "manage_chairs",
-    "manage_fee_schedule",
-    "view_audit_log",
-  ]),
+  DENTIST: [
+    "patients:read",
+    "patients:write",
+    "appointments:read",
+    "appointments:write",
+    "clinical:read",
+    "clinical:write",
+    "clinical:sign",
+    "charting:read",
+    "charting:write",
+    "treatments:read",
+    "treatments:write",
+    "imaging:read",
+    "imaging:write",
+    "imaging:delete",
+    "billing:read",
+    "billing:write",
+    "claims:manage",
+    "reports:read",
+    "inventory:read",
+  ],
 
-  DENTIST: new Set<PermissionAction>([
-    "view_dashboard",
-    "view_schedule",
-    "manage_schedule",
-    "view_patients",
-    "create_patient",
-    "edit_patient",
-    "view_clinical",
-    "create_clinical_note",
-    "edit_clinical_note",
-    "sign_clinical_note",
-    "view_dental_chart",
-    "edit_dental_chart",
-    "view_treatment_plans",
-    "create_treatment_plan",
-    "edit_treatment_plan",
-    "view_imaging",
-    "upload_image",
-    "delete_image",
-    "run_ai_analysis",
-    "view_billing",
-    "create_invoice",
-    "edit_invoice",
-    "process_payment",
-    "manage_claims",
-    "view_reports",
-  ]),
+  HYGIENIST: [
+    "patients:read",
+    "patients:write",
+    "appointments:read",
+    "clinical:read",
+    "clinical:write",
+    "charting:read",
+    "charting:write",
+    "treatments:read",
+    "imaging:read",
+    "imaging:write",
+    "billing:read",
+    "inventory:read",
+  ],
 
-  HYGIENIST: new Set<PermissionAction>([
-    "view_dashboard",
-    "view_schedule",
-    "view_patients",
-    "edit_patient",
-    "view_clinical",
-    "create_clinical_note",
-    "edit_clinical_note",
-    "view_dental_chart",
-    "edit_dental_chart",
-    "view_treatment_plans",
-    "view_imaging",
-    "upload_image",
-    "view_billing",
-  ]),
+  ASSISTANT: [
+    "patients:read",
+    "patients:write",
+    "appointments:read",
+    "clinical:read",
+    "clinical:write",
+    "charting:read",
+    "treatments:read",
+    "imaging:read",
+    "imaging:write",
+    "inventory:read",
+  ],
 
-  ASSISTANT: new Set<PermissionAction>([
-    "view_dashboard",
-    "view_schedule",
-    "view_patients",
-    "edit_patient",
-    "view_clinical",
-    "create_clinical_note",
-    "view_dental_chart",
-    "view_treatment_plans",
-    "view_imaging",
-    "upload_image",
-  ]),
-
-  FRONT_DESK: new Set<PermissionAction>([
-    "view_dashboard",
-    "view_schedule",
-    "manage_schedule",
-    "view_patients",
-    "create_patient",
-    "edit_patient",
-    "view_billing",
-    "create_invoice",
-    "edit_invoice",
-    "process_payment",
-    "manage_claims",
-  ]),
+  FRONT_DESK: [
+    "patients:read",
+    "patients:write",
+    "appointments:read",
+    "appointments:write",
+    "appointments:delete",
+    "billing:read",
+    "billing:write",
+    "claims:manage",
+    "inventory:read",
+  ],
 };
 
 /**
- * Check if a role has permission to perform a given action.
+ * Check if a role has a specific permission.
  */
-export function hasPermission(
-  role: ProviderRole,
-  action: PermissionAction
-): boolean {
-  return ROLE_PERMISSIONS[role]?.has(action) ?? false;
+export function hasPermission(role: Role, permission: Permission): boolean {
+  const permissions = ROLE_PERMISSIONS[role];
+  return permissions ? permissions.includes(permission) : false;
 }
 
 /**
- * Route access control mapping. Defines which roles can access each route prefix.
+ * Route access control mapping.
  */
-const ROUTE_ACCESS: { path: string; roles: ProviderRole[] }[] = [
+const ROUTE_ACCESS: { path: string; roles: Role[] }[] = [
   { path: "/settings", roles: ["OWNER"] },
   { path: "/reports", roles: ["OWNER", "DENTIST"] },
   { path: "/billing", roles: ["OWNER", "DENTIST", "FRONT_DESK"] },
   { path: "/imaging", roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT"] },
-  {
-    path: "/clinical",
-    roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT"],
-  },
-  {
-    path: "/patients",
-    roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT", "FRONT_DESK"],
-  },
-  {
-    path: "/schedule",
-    roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT", "FRONT_DESK"],
-  },
-  {
-    path: "/",
-    roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT", "FRONT_DESK"],
-  },
+  { path: "/clinical", roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT"] },
+  { path: "/inventory", roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT", "FRONT_DESK"] },
+  { path: "/patients", roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT", "FRONT_DESK"] },
+  { path: "/schedule", roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT", "FRONT_DESK"] },
+  { path: "/", roles: ["OWNER", "DENTIST", "HYGIENIST", "ASSISTANT", "FRONT_DESK"] },
 ];
 
 /**
  * Check if a role can access a given route path.
  * Matches the most specific route prefix first.
  */
-export function canAccessRoute(role: ProviderRole, path: string): boolean {
-  // Find the most specific matching route (longest prefix match)
+export function canAccessRoute(role: Role, path: string): boolean {
   const match = ROUTE_ACCESS.find((route) => path.startsWith(route.path));
-  if (!match) return true; // Routes not in the map are accessible by default
+  if (!match) return true;
   return match.roles.includes(role);
+}
+
+/**
+ * Get the list of permissions granted to a role.
+ */
+export function getPermissionsForRole(role: Role): Permission[] {
+  return ROLE_PERMISSIONS[role] ?? [];
 }

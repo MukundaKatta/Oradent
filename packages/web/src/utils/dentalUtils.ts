@@ -62,59 +62,79 @@ export function getQuadrant(toothNum: number): 1 | 2 | 3 | 4 {
 /**
  * Map of surface abbreviations to their full names.
  */
-const SURFACE_NAMES: Record<string, string> = {
+export const surfaceAbbreviations: Record<string, string> = {
   M: "Mesial",
-  O: "Occlusal",
   D: "Distal",
   B: "Buccal",
   L: "Lingual",
+  O: "Occlusal",
   I: "Incisal",
-  F: "Facial",
-};
-
-/**
- * Get the full surface name from its abbreviation.
- *
- * @example
- * surfaceAbbreviation("M") // "Mesial"
- * surfaceAbbreviation("O") // "Occlusal"
- */
-export function surfaceAbbreviation(surface: string): string {
-  return SURFACE_NAMES[surface.toUpperCase()] ?? surface;
-}
-
-/**
- * CDT code category ranges mapping code prefixes to category names.
- */
-export const cdtCodeCategories: Record<string, string> = {
-  D0: "Diagnostic",
-  D1: "Preventive",
-  D2: "Restorative",
-  D3: "Endodontics",
-  D4: "Periodontics",
-  D5: "Prosthodontics",
-  D6: "Implant Services / Prosthodontics (Fixed)",
-  D7: "Oral & Maxillofacial Surgery",
-  D8: "Orthodontics",
-  D9: "Adjunctive General Services",
 };
 
 /**
  * Get the tooth type for a given tooth number (universal numbering system).
  */
 export function getToothType(num: number): ToothType {
-  // Molars: 1-3, 14-19, 30-32
   const molars = [1, 2, 3, 14, 15, 16, 17, 18, 19, 30, 31, 32];
   if (molars.includes(num)) return "molar";
 
-  // Premolars: 4-5, 12-13, 20-21, 28-29
   const premolars = [4, 5, 12, 13, 20, 21, 28, 29];
   if (premolars.includes(num)) return "premolar";
 
-  // Canines: 6, 11, 22, 27
   const canines = [6, 11, 22, 27];
   if (canines.includes(num)) return "canine";
 
-  // Incisors: 7-10, 23-26
   return "incisor";
+}
+
+/**
+ * Common CDT procedure codes with category and description.
+ */
+export const cdtCategories: { code: string; category: string; description: string }[] = [
+  { code: "D0120", category: "Diagnostic", description: "Periodic oral evaluation" },
+  { code: "D0140", category: "Diagnostic", description: "Limited oral evaluation - problem focused" },
+  { code: "D0150", category: "Diagnostic", description: "Comprehensive oral evaluation - new or established patient" },
+  { code: "D0210", category: "Diagnostic", description: "Intraoral - complete series of radiographic images" },
+  { code: "D0220", category: "Diagnostic", description: "Intraoral - periapical first radiographic image" },
+  { code: "D0274", category: "Diagnostic", description: "Bitewings - four radiographic images" },
+  { code: "D0330", category: "Diagnostic", description: "Panoramic radiographic image" },
+  { code: "D1110", category: "Preventive", description: "Prophylaxis - adult" },
+  { code: "D1120", category: "Preventive", description: "Prophylaxis - child" },
+  { code: "D1206", category: "Preventive", description: "Topical application of fluoride varnish" },
+  { code: "D1351", category: "Preventive", description: "Sealant - per tooth" },
+  { code: "D2140", category: "Restorative", description: "Amalgam - one surface, primary or permanent" },
+  { code: "D2150", category: "Restorative", description: "Amalgam - two surfaces, primary or permanent" },
+  { code: "D2391", category: "Restorative", description: "Resin-based composite - one surface, posterior" },
+  { code: "D2392", category: "Restorative", description: "Resin-based composite - two surfaces, posterior" },
+  { code: "D2740", category: "Restorative", description: "Crown - porcelain/ceramic" },
+  { code: "D3310", category: "Endodontics", description: "Endodontic therapy, anterior tooth" },
+  { code: "D4341", category: "Periodontics", description: "Periodontal scaling and root planing - four or more teeth, per quadrant" },
+  { code: "D7140", category: "Oral Surgery", description: "Extraction, erupted tooth or exposed root" },
+  { code: "D7210", category: "Oral Surgery", description: "Extraction, erupted tooth requiring removal of bone and/or sectioning" },
+];
+
+/**
+ * Primary (deciduous) tooth letter-to-number mapping.
+ * Letters A-T map to deciduous tooth positions.
+ * In universal numbering: A-J are upper (right to left), K-T are lower (left to right).
+ */
+const PRIMARY_TOOTH_NUMBERS = new Set([
+  // A-T correspond to specific positions; in practice we check if a
+  // given universal tooth number is in the deciduous range.
+  // Deciduous teeth use letters A-T but can also be referenced by
+  // their universal numbers which overlap with the adult range
+  // when using the deciduous numbering convention.
+]);
+
+/**
+ * Check if a tooth number represents a primary (deciduous) tooth.
+ * In the universal numbering system, primary teeth are identified by
+ * letters A-T. When represented as numbers, primary teeth use positions
+ * 1-20 in the deciduous notation (separate from the adult 1-32 system).
+ *
+ * This function accepts a numeric value 1-20 representing deciduous
+ * teeth A(1) through T(20) and returns true for valid deciduous positions.
+ */
+export function isToothPrimary(num: number): boolean {
+  return Number.isInteger(num) && num >= 1 && num <= 20;
 }
