@@ -6,6 +6,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { Search, Bell, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { useAppStore } from "@/stores/appStore";
+import { useNotificationStore } from "@/stores/notificationStore";
 import { NotificationPanel } from "./NotificationPanel";
 import { CommandPalette } from "./CommandPalette";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -16,6 +17,7 @@ export function TopBar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const router = useRouter();
   const { provider, practice, logout } = useAppStore();
+  const { unreadCount } = useNotificationStore();
   const today = format(new Date(), "EEEE, MMMM d, yyyy");
 
   const initials = provider?.name
@@ -70,6 +72,11 @@ export function TopBar() {
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </button>
 
             {notificationsOpen && (

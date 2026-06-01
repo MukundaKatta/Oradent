@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
+import { invalidateDashboardCache } from '../utils/cache';
 import { generateInvoiceNumber } from '../utils/formatters';
 
 const router = Router();
@@ -156,6 +157,7 @@ router.post('/payments', async (req: Request, res: Response) => {
   });
 
   res.status(201).json(payment);
+  invalidateDashboardCache(req.auth!.practiceId);
 });
 
 // Insurance claims

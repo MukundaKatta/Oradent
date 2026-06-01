@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
+import { invalidateDashboardCache } from '../utils/cache';
 
 class ConflictError extends Error {
   constructor(message: string) {
@@ -224,6 +225,7 @@ router.post('/', async (req: Request, res: Response) => {
     });
 
     res.status(201).json(appointment);
+    invalidateDashboardCache(req.auth!.practiceId);
   } catch (error) {
     if (error instanceof ConflictError) {
       res.status(409).json({ error: error.message });
@@ -286,6 +288,33 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
   await prisma.appointment.delete({ where: { id: req.params.id } });
   res.json({ message: 'Appointment deleted' });
+});
+
+// Batch status update (for check-in flow)
+router.patch('/batch-status', async (req: Request, res: Response) => {
+  const { appointmentIds, status } = z.object({
+    appointmentIds: z.array(z.string()).min(1),
+    status: z.enum([
+      'SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_CHAIR',
+      'COMPLETED', 'CANCELLED', 'NO_SHOW', 'RESCHEDULED',
+    ]),
+  }).parse(req.body);
+
+  const updateData: Record<string, unknown> = { status };
+  if (status === 'CONFIRMED') updateData.confirmedAt = new Date();
+  if (status === 'CHECKED_IN') updateData.checkedInAt = new Date();
+  if (status === 'IN_CHAIR') updateData.seatedAt = new Date();
+  if (status === 'COMPLETED') updateData.completedAt = new Date();
+
+  await prisma.appointment.updateMany({
+    where: {
+      id: { in: appointmentIds },
+      provider: { practiceId: req.auth!.practiceId },
+    },
+    data: updateData as any,
+  });
+
+  res.json({ message: `Updated ${appointmentIds.length} appointments to ${status}` });
 });
 
 export default router;

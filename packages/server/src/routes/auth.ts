@@ -1,7 +1,9 @@
+import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../config/database';
+import { redis } from '../config/redis';
 import { generateToken, generateRefreshToken, verifyRefreshToken, authenticate, blacklistToken, AuthPayload } from '../middleware/auth';
 import { authLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
@@ -235,6 +237,51 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
       chairs: provider.practice.chairs,
     },
   });
+});
+
+// Forgot password — request a reset token
+router.post('/forgot-password', authLimiter, async (req: Request, res: Response) => {
+  const { email } = z.object({ email: z.string().email() }).parse(req.body);
+
+  // Always return the same response to avoid leaking whether the email exists
+  const provider = await prisma.provider.findUnique({ where: { email } });
+
+  if (provider) {
+    const token = crypto.randomBytes(32).toString('hex');
+    // Store in Redis with 1-hour TTL: reset:<token> → providerId
+    await redis.set(`reset:${token}`, provider.id, 'EX', 3600);
+    logger.info({ providerId: provider.id }, 'Password reset token generated');
+    // In production, send the token via email. Omitted here.
+  }
+
+  res.json({ message: 'If the email exists, a reset link has been sent' });
+});
+
+// Reset password — consume a reset token
+router.post('/reset-password', authLimiter, async (req: Request, res: Response) => {
+  const { token, newPassword } = z.object({
+    token: z.string().min(1),
+    newPassword: passwordSchema,
+  }).parse(req.body);
+
+  const providerId = await redis.get(`reset:${token}`);
+  if (!providerId) {
+    res.status(400).json({ error: 'Invalid or expired reset token' });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await prisma.provider.update({
+    where: { id: providerId },
+    data: { passwordHash },
+  });
+
+  // Delete the token so it cannot be reused
+  await redis.del(`reset:${token}`);
+
+  logger.info({ providerId }, 'Password reset completed');
+
+  res.json({ message: 'Password reset successfully' });
 });
 
 // Change password

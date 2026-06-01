@@ -8,18 +8,21 @@ import { createServer } from 'http';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
-import { env } from './config/env';
 import { prisma } from './config/database';
+import { env } from './config/env';
 import { redis } from './config/redis';
 import { ensureUploadDir, uploadDir } from './config/storage';
-import { logger } from './utils/logger';
-import { errorHandler } from './middleware/errorHandler';
-import { apiLimiter } from './middleware/rateLimiter';
-import { auditMiddleware } from './middleware/auditMiddleware';
-import { initializeWebSocket } from './websocket/liveUpdates';
 import { startAppointmentReminders } from './jobs/appointmentReminder';
 import { startClaimFollowUp } from './jobs/claimFollowUp';
 import { startDailyDigest } from './jobs/dailyDigest';
+import { auditMiddleware } from './middleware/auditMiddleware';
+import { errorHandler } from './middleware/errorHandler';
+import { apiLimiter } from './middleware/rateLimiter';
+import { requestId } from './middleware/requestId';
+import { requestLogger } from './middleware/requestLogger';
+import { sanitizeInput } from './middleware/sanitize';
+import { logger } from './utils/logger';
+import { initializeWebSocket } from './websocket/liveUpdates';
 
 import authRoutes from './routes/auth';
 import patientRoutes from './routes/patients';
@@ -36,7 +39,30 @@ const app = express();
 const httpServer = createServer(app);
 
 // Middleware
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(requestId);
+app.use(requestLogger);
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      connectSrc: ["'self'", 'ws:', 'wss:'],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  xContentTypeOptions: true,
+}));
 app.use(cors({
   origin: env.NODE_ENV === 'production'
     ? env.CORS_ORIGINS.split(',').map((s) => s.trim())
@@ -49,6 +75,7 @@ app.use(cors({
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(sanitizeInput);
 app.use(apiLimiter);
 app.use(auditMiddleware);
 

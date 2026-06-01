@@ -12,6 +12,8 @@ import {
   Brain,
   ArrowUpRight,
   ArrowDownRight,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import TodaySchedule from '@/components/dashboard/TodaySchedule';
@@ -19,6 +21,7 @@ import RevenueCard from '@/components/dashboard/RevenueCard';
 import PatientStatsCard from '@/components/dashboard/PatientStatsCard';
 import PendingClaimsCard from '@/components/dashboard/PendingClaimsCard';
 import AIInsightsCard from '@/components/dashboard/AIInsightsCard';
+import { useAppStore } from '@/stores/appStore';
 
 interface DashboardStats {
   todayAppointments: number;
@@ -50,18 +53,30 @@ function StatCardSkeleton() {
   );
 }
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default function DashboardPage() {
+  const { provider } = useAppStore();
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
     queryFn: () => apiGet('/api/reports/dashboard'),
   });
+
+  const firstName = provider?.name?.split(' ')[0] || 'Doctor';
 
   return (
     <div className="space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-stone-900">
+            {getGreeting()}, {firstName}
+          </h1>
           <p className="text-stone-500 text-sm mt-1">
             {new Date().toLocaleDateString('en-US', {
               weekday: 'long',
@@ -69,15 +84,20 @@ export default function DashboardPage() {
               month: 'long',
               day: 'numeric',
             })}
+            {stats && !isLoading && stats.todayAppointments > 0 && (
+              <span className="ml-2 text-teal-600 font-medium">
+                &middot; {stats.todayAppointments} appointment{stats.todayAppointments !== 1 ? 's' : ''} today
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-3">
           <Link
-            href="/patients?new=true"
+            href="/morning-huddle"
             className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-50 text-sm font-medium transition-colors"
           >
-            <Plus className="w-4 h-4" />
-            New Patient
+            <Clock className="w-4 h-4" />
+            Morning Huddle
           </Link>
           <Link
             href="/appointments?new=true"

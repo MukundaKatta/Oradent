@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check, X as XIcon } from "lucide-react";
 
 const registerSchema = z.object({
   practiceName: z.string().min(2, "Practice name is required"),
@@ -35,6 +35,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -49,6 +50,14 @@ export default function RegisterPage() {
       title: undefined,
     },
   });
+
+  const watchPassword = watch("password", "");
+
+  const passwordChecks = [
+    { label: "8+ characters", met: watchPassword.length >= 8 },
+    { label: "Uppercase letter", met: /[A-Z]/.test(watchPassword) },
+    { label: "Number", met: /[0-9]/.test(watchPassword) },
+  ];
 
   const onSubmit = async (data: RegisterFormData) => {
     setServerError(null);
@@ -356,6 +365,25 @@ export default function RegisterPage() {
                 <p className="mt-1 text-xs text-red-600">
                   {errors.password.message}
                 </p>
+              )}
+              {watchPassword.length > 0 && (
+                <div className="mt-2 flex gap-3">
+                  {passwordChecks.map((check) => (
+                    <span
+                      key={check.label}
+                      className={`flex items-center gap-1 text-xs ${
+                        check.met ? "text-emerald-600" : "text-stone-400"
+                      }`}
+                    >
+                      {check.met ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <XIcon className="h-3 w-3" />
+                      )}
+                      {check.label}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
           </div>

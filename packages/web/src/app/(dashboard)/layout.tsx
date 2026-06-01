@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
+import { SkipNavigation } from "@/components/layout/SkipNavigation";
 import { useAppStore } from "@/stores/appStore";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { apiGet } from "@/lib/api";
 
 export default function DashboardLayout({
@@ -14,6 +17,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  useKeyboardShortcuts();
+  useSessionTimeout();
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const { login, provider } = useAppStore();
 
@@ -55,14 +60,17 @@ export default function DashboardLayout({
   }
 
   return (
+    <>
+    <SkipNavigation />
     <div className="flex h-screen overflow-hidden bg-stone-50">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar />
-        <main className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+        <main id="main-content" className="flex-1 overflow-y-auto p-6 scrollbar-thin">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
     </div>
+    </>
   );
 }

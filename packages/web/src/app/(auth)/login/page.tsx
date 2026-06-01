@@ -24,6 +24,7 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -221,6 +222,24 @@ export default function LoginPage() {
           Create one
         </Link>
       </p>
+
+      {/* Demo credentials */}
+      <div className="mt-4 rounded-lg border border-dashed border-stone-300 bg-stone-50 p-3">
+        <p className="text-xs font-medium text-stone-500 mb-1">Demo Credentials</p>
+        <div className="flex items-center justify-between">
+          <code className="text-xs text-stone-600">sarah@brightsmiles.com / password123</code>
+          <button
+            type="button"
+            onClick={() => {
+              setValue('email', 'sarah@brightsmiles.com');
+              setValue('password', 'password123');
+            }}
+            className="text-xs font-medium text-teal-600 hover:text-teal-700"
+          >
+            Fill
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

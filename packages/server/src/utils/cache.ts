@@ -39,6 +39,11 @@ export async function invalidateCache(key: string): Promise<void> {
   }
 }
 
+/** Invalidate dashboard cache when relevant data changes */
+export function invalidateDashboardCache(practiceId: string): void {
+  invalidateCache(`dashboard:${practiceId}`);
+}
+
 /** Invalidate all cache keys matching a pattern */
 export async function invalidateCachePattern(pattern: string): Promise<void> {
   try {

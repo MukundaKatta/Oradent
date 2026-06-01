@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Users,
   Calendar,
+  Clock,
   Receipt,
   BarChart3,
   Brain,
@@ -20,6 +21,7 @@ import {
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Morning Huddle", href: "/morning-huddle", icon: Clock },
   { name: "Patients", href: "/patients", icon: Users },
   { name: "Appointments", href: "/appointments", icon: Calendar },
   { name: "Billing", href: "/billing", icon: Receipt },

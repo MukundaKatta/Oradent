@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   Calendar,
   Receipt,
@@ -9,24 +9,14 @@ import {
   Check,
   X,
   Trash2,
+  Info,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNotificationStore } from "@/stores/notificationStore";
+import { formatRelativeDate } from "@/lib/formatters";
 
-type NotificationType = "appointment" | "billing" | "ai" | "system";
-
-interface Notification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-}
-
-const typeConfig: Record<
-  NotificationType,
-  { icon: typeof Calendar; color: string; bg: string }
-> = {
+const typeConfig = {
   appointment: {
     icon: Calendar,
     color: "text-blue-600",
@@ -47,61 +37,37 @@ const typeConfig: Record<
     color: "text-stone-600",
     bg: "bg-stone-50",
   },
-};
-
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    type: "appointment",
-    title: "Upcoming Appointment",
-    message: "John Doe has an appointment at 2:00 PM today.",
-    time: "10 min ago",
-    read: false,
+  success: {
+    icon: CheckCircle2,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
   },
-  {
-    id: "2",
-    type: "billing",
-    title: "Payment Received",
-    message: "Jane Smith paid $250 for invoice #1042.",
-    time: "1 hour ago",
-    read: false,
+  info: {
+    icon: Info,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
   },
-  {
-    id: "3",
-    type: "ai",
-    title: "AI Analysis Ready",
-    message: "X-ray analysis for Robert Johnson is complete.",
-    time: "2 hours ago",
-    read: false,
+  warning: {
+    icon: AlertCircle,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
   },
-  {
-    id: "4",
-    type: "system",
-    title: "System Update",
-    message: "Oradent v2.1 is now available with new features.",
-    time: "5 hours ago",
-    read: true,
+  error: {
+    icon: AlertCircle,
+    color: "text-red-600",
+    bg: "bg-red-50",
   },
-  {
-    id: "5",
-    type: "appointment",
-    title: "Cancelled Appointment",
-    message: "Maria Garcia cancelled her 4:00 PM appointment.",
-    time: "Yesterday",
-    read: true,
-  },
-];
+} as const;
 
 interface NotificationPanelProps {
   onClose: () => void;
 }
 
 export function NotificationPanel({ onClose }: NotificationPanelProps) {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(mockNotifications);
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } =
+    useNotificationStore();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
@@ -113,24 +79,11 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
-
-  const clearAll = () => {
-    setNotifications([]);
-  };
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
   return (
     <div
       ref={panelRef}
       className="absolute right-0 top-full z-50 mt-2 w-96 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-xl animate-in fade-in-0 slide-in-from-top-2"
     >
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-stone-100 px-4 py-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-stone-900">
@@ -143,12 +96,21 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
           )}
         </div>
         <div className="flex items-center gap-1">
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllAsRead}
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
+            >
+              <Check className="h-3 w-3" />
+              Mark all read
+            </button>
+          )}
           <button
             onClick={clearAll}
             className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
           >
             <Trash2 className="h-3 w-3" />
-            Clear all
+            Clear
           </button>
           <button
             onClick={onClose}
@@ -160,17 +122,19 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
         </div>
       </div>
 
-      {/* Notification list */}
       <div className="max-h-96 overflow-y-auto scrollbar-thin">
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-stone-400">
             <Check className="mb-2 h-8 w-8" />
-            <p className="text-sm">All caught up!</p>
+            <p className="text-sm font-medium">All caught up!</p>
+            <p className="mt-1 text-xs">No notifications to show</p>
           </div>
         ) : (
           <div>
             {notifications.map((notification) => {
-              const config = typeConfig[notification.type];
+              const config =
+                typeConfig[notification.type as keyof typeof typeConfig] ||
+                typeConfig.system;
               const Icon = config.icon;
 
               return (
@@ -210,7 +174,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
                       {notification.message}
                     </p>
                     <p className="mt-1 text-[10px] text-stone-400">
-                      {notification.time}
+                      {formatRelativeDate(new Date(notification.timestamp))}
                     </p>
                   </div>
                 </button>
@@ -220,12 +184,11 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
         )}
       </div>
 
-      {/* Footer */}
-      {notifications.length > 0 && (
+      {notifications.length > 5 && (
         <div className="border-t border-stone-100 px-4 py-2">
-          <button className="w-full rounded-md py-1.5 text-center text-xs font-medium text-teal-600 transition-colors hover:bg-teal-50">
-            View all notifications
-          </button>
+          <p className="text-center text-xs text-stone-400">
+            Showing {notifications.length} notifications
+          </p>
         </div>
       )}
     </div>

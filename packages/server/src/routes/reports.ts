@@ -372,4 +372,95 @@ router.get('/treatment-acceptance', async (req: Request, res: Response) => {
   });
 });
 
+// Morning huddle summary
+router.get('/morning-huddle', async (req: Request, res: Response) => {
+  const practiceId = req.auth!.practiceId;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const [appointments, overdueBalance, unconfirmed, recalls] = await Promise.all([
+    prisma.appointment.findMany({
+      where: {
+        provider: { practiceId },
+        startTime: { gte: today, lt: tomorrow },
+        status: { notIn: ['CANCELLED', 'NO_SHOW'] },
+      },
+      include: {
+        patient: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            insurancePrimary: { select: { company: true, remainingBenefit: true } },
+          },
+        },
+        provider: { select: { id: true, name: true, color: true } },
+        chair: { select: { id: true, name: true } },
+      },
+      orderBy: { startTime: 'asc' },
+    }),
+    prisma.invoice.aggregate({
+      _sum: { total: true },
+      where: {
+        patient: { practiceId },
+        status: 'OVERDUE',
+      },
+    }),
+    prisma.appointment.count({
+      where: {
+        provider: { practiceId },
+        startTime: { gte: today, lt: tomorrow },
+        status: 'SCHEDULED',
+      },
+    }),
+    prisma.patient.count({
+      where: {
+        practiceId,
+        status: 'ACTIVE',
+        OR: [
+          { lastVisit: { lt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000) } },
+          { lastVisit: null },
+        ],
+        nextAppointment: null,
+      },
+    }),
+  ]);
+
+  const totalProduction = appointments.reduce((sum, apt) => {
+    return sum;
+  }, 0);
+
+  res.json({
+    date: today.toISOString(),
+    appointments: appointments.map((apt) => ({
+      id: apt.id,
+      time: apt.startTime,
+      endTime: apt.endTime,
+      type: apt.type,
+      status: apt.status,
+      duration: apt.duration,
+      reason: apt.reason,
+      patient: {
+        id: apt.patient.id,
+        name: `${apt.patient.firstName} ${apt.patient.lastName}`,
+        phone: apt.patient.phone,
+        insurance: apt.patient.insurancePrimary?.company || null,
+        remainingBenefit: apt.patient.insurancePrimary?.remainingBenefit || null,
+      },
+      provider: apt.provider,
+      chair: apt.chair,
+    })),
+    summary: {
+      totalAppointments: appointments.length,
+      unconfirmedCount: unconfirmed,
+      overdueBalance: overdueBalance._sum.total || 0,
+      recallsDue: recalls,
+    },
+  });
+});
+
 export default router;

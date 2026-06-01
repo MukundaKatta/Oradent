@@ -28,12 +28,17 @@ export function errorHandler(
 
   // Validation errors
   if (err instanceof ZodError) {
+    const fields: Record<string, string> = {};
+    for (const issue of err.errors) {
+      const fieldName = issue.path.length > 0 ? issue.path.join('.') : '_root';
+      // Keep the first error per field
+      if (!fields[fieldName]) {
+        fields[fieldName] = issue.message;
+      }
+    }
     res.status(400).json({
-      error: 'Validation error',
-      details: err.errors.map((e) => ({
-        path: e.path.join('.'),
-        message: e.message,
-      })),
+      error: 'Validation failed',
+      fields,
     });
     return;
   }
@@ -41,12 +46,13 @@ export function errorHandler(
   // Prisma errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     switch (err.code) {
-      case 'P2002':
+      case 'P2002': {
+        const target = err.meta?.target as string[] | undefined;
         res.status(409).json({
-          error: 'A record with this value already exists',
-          field: (err.meta?.target as string[])?.join(', '),
+          error: `A record with this ${target?.join(', ') || 'value'} already exists`,
         });
         return;
+      }
       case 'P2025':
         res.status(404).json({ error: 'Record not found' });
         return;

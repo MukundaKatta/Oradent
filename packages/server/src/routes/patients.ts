@@ -77,6 +77,53 @@ router.get('/', async (req: Request, res: Response) => {
   });
 });
 
+// Export patients as CSV
+router.get('/export/csv', async (req: Request, res: Response) => {
+  const patients = await prisma.patient.findMany({
+    where: { practiceId: req.auth!.practiceId },
+    select: {
+      firstName: true,
+      lastName: true,
+      dateOfBirth: true,
+      gender: true,
+      email: true,
+      phone: true,
+      phoneSecondary: true,
+      address: true,
+      city: true,
+      state: true,
+      zipCode: true,
+      status: true,
+      lastVisit: true,
+      createdAt: true,
+    },
+    orderBy: { lastName: 'asc' },
+  });
+
+  const headers = [
+    'First Name', 'Last Name', 'Date of Birth', 'Gender', 'Email',
+    'Phone', 'Secondary Phone', 'Address', 'City', 'State', 'Zip',
+    'Status', 'Last Visit', 'Created',
+  ];
+
+  const csvRows = [
+    headers.join(','),
+    ...patients.map((p) => [
+      p.firstName, p.lastName,
+      p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().split('T')[0] : '',
+      p.gender || '', p.email || '', p.phone, p.phoneSecondary || '',
+      `"${(p.address || '').replace(/"/g, '""')}"`,
+      p.city || '', p.state || '', p.zipCode || '', p.status,
+      p.lastVisit ? new Date(p.lastVisit).toISOString().split('T')[0] : '',
+      new Date(p.createdAt).toISOString().split('T')[0],
+    ].join(',')),
+  ];
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="patients-${new Date().toISOString().split('T')[0]}.csv"`);
+  res.send(csvRows.join('\n'));
+});
+
 // Get patient by ID
 router.get('/:id', async (req: Request, res: Response) => {
   const patient = await prisma.patient.findFirst({
@@ -106,6 +153,70 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 
   res.json(patient);
+});
+
+// Quick summary for patient (used in popovers/tooltips)
+router.get('/:id/summary', async (req: Request, res: Response) => {
+  const patient = await prisma.patient.findFirst({
+    where: { id: req.params.id, practiceId: req.auth!.practiceId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      dateOfBirth: true,
+      phone: true,
+      email: true,
+      status: true,
+      lastVisit: true,
+      nextAppointment: true,
+      medicalHistory: {
+        select: { allergies: true, conditions: true, medications: true },
+      },
+      insurancePrimary: {
+        select: { company: true, memberId: true, remainingBenefit: true },
+      },
+      _count: {
+        select: { appointments: true, treatments: true },
+      },
+    },
+  });
+
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
+
+  const upcomingAppointments = await prisma.appointment.findMany({
+    where: {
+      patientId: req.params.id,
+      startTime: { gte: new Date() },
+      status: { notIn: ['CANCELLED', 'NO_SHOW'] },
+    },
+    select: { id: true, startTime: true, type: true, status: true },
+    orderBy: { startTime: 'asc' },
+    take: 3,
+  });
+
+  const outstandingBalance = await prisma.invoice.aggregate({
+    _sum: { patientPortion: true },
+    where: {
+      patientId: req.params.id,
+      status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] },
+    },
+  });
+
+  res.json({
+    ...patient,
+    upcomingAppointments,
+    outstandingBalance: outstandingBalance._sum.patientPortion || 0,
+    alerts: {
+      hasAllergies: Array.isArray(patient.medicalHistory?.allergies) && (patient.medicalHistory?.allergies as string[]).length > 0,
+      hasMedicalConditions: Array.isArray(patient.medicalHistory?.conditions) && (patient.medicalHistory?.conditions as string[]).length > 0,
+      hasOverdueBalance: (outstandingBalance._sum.patientPortion || 0) > 0,
+      needsRecall: !patient.nextAppointment && patient.lastVisit &&
+        new Date().getTime() - new Date(patient.lastVisit).getTime() > 180 * 24 * 60 * 60 * 1000,
+    },
+  });
 });
 
 // Create patient
