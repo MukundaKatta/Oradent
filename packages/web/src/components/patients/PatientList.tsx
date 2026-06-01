@@ -1,6 +1,18 @@
 'use client';
 
-import { User, Phone, Mail, Calendar } from 'lucide-react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  User,
+  Phone,
+  Mail,
+  Calendar,
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  CalendarPlus,
+  ClipboardPlus,
+} from 'lucide-react';
 import type { Patient } from '@/hooks/usePatient';
 import { formatDate, formatAge, formatPhone, getInitials } from '@/lib/formatters';
 
@@ -16,6 +28,9 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export function PatientList({ patients, onSelect }: PatientListProps) {
+  const router = useRouter();
+  const [openActionId, setOpenActionId] = useState<string | null>(null);
+
   if (patients.length === 0) {
     return (
       <div className="rounded-xl border border-stone-200 bg-white p-12 text-center shadow-sm">
@@ -50,6 +65,9 @@ export function PatientList({ patients, onSelect }: PatientListProps) {
             <th className="px-4 py-3 text-left font-medium text-stone-500">
               Status
             </th>
+            <th className="px-4 py-3 text-right font-medium text-stone-500">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -57,7 +75,7 @@ export function PatientList({ patients, onSelect }: PatientListProps) {
             <tr
               key={patient.id}
               onClick={() => onSelect(patient.id)}
-              className="cursor-pointer border-b border-stone-100 transition-colors hover:bg-stone-50"
+              className="group cursor-pointer border-b border-stone-100 transition-colors hover:bg-stone-50"
             >
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
@@ -100,6 +118,84 @@ export function PatientList({ patients, onSelect }: PatientListProps) {
                 >
                   {patient.status}
                 </span>
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex items-center justify-end">
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenActionId(
+                          openActionId === patient.id ? null : patient.id
+                        );
+                      }}
+                      className="rounded p-1 text-stone-400 opacity-0 group-hover:opacity-100 hover:bg-stone-100 hover:text-stone-600 transition-all"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                    {openActionId === patient.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenActionId(null);
+                          }}
+                        />
+                        <div className="absolute right-0 z-20 mt-1 w-48 rounded-lg border border-stone-200 bg-white py-1 shadow-lg">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenActionId(null);
+                              router.push(`/patients/${patient.id}`);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                          >
+                            <Eye className="h-4 w-4" />
+                            View
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenActionId(null);
+                              router.push(`/patients/${patient.id}?edit=true`);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenActionId(null);
+                              router.push(
+                                `/schedule?new=true&patientId=${patient.id}`
+                              );
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                          >
+                            <CalendarPlus className="h-4 w-4" />
+                            New Appointment
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenActionId(null);
+                              router.push(
+                                `/clinical/treatment-plans?new=true&patientId=${patient.id}`
+                              );
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50"
+                          >
+                            <ClipboardPlus className="h-4 w-4" />
+                            New Treatment
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </td>
             </tr>
           ))}
