@@ -43,13 +43,13 @@ export default function PendingClaimsCard({ pendingClaims, totalAmount, isLoadin
             />
           </svg>
         </div>
-        <span className="text-sm font-medium text-stone-500">{t('dashboard.pendingClaims', 'Guias pendentes')}</span>
+        <span className="text-sm font-medium text-stone-500 dark:text-stone-400">{t('dashboard.pendingClaims', 'Guias pendentes')}</span>
       </div>
-      <p className="text-2xl font-semibold text-stone-900">
+      <p className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
         {pendingClaims ?? 0}
       </p>
       {totalAmount !== undefined && (
-        <p className="text-sm text-stone-500 mt-2">
+        <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">
           <span className="font-mono">{formattedAmount}</span> {t('dashboard.totalValue', 'em valor total')}
         </p>
       )}

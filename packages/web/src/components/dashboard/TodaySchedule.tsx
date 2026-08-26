@@ -40,17 +40,17 @@ function ScheduleRow({ item }: { item: TodayScheduleItem }) {
       onClick={() => router.push(`/patients/${item.patientId}`)}
       className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-stone-50 transition-colors text-left"
     >
-      <span className="text-sm font-medium text-stone-900 w-16 shrink-0 flex items-center gap-1.5">
-        <Clock className="w-3.5 h-3.5 text-stone-400" />
+      <span className="text-sm font-medium text-stone-900 dark:text-stone-100 w-16 shrink-0 flex items-center gap-1.5">
+        <Clock className="w-3.5 h-3.5 text-stone-400 dark:text-stone-500" />
         {item.time}
       </span>
-      <span className="text-sm font-medium text-stone-900 flex-1 min-w-0 truncate">
+      <span className="text-sm font-medium text-stone-900 dark:text-stone-100 flex-1 min-w-0 truncate">
         {item.patientName}
       </span>
-      <span className="text-sm text-stone-500 w-28 shrink-0 truncate hidden sm:block">
+      <span className="text-sm text-stone-500 dark:text-stone-400 w-28 shrink-0 truncate hidden sm:block">
         {appointmentTypeLabel(item.type)}
       </span>
-      <span className="text-sm text-stone-500 w-16 shrink-0 hidden md:block">
+      <span className="text-sm text-stone-500 dark:text-stone-400 w-16 shrink-0 hidden md:block">
         {item.chair}
       </span>
       <span
@@ -70,10 +70,10 @@ export default function TodaySchedule() {
   return (
     <div className="glass-card">
       <div className="flex items-center justify-between p-6 pb-4">
-        <h2 className="text-lg font-semibold text-stone-900">
+        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
           {t('dashboard.todaySchedule', 'Agenda de hoje')}
         </h2>
-        <span className="text-sm text-stone-500">
+        <span className="text-sm text-stone-500 dark:text-stone-400">
           {schedule?.length ?? 0} {(schedule?.length ?? 0) === 1 ? t('dashboard.appointment', 'consulta') : t('dashboard.appointments', 'consultas')}
         </span>
       </div>
@@ -81,27 +81,27 @@ export default function TodaySchedule() {
       {isLoading ? (
         <ScheduleSkeleton />
       ) : isError ? (
-        <div className="py-12 text-center text-stone-500 text-sm px-6 pb-6">{t('dashboard.scheduleLoadError', 'Não foi possível carregar a agenda de hoje.')}</div>
+        <div className="py-12 text-center text-stone-500 dark:text-stone-400 text-sm px-6 pb-6">{t('dashboard.scheduleLoadError', 'Não foi possível carregar a agenda de hoje.')}</div>
       ) : !schedule || schedule.length === 0 ? (
-        <div className="py-12 text-center text-stone-500 text-sm px-6 pb-6">
+        <div className="py-12 text-center text-stone-500 dark:text-stone-400 text-sm px-6 pb-6">
           {t('dashboard.scheduleEmpty', 'Não há consultas agendadas para hoje.')}
         </div>
       ) : (
         <div className="px-6 pb-6 space-y-1">
-          <div className="flex items-center gap-4 px-3 pb-2 border-b border-stone-100">
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider w-16 shrink-0">
+          <div className="flex items-center gap-4 px-3 pb-2 border-b border-stone-100 dark:border-white/10">
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider w-16 shrink-0">
               {t('appointments.time', 'Horário')}
             </span>
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider flex-1">
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider flex-1">
               {t('appointments.patient', 'Paciente')}
             </span>
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider w-28 shrink-0 hidden sm:block">
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider w-28 shrink-0 hidden sm:block">
               {t('appointments.type', 'Tipo')}
             </span>
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider w-16 shrink-0 hidden md:block">
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider w-16 shrink-0 hidden md:block">
               {t('appointments.chair', 'Cadeira')}
             </span>
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider w-20 shrink-0">
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider w-20 shrink-0">
               {t('appointments.status', 'Status')}
             </span>
           </div>

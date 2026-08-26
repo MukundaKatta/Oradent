@@ -40,9 +40,9 @@ export default function PatientStatsCard({ activePatients, trend, isLoading }: P
             />
           </svg>
         </div>
-        <span className="text-sm font-medium text-stone-500">{t('dashboard.activePatients', 'Pacientes ativos')}</span>
+        <span className="text-sm font-medium text-stone-500 dark:text-stone-400">{t('dashboard.activePatients', 'Pacientes ativos')}</span>
       </div>
-      <p className="text-2xl font-semibold text-stone-900">
+      <p className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
         {activePatients?.toLocaleString('pt-BR') ?? '0'}
       </p>
       {trend !== undefined && (
@@ -59,7 +59,7 @@ export default function PatientStatsCard({ activePatients, trend, isLoading }: P
           <span className={`text-sm font-medium ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {Math.abs(trend)}%
           </span>
-          <span className="text-xs text-stone-400">{t('dashboard.comparedToLastMonth', 'em relação ao mês anterior')}</span>
+          <span className="text-xs text-stone-400 dark:text-stone-500">{t('dashboard.comparedToLastMonth', 'em relação ao mês anterior')}</span>
         </div>
       )}
     </div>

@@ -43,9 +43,9 @@ export default function RevenueCard({ revenue, trend, isLoading }: RevenueCardPr
             />
           </svg>
         </div>
-        <span className="text-sm font-medium text-stone-500">{t('dashboard.monthRevenue', 'Receita do mês')}</span>
+        <span className="text-sm font-medium text-stone-500 dark:text-stone-400">{t('dashboard.monthRevenue', 'Receita do mês')}</span>
       </div>
-      <p className="text-2xl font-semibold text-stone-900 font-mono">
+      <p className="text-2xl font-semibold text-stone-900 dark:text-stone-100 font-mono">
         {formattedRevenue}
       </p>
       {trend !== undefined && (
@@ -62,7 +62,7 @@ export default function RevenueCard({ revenue, trend, isLoading }: RevenueCardPr
           <span className={`text-sm font-medium ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {Math.abs(trend)}%
           </span>
-          <span className="text-xs text-stone-400">{t('dashboard.comparedToLastMonth', 'em relação ao mês anterior')}</span>
+          <span className="text-xs text-stone-400 dark:text-stone-500">{t('dashboard.comparedToLastMonth', 'em relação ao mês anterior')}</span>
         </div>
       )}
     </div>

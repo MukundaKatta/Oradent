@@ -59,8 +59,8 @@ export default function DashboardPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900">{t('dashboard.title', 'Visão geral')}</h1>
-          <p className="text-stone-500 text-sm mt-1">
+          <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">{t('dashboard.title', 'Visão geral')}</h1>
+          <p className="text-stone-500 dark:text-stone-400 text-sm mt-1">
             {format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: dateFnsPtBR })}
           </p>
         </div>
@@ -105,10 +105,10 @@ export default function DashboardPage() {
                 </span>
               )}
             </div>
-            <p className="text-2xl font-semibold text-stone-900">
+            <p className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
               {stats?.todayAppointments ?? 0}
             </p>
-            <p className="text-sm text-stone-500 mt-1">{t('dashboard.todayAppointments', 'Consultas de hoje')}</p>
+            <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">{t('dashboard.todayAppointments', 'Consultas de hoje')}</p>
           </div>
         )}
 
@@ -143,7 +143,7 @@ export default function DashboardPage() {
         {/* Quick Actions & AI sidebar */}
         <div className="space-y-4">
           <div className="glass-card p-6">
-            <h3 className="text-lg font-semibold text-stone-900 mb-4">{t('dashboard.quickActions', 'Ações rápidas')}</h3>
+            <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">{t('dashboard.quickActions', 'Ações rápidas')}</h3>
             <div className="grid grid-cols-1 gap-2">
               <Link
                 href="/patients?new=true"
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                 <div className="p-2 bg-teal-100/80 rounded-lg group-hover:bg-teal-200/80 transition-colors">
                   <Users className="w-4 h-4 text-teal-600" />
                 </div>
-                <span className="text-sm font-medium text-stone-700">{t('dashboard.newPatient', 'Novo paciente')}</span>
+                <span className="text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.newPatient', 'Novo paciente')}</span>
               </Link>
               <Link
                 href="/appointments?new=true"
@@ -161,7 +161,7 @@ export default function DashboardPage() {
                 <div className="p-2 bg-blue-100/80 rounded-lg group-hover:bg-blue-200/80 transition-colors">
                   <Calendar className="w-4 h-4 text-blue-600" />
                 </div>
-                <span className="text-sm font-medium text-stone-700">{t('dashboard.newAppointment', 'Nova consulta')}</span>
+                <span className="text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.newAppointment', 'Nova consulta')}</span>
               </Link>
               <Link
                 href="/ai-assistant"
@@ -170,7 +170,7 @@ export default function DashboardPage() {
                 <div className="p-2 bg-purple-100/80 rounded-lg group-hover:bg-purple-200/80 transition-colors">
                   <Brain className="w-4 h-4 text-purple-600" />
                 </div>
-                <span className="text-sm font-medium text-stone-700">{t('dashboard.aiAnalysis', 'Análise com IA')}</span>
+                <span className="text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.aiAnalysis', 'Análise com IA')}</span>
               </Link>
             </div>
           </div>
