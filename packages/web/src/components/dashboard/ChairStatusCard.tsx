@@ -1,5 +1,7 @@
 'use client';
 
+
+import { t } from '@/i18n';
 export interface ChairStatus {
   id: string;
   name: string;
@@ -15,10 +17,10 @@ interface ChairStatusCardProps {
 }
 
 const statusConfig: Record<string, { color: string; label: string }> = {
-  available: { color: 'bg-green-500', label: 'Available' },
-  occupied: { color: 'bg-red-500', label: 'Occupied' },
-  cleaning: { color: 'bg-amber-500', label: 'Cleaning' },
-  maintenance: { color: 'bg-stone-400', label: 'Maintenance' },
+  available: { color: 'bg-green-500', label: t('dashboard.chairAvailable', 'Disponível') },
+  occupied: { color: 'bg-red-500', label: t('dashboard.chairOccupied', 'Ocupada') },
+  cleaning: { color: 'bg-amber-500', label: t('dashboard.chairCleaning', 'Em limpeza') },
+  maintenance: { color: 'bg-stone-400', label: t('dashboard.chairMaintenance', 'Em manutenção') },
 };
 
 export default function ChairStatusCard({ chairs, isLoading }: ChairStatusCardProps) {
@@ -42,9 +44,9 @@ export default function ChairStatusCard({ chairs, isLoading }: ChairStatusCardPr
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
-      <h3 className="text-lg font-semibold text-stone-900 mb-4">Chair Status</h3>
+      <h3 className="text-lg font-semibold text-stone-900 mb-4">{t('dashboard.chairStatus', 'Status das cadeiras')}</h3>
       {!chairs || chairs.length === 0 ? (
-        <p className="text-sm text-stone-500">No chairs configured</p>
+        <p className="text-sm text-stone-500">{t('dashboard.chairsEmpty', 'Nenhuma cadeira configurada.')}</p>
       ) : (
         <div className="space-y-3">
           {chairs.map((chair) => {

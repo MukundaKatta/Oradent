@@ -2,12 +2,10 @@
 
 import { useMemo } from 'react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import {
-  APPOINTMENT_TYPE_LABELS,
-  APPOINTMENT_TYPE_COLORS,
-  APPOINTMENT_STATUS_LABELS,
-} from '@/lib/constants';
+import { formatTime } from '@/lib/formatters';
+import { t } from '@/i18n';
+import { APPOINTMENT_TYPE_COLORS } from '@/lib/constants';
+import { appointmentTypeLabel } from './appointmentLabels';
 
 interface Appointment {
   id: string;
@@ -36,6 +34,15 @@ interface ChairViewProps {
 const HOURS = Array.from({ length: 10 }, (_, i) => i + 8); // 8am - 5pm
 const SLOT_HEIGHT = 60; // px per 30 min
 const CHAIRS = ['Chair 1', 'Chair 2', 'Chair 3'];
+
+function chairLabel(chair: string): string {
+  const labels: Record<string, string> = {
+    'Chair 1': t('appointments.chairOne', 'Cadeira 1'),
+    'Chair 2': t('appointments.chairTwo', 'Cadeira 2'),
+    'Chair 3': t('appointments.chairThree', 'Cadeira 3'),
+  };
+  return labels[chair] ?? chair;
+}
 
 export function ChairView({
   appointments,
@@ -91,16 +98,16 @@ export function ChairView({
         {/* Header */}
         <div className="grid grid-cols-[80px_1fr_1fr_1fr] border-b border-stone-200">
           <div className="border-r border-stone-200 bg-stone-50 p-3">
-            <span className="text-xs font-medium text-stone-500">Time</span>
+            <span className="text-xs font-medium text-stone-500">{t('appointments.time', 'Horário')}</span>
           </div>
           {CHAIRS.map((chair) => (
             <div
               key={chair}
               className="border-r border-stone-200 bg-stone-50 p-3 text-center last:border-r-0"
             >
-              <span className="text-sm font-semibold text-stone-700">{chair}</span>
+              <span className="text-sm font-semibold text-stone-700">{chairLabel(chair)}</span>
               <span className="ml-2 text-xs text-stone-400">
-                {chairGroups[chair]?.length || 0} appts
+                {chairGroups[chair]?.length || 0} {t('appointments.appointmentsAbbreviation', 'consultas')}
               </span>
             </div>
           ))}
@@ -113,7 +120,7 @@ export function ChairView({
             {HOURS.map((hour) => (
               <div key={hour} className="relative" style={{ height: `${SLOT_HEIGHT * 2}px` }}>
                 <span className="absolute -top-2 right-3 text-xs text-stone-400">
-                  {hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
+                  {`${hour.toString().padStart(2, '0')}:00`}
                 </span>
                 <div
                   className="absolute right-0 top-0 w-3 border-t border-stone-200"
@@ -167,11 +174,10 @@ export function ChairView({
                       {apt.patientName}
                     </div>
                     <div className="mt-0.5 truncate text-[10px] text-white/80">
-                      {APPOINTMENT_TYPE_LABELS[apt.type] || apt.type}
+                      {appointmentTypeLabel(apt.type)}
                     </div>
                     <div className="mt-0.5 truncate text-[10px] text-white/70">
-                      {format(new Date(apt.startTime), 'h:mm a')} -{' '}
-                      {format(new Date(apt.endTime), 'h:mm a')}
+                      {formatTime(apt.startTime)} - {formatTime(apt.endTime)}
                     </div>
                   </button>
                 );
