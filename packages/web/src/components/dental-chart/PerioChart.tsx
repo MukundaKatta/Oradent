@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { UPPER_TEETH, LOWER_TEETH } from '@/lib/toothMap';
+import { UPPER_TEETH, LOWER_TEETH } from "@/lib/toothMap";
+import { ptBR } from "@/i18n";
 
 export interface PerioReading {
   MB: number | null;
@@ -221,8 +222,8 @@ export default function PerioChart({
                       className={`w-2 h-2 rounded-full mb-0.5 transition-colors
                         ${isBleeding ? 'bg-red-500' : 'bg-slate-200'}
                         ${readOnly ? 'cursor-default' : 'cursor-pointer hover:bg-red-300'}`}
-                      aria-label={`Bleeding ${site} tooth ${tooth}`}
-                      title={isBleeding ? 'Bleeding on probing' : 'No bleeding'}
+                      aria-label={ptBR.patientWorkflow.chart.bleeding}
+                      title={isBleeding ? ptBR.patientWorkflow.chart.bleedingOnProbing : ptBR.patientWorkflow.chart.noBleeding}
                     />
                     {/* Depth input */}
                     <input
@@ -280,8 +281,8 @@ export default function PerioChart({
             </tr>
           </thead>
           <tbody>
-            {renderArchRow(teeth, BUCCAL_SITES, archLabel, 'Buccal (MB/B/DB)')}
-            {renderArchRow(teeth, LINGUAL_SITES, archLabel, 'Lingual (ML/L/DL)')}
+            {renderArchRow(teeth, BUCCAL_SITES, archLabel, ` (MB/B/DB)`)}
+            {renderArchRow(teeth, LINGUAL_SITES, archLabel, ` (ML/L/DL)`)}
           </tbody>
         </table>
       </div>
@@ -322,7 +323,7 @@ export default function PerioChart({
 
         {/* Depth color key */}
         <div className="flex items-center gap-4 mb-4 text-[10px]">
-          <span className="text-slate-400 font-medium">Depth:</span>
+          <span className="text-slate-400 font-medium">{ptBR.patientWorkflow.chart.depth}:</span>
           <span className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-sm bg-green-100 border border-green-300" />
             <span className="text-green-600 font-medium">1-3mm</span>
@@ -337,12 +338,12 @@ export default function PerioChart({
           </span>
           <span className="flex items-center gap-1 ml-2">
             <span className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-red-500 font-medium">Bleeding on probing</span>
+            <span className="text-red-500 font-medium">{ptBR.patientWorkflow.chart.bleedingOnProbing}</span>
           </span>
         </div>
 
-        {renderArchSection(UPPER_TEETH, 'upper', 'Upper Arch')}
-        {renderArchSection(LOWER_TEETH, 'lower', 'Lower Arch')}
+        {renderArchSection(UPPER_TEETH, 'upper', ptBR.patientWorkflow.chart.upperArch)}
+        {renderArchSection(LOWER_TEETH, 'lower', ptBR.patientWorkflow.chart.lowerArch)}
       </div>
     </div>
   );

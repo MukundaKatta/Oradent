@@ -6,7 +6,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
-import { useCreatePatient } from '@/hooks/usePatient';
+import { useCreatePatient } from "@/hooks/usePatient";
+import { ptBR } from "@/i18n";
+
+const copy = ptBR.patientWorkflow.form;
 
 const patientSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -87,7 +90,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
               New Patient
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
+              <button aria-label={copy.closeDialog} className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
                 <X className="h-5 w-5" />
               </button>
             </Dialog.Close>
@@ -173,10 +176,10 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                       {...register('gender')}
                       className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                     >
-                      <option value="">Select</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
+                      <option value="">{ptBR.auth.register.select}</option>
+                      <option value="male">{ptBR.patient.gender.male}</option>
+                      <option value="female">{ptBR.patient.gender.female}</option>
+                      <option value="other">{ptBR.patient.gender.other}</option>
                     </select>
                     {errors.gender && (
                       <p className="mt-1 text-xs text-red-500">{errors.gender.message}</p>
@@ -191,7 +194,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   <input
                     type="tel"
                     {...register('phone')}
-                    placeholder="(555) 123-4567"
+                    placeholder={copy.phonePlaceholder}
                     className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                   />
                   {errors.phone && (
@@ -270,7 +273,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   <input
                     type="text"
                     {...register('insuranceCompany')}
-                    placeholder="e.g., Delta Dental"
+                    placeholder={copy.insurancePlaceholder}
                     className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                   />
                 </div>

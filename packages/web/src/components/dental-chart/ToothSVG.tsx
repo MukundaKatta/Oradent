@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { TOOTH_MAP, isAnterior, getCenterSurfaceLabel } from '@/lib/toothMap';
-import { getConditionColor } from '@/lib/conditionColors';
+import { TOOTH_MAP, getCenterSurfaceLabel } from "@/lib/toothMap";
+import { getConditionColor } from "@/lib/conditionColors";
+import { ptBR } from "@/i18n";
 
 export interface ToothCondition {
   surface: string;
@@ -127,7 +128,7 @@ export default function ToothSVG({
         height={size}
         className="block"
         role="img"
-        aria-label={`Tooth ${toothNumber} - ${tooth.name}`}
+        aria-label={ptBR.patientWorkflow.chart.toothAria}
       >
         {/* Selected ring */}
         {isSelected && (

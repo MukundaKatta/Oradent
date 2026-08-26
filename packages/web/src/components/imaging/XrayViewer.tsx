@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { X, ZoomIn, ZoomOut, RotateCw, Brain, Download } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { formatDate } from '@/lib/formatters';
+import { formatDate } from "@/lib/formatters";
+import { ptBR } from "@/i18n";
 
 interface XrayImage {
   id: string;
@@ -54,10 +55,10 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
                 className="flex items-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors"
               >
                 <Brain className="h-4 w-4" />
-                {image.aiAnalyzed ? 'View Analysis' : 'AI Analysis'}
+                {image.aiAnalyzed ? ptBR.patientWorkflow.imaging.viewAnalysis : ptBR.patientWorkflow.imaging.aiAnalysis}
               </button>
               <Dialog.Close asChild>
-                <button className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white">
+                <button aria-label={ptBR.patientWorkflow.imaging.closeViewer} className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white">
                   <X className="h-5 w-5" />
                 </button>
               </Dialog.Close>
@@ -69,7 +70,7 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
             <button
               onClick={handleZoomOut}
               className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white"
-              title="Zoom out"
+              title={ptBR.patientWorkflow.imaging.zoomOut} aria-label={ptBR.patientWorkflow.imaging.zoomOut}
             >
               <ZoomOut className="h-4 w-4" />
             </button>
@@ -79,7 +80,7 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
             <button
               onClick={handleZoomIn}
               className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white"
-              title="Zoom in"
+              title={ptBR.patientWorkflow.imaging.zoomIn} aria-label={ptBR.patientWorkflow.imaging.zoomIn}
             >
               <ZoomIn className="h-4 w-4" />
             </button>
@@ -87,7 +88,7 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
             <button
               onClick={handleRotate}
               className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white"
-              title="Rotate"
+              title={ptBR.patientWorkflow.imaging.rotate} aria-label={ptBR.patientWorkflow.imaging.rotate}
             >
               <RotateCw className="h-4 w-4" />
             </button>
@@ -96,7 +97,7 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
               href={image.url}
               download={image.filename}
               className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white"
-              title="Download"
+              title={ptBR.patientWorkflow.imaging.download} aria-label={ptBR.patientWorkflow.imaging.download}
             >
               <Download className="h-4 w-4" />
             </a>

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { UPPER_TEETH, LOWER_TEETH, TOOTH_MAP } from '@/lib/toothMap';
+import React, { useState, useCallback } from "react";
+import { UPPER_TEETH, LOWER_TEETH } from "@/lib/toothMap";
 import ToothSVG, { type ToothCondition } from './ToothSVG';
 import ToothPopover from './ToothPopover';
-import ChartLegend from './ChartLegend';
+import ChartLegend from "./ChartLegend";
+import { ptBR } from "@/i18n";
 
 export interface ToothRecord {
   conditions: ToothCondition[];
@@ -121,10 +122,10 @@ export default function DentalChart({
         {/* Quadrant labels */}
         <div className="flex justify-between mb-1 px-1">
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            Upper Right
+            {ptBR.patientWorkflow.chart.upperRight}
           </span>
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            Upper Left
+            {ptBR.patientWorkflow.chart.upperLeft}
           </span>
         </div>
 
@@ -168,10 +169,10 @@ export default function DentalChart({
         {/* Lower quadrant labels */}
         <div className="flex justify-between mt-1 px-1">
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            Lower Right
+            {ptBR.patientWorkflow.chart.lowerRight}
           </span>
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            Lower Left
+            {ptBR.patientWorkflow.chart.lowerLeft}
           </span>
         </div>
       </div>

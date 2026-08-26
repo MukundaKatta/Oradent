@@ -2,7 +2,8 @@
 
 import { User, Phone, Mail, Calendar } from 'lucide-react';
 import type { Patient } from '@/hooks/usePatient';
-import { formatDate, formatAge, formatPhone, getInitials } from '@/lib/formatters';
+import { formatDate, formatAge, formatPhone, getInitials } from "@/lib/formatters";
+import { ptBR } from "@/i18n";
 
 interface PatientListProps {
   patients: Patient[];
@@ -98,7 +99,7 @@ export function PatientList({ patients, onSelect }: PatientListProps) {
                     STATUS_BADGE[patient.status] || 'bg-stone-100 text-stone-600'
                   }`}
                 >
-                  {patient.status}
+                  {ptBR.patient.status[patient.status.toUpperCase() as keyof typeof ptBR.patient.status] ?? patient.status}
                 </span>
               </td>
             </tr>

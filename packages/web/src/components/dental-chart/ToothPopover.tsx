@@ -7,7 +7,8 @@ import { TOOTH_MAP } from '@/lib/toothMap';
 import { getConditionColor, getConditionLabel } from '@/lib/conditionColors';
 import SurfaceSelector from './SurfaceSelector';
 import ConditionPalette from './ConditionPalette';
-import type { ToothCondition } from './ToothSVG';
+import type { ToothCondition } from "./ToothSVG";
+import { ptBR } from "@/i18n";
 
 export interface ToothPopoverProps {
   toothNumber: number;
@@ -105,7 +106,7 @@ export default function ToothPopover({
             <Popover.Close asChild>
               <button
                 className="rounded-full p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                aria-label="Close"
+                aria-label={ptBR.patientWorkflow.chart.closePopover}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -133,7 +134,7 @@ export default function ToothPopover({
                     <button
                       onClick={() => handleRemoveCondition(i)}
                       className="ml-0.5 rounded-full hover:bg-white/20 p-0.5"
-                      aria-label={`Remove ${c.condition} from ${c.surface}`}
+                      aria-label={ptBR.patientWorkflow.chart.removeCondition}
                     >
                       <X className="h-2.5 w-2.5" />
                     </button>
@@ -207,7 +208,7 @@ export default function ToothPopover({
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Clinical notes for this tooth..."
+              placeholder={ptBR.patientWorkflow.chart.notesPlaceholder}
               rows={2}
               className="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-700
                 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30

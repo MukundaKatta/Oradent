@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiGet, apiPost, apiPatch } from '@/lib/api';
+import { apiGet, apiPatch } from '@/lib/api';
 import { formatCurrency } from '@/lib/formatters';
 import {
   FileText,
@@ -15,7 +15,8 @@ import {
   Sparkles,
   Printer,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState } from "react";
+import { ptBR } from "@/i18n";
 
 interface TreatmentPlanItem {
   id: string;
@@ -56,9 +57,9 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 const PRIORITY_LABELS: Record<number, { label: string; color: string }> = {
-  1: { label: 'Urgent', color: 'bg-red-100 text-red-700' },
-  2: { label: 'Recommended', color: 'bg-amber-100 text-amber-700' },
-  3: { label: 'Elective', color: 'bg-blue-100 text-blue-700' },
+  1: { label: ptBR.patientWorkflow.treatment.urgent, color: "bg-red-100 text-red-700" },
+  2: { label: ptBR.patientWorkflow.treatment.recommended, color: "bg-amber-100 text-amber-700" },
+  3: { label: ptBR.patientWorkflow.treatment.elective, color: "bg-blue-100 text-blue-700" },
 };
 
 export default function TreatmentPlansPage() {
@@ -117,9 +118,9 @@ export default function TreatmentPlansPage() {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-12">
         <FileText className="h-12 w-12 text-stone-300" />
-        <h3 className="mt-4 text-lg font-semibold text-stone-900">No Treatment Plans</h3>
+        <h3 className="mt-4 text-lg font-semibold text-stone-900">{ptBR.patientWorkflow.treatment.empty}</h3>
         <p className="mt-1 text-sm text-stone-500">
-          Use the AI Assistant to generate treatment plan suggestions for this patient.
+          {ptBR.patientWorkflow.treatment.emptyDescription}
         </p>
       </div>
     );
@@ -128,7 +129,7 @@ export default function TreatmentPlansPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-stone-900">Treatment Plans</h2>
+        <h2 className="text-xl font-semibold text-stone-900">{ptBR.patientWorkflow.treatment.title}</h2>
       </div>
 
       {plans.map((plan) => {
@@ -165,7 +166,7 @@ export default function TreatmentPlansPage() {
                         STATUS_STYLES[plan.status] || STATUS_STYLES.PROPOSED
                       }`}
                     >
-                      {plan.status.replace('_', ' ')}
+                      {ptBR.treatment.status[plan.status as keyof typeof ptBR.treatment.status] ?? plan.status.replace("_", " ")}
                     </span>
                   </div>
                   <p className="mt-0.5 text-sm text-stone-500">
@@ -250,18 +251,18 @@ export default function TreatmentPlansPage() {
                           <span
                             className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${priority.color}`}
                           >
-                            Priority {group.priority} &mdash; {priority.label}
+                            {ptBR.patientWorkflow.treatment.priority} {group.priority} — {priority.label}
                           </span>
                         </div>
                         <table className="w-full">
                           <thead>
                             <tr className="text-xs text-stone-500 border-b border-stone-100">
-                              <th className="px-5 py-2 text-left font-medium">CDT Code</th>
-                              <th className="px-3 py-2 text-left font-medium">Procedure</th>
-                              <th className="px-3 py-2 text-center font-medium">Tooth</th>
-                              <th className="px-3 py-2 text-right font-medium">Fee</th>
-                              <th className="px-3 py-2 text-right font-medium">Insurance</th>
-                              <th className="px-5 py-2 text-right font-medium">Your Cost</th>
+                              <th className="px-5 py-2 text-left font-medium">{ptBR.patientWorkflow.treatment.cdtCode}</th>
+                              <th className="px-3 py-2 text-left font-medium">{ptBR.patientWorkflow.treatment.procedure}</th>
+                              <th className="px-3 py-2 text-center font-medium">{ptBR.patientWorkflow.common.tooth}</th>
+                              <th className="px-3 py-2 text-right font-medium">{ptBR.patientWorkflow.treatment.fee}</th>
+                              <th className="px-3 py-2 text-right font-medium">{ptBR.patientWorkflow.treatment.insurance}</th>
+                              <th className="px-5 py-2 text-right font-medium">{ptBR.patientWorkflow.treatment.yourCost}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-stone-50">
@@ -304,17 +305,17 @@ export default function TreatmentPlansPage() {
                   <div className="flex justify-end">
                     <div className="space-y-1 text-sm">
                       <div className="flex items-center justify-between gap-12">
-                        <span className="text-stone-500">Total Fees</span>
+                        <span className="text-stone-500">{ptBR.patientWorkflow.treatment.totalFees}</span>
                         <span className="text-stone-900">{formatCurrency(plan.totalFee)}</span>
                       </div>
                       <div className="flex items-center justify-between gap-12">
-                        <span className="text-stone-500">Insurance Estimate</span>
+                        <span className="text-stone-500">{ptBR.patientWorkflow.treatment.insuranceEstimate}</span>
                         <span className="text-stone-600">
                           -{formatCurrency(plan.insuranceEst)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-12 border-t border-stone-200 pt-1">
-                        <span className="font-semibold text-stone-900">Patient Estimate</span>
+                        <span className="font-semibold text-stone-900">{ptBR.patientWorkflow.treatment.patientEstimate}</span>
                         <span className="font-bold text-teal-600 text-base">
                           {formatCurrency(plan.patientEst)}
                         </span>
@@ -325,7 +326,7 @@ export default function TreatmentPlansPage() {
 
                 {plan.notes && (
                   <div className="border-t border-stone-100 px-5 py-3 bg-amber-50">
-                    <p className="text-xs font-medium text-amber-800">Notes</p>
+                    <p className="text-xs font-medium text-amber-800">{ptBR.patientWorkflow.treatment.notes}</p>
                     <p className="mt-1 text-sm text-amber-700">{plan.notes}</p>
                   </div>
                 )}

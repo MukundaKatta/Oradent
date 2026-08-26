@@ -11,7 +11,8 @@ import {
   CheckCircle2,
   Info,
 } from 'lucide-react';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost } from "@/lib/api";
+import { ptBR } from "@/i18n";
 import { cn } from '@/lib/utils';
 
 interface AIAnalysisPanelProps {
@@ -101,7 +102,7 @@ export function AIAnalysisPanel({
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
-                <p className="mt-3 text-sm text-stone-500">Loading analysis...</p>
+                <p className="mt-3 text-sm text-stone-500">{ptBR.patientWorkflow.imaging.loadingAnalysis}</p>
               </div>
             ) : isRunning || analysis?.status === 'processing' ? (
               <div className="flex flex-col items-center justify-center py-12">
@@ -178,8 +179,7 @@ export function AIAnalysisPanel({
                   No Analysis Yet
                 </h3>
                 <p className="mt-1 text-center text-sm text-stone-500">
-                  Run AI analysis to detect potential findings in this X-ray
-                  image.
+                  {ptBR.patientWorkflow.imaging.noAnalysisDescription}
                 </p>
                 <button
                   onClick={() => runAnalysis.mutate()}
@@ -197,8 +197,7 @@ export function AIAnalysisPanel({
           {hasResults && (
             <div className="border-t border-stone-200 px-6 py-4">
               <p className="text-xs text-stone-400">
-                AI analysis is provided as a clinical decision support tool. All
-                findings should be verified by a licensed dental professional.
+                {ptBR.patientWorkflow.imaging.analysisDisclaimer}
               </p>
             </div>
           )}

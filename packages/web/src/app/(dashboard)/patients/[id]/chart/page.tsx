@@ -4,7 +4,8 @@ import { useParams } from 'next/navigation';
 import { Save, RotateCcw } from 'lucide-react';
 import { useDentalChart } from '@/hooks/useDentalChart';
 import DentalChart from '@/components/dental-chart/DentalChart';
-import { formatDate } from '@/lib/formatters';
+import { formatDate } from "@/lib/formatters";
+import { ptBR } from "@/i18n";
 
 export default function DentalChartPage() {
   const params = useParams<{ id: string }>();
@@ -24,11 +25,11 @@ export default function DentalChartPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-stone-900">Dental Chart</h2>
+          <h2 className="text-xl font-bold text-stone-900">{ptBR.patientWorkflow.chart.dentalChart}</h2>
           {chartData?.lastUpdated && (
             <p className="mt-1 text-sm text-stone-500">
-              Last updated: {formatDate(chartData.lastUpdated)}
-              {chartData.updatedBy && ` by ${chartData.updatedBy}`}
+              {ptBR.patientWorkflow.chart.lastUpdated}: {formatDate(chartData.lastUpdated)}
+              {chartData.updatedBy && `  `}
             </p>
           )}
         </div>
@@ -53,7 +54,7 @@ export default function DentalChartPage() {
           <DentalChart />
         ) : (
           <div className="flex h-96 items-center justify-center text-stone-400">
-            No chart data available. Start by selecting a tooth.
+            {ptBR.patientWorkflow.chart.noData}
           </div>
         )}
       </div>

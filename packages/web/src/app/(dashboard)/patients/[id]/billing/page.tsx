@@ -6,7 +6,8 @@ import { DollarSign, FileText, CreditCard, Plus } from 'lucide-react';
 import { useInvoices, usePayments } from '@/hooks/useBilling';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { CreateInvoice } from '@/components/billing/CreateInvoice';
-import { PaymentModal } from '@/components/billing/PaymentModal';
+import { PaymentModal } from "@/components/billing/PaymentModal";
+import { ptBR } from "@/i18n";
 
 export default function PatientBillingPage() {
   const params = useParams<{ id: string }>();
@@ -31,7 +32,7 @@ export default function PatientBillingPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-stone-900">Billing</h2>
+        <h2 className="text-xl font-bold text-stone-900">{ptBR.patientWorkflow.profile.billing.title}</h2>
         <button
           onClick={() => setShowCreateInvoice(true)}
           className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors"
@@ -49,7 +50,7 @@ export default function PatientBillingPage() {
               <DollarSign className="h-5 w-5 text-red-500" />
             </div>
             <div>
-              <p className="text-sm text-stone-500">Outstanding Balance</p>
+              <p className="text-sm text-stone-500">{ptBR.patientWorkflow.profile.billing.outstandingBalance}</p>
               <p className="text-xl font-bold text-stone-900">
                 {isLoading ? (
                   <span className="inline-block h-7 w-24 animate-pulse rounded bg-stone-200" />
@@ -66,7 +67,7 @@ export default function PatientBillingPage() {
               <CreditCard className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-stone-500">Total Paid</p>
+              <p className="text-sm text-stone-500">{ptBR.patientWorkflow.profile.billing.totalPaid}</p>
               <p className="text-xl font-bold text-stone-900">
                 {isLoading ? (
                   <span className="inline-block h-7 w-24 animate-pulse rounded bg-stone-200" />
@@ -83,7 +84,7 @@ export default function PatientBillingPage() {
               <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-stone-500">Invoices</p>
+              <p className="text-sm text-stone-500">{ptBR.patientWorkflow.profile.billing.invoices}</p>
               <p className="text-xl font-bold text-stone-900">
                 {isLoading ? (
                   <span className="inline-block h-7 w-24 animate-pulse rounded bg-stone-200" />
@@ -99,7 +100,7 @@ export default function PatientBillingPage() {
       {/* Invoice List */}
       <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
         <div className="border-b border-stone-100 px-6 py-4">
-          <h3 className="text-sm font-semibold text-stone-900">Invoices</h3>
+          <h3 className="text-sm font-semibold text-stone-900">{ptBR.patientWorkflow.profile.billing.invoices}</h3>
         </div>
         {isLoading ? (
           <div className="space-y-3 p-6">
@@ -111,12 +112,12 @@ export default function PatientBillingPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-stone-200 bg-stone-50">
-                <th className="px-6 py-3 text-left font-medium text-stone-500">Invoice #</th>
-                <th className="px-6 py-3 text-left font-medium text-stone-500">Date</th>
-                <th className="px-6 py-3 text-left font-medium text-stone-500">Status</th>
-                <th className="px-6 py-3 text-right font-medium text-stone-500">Total</th>
-                <th className="px-6 py-3 text-right font-medium text-stone-500">Balance</th>
-                <th className="px-6 py-3 text-right font-medium text-stone-500">Actions</th>
+                <th className="px-6 py-3 text-left font-medium text-stone-500">{ptBR.patientWorkflow.profile.billing.invoiceNumber}</th>
+                <th className="px-6 py-3 text-left font-medium text-stone-500">{ptBR.patientWorkflow.common.date}</th>
+                <th className="px-6 py-3 text-left font-medium text-stone-500">{ptBR.patientWorkflow.common.status}</th>
+                <th className="px-6 py-3 text-right font-medium text-stone-500">{ptBR.patientWorkflow.profile.billing.total}</th>
+                <th className="px-6 py-3 text-right font-medium text-stone-500">{ptBR.patientWorkflow.profile.balance}</th>
+                <th className="px-6 py-3 text-right font-medium text-stone-500">{ptBR.patientWorkflow.common.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -138,7 +139,7 @@ export default function PatientBillingPage() {
                           : 'bg-stone-100 text-stone-600'
                       }`}
                     >
-                      {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                      {ptBR.invoice.status[invoice.status.toUpperCase() as keyof typeof ptBR.invoice.status] ?? invoice.status}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-right text-stone-900">
@@ -166,7 +167,7 @@ export default function PatientBillingPage() {
           </table>
         ) : (
           <div className="p-12 text-center text-sm text-stone-400">
-            No invoices yet.
+            {ptBR.patientWorkflow.profile.billing.noInvoices}
           </div>
         )}
       </div>
@@ -174,16 +175,16 @@ export default function PatientBillingPage() {
       {/* Payment History */}
       <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
         <div className="border-b border-stone-100 px-6 py-4">
-          <h3 className="text-sm font-semibold text-stone-900">Payment History</h3>
+          <h3 className="text-sm font-semibold text-stone-900">{ptBR.patientWorkflow.profile.billing.paymentHistory}</h3>
         </div>
         {payments.length > 0 ? (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-stone-200 bg-stone-50">
-                <th className="px-6 py-3 text-left font-medium text-stone-500">Date</th>
-                <th className="px-6 py-3 text-left font-medium text-stone-500">Method</th>
-                <th className="px-6 py-3 text-left font-medium text-stone-500">Reference</th>
-                <th className="px-6 py-3 text-right font-medium text-stone-500">Amount</th>
+                <th className="px-6 py-3 text-left font-medium text-stone-500">{ptBR.patientWorkflow.common.date}</th>
+                <th className="px-6 py-3 text-left font-medium text-stone-500">{ptBR.patientWorkflow.profile.billing.method}</th>
+                <th className="px-6 py-3 text-left font-medium text-stone-500">{ptBR.patientWorkflow.profile.billing.reference}</th>
+                <th className="px-6 py-3 text-right font-medium text-stone-500">{ptBR.patientWorkflow.profile.billing.amount}</th>
               </tr>
             </thead>
             <tbody>
@@ -192,7 +193,7 @@ export default function PatientBillingPage() {
                   <td className="px-6 py-3 text-stone-600">{formatDate(payment.date)}</td>
                   <td className="px-6 py-3">
                     <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
-                      {payment.method.replace('_', ' ')}
+                      {ptBR.payment.method[payment.method as keyof typeof ptBR.payment.method] ?? payment.method.replace("_", " ")}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-stone-500">{payment.reference || '-'}</td>
@@ -205,7 +206,7 @@ export default function PatientBillingPage() {
           </table>
         ) : (
           <div className="p-12 text-center text-sm text-stone-400">
-            No payments recorded.
+            {ptBR.patientWorkflow.profile.billing.noPayments}
           </div>
         )}
       </div>

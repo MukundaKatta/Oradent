@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Upload, Image as ImageIcon, Brain } from 'lucide-react';
+import { Upload, Image as ImageIcon } from "lucide-react";
 import { apiGet } from '@/lib/api';
 import { XrayGallery } from '@/components/imaging/XrayGallery';
 import { XrayUploader } from '@/components/imaging/XrayUploader';
 import { XrayViewer } from '@/components/imaging/XrayViewer';
-import { AIAnalysisPanel } from '@/components/imaging/AIAnalysisPanel';
+import { AIAnalysisPanel } from "@/components/imaging/AIAnalysisPanel";
+import { ptBR } from "@/i18n";
 
 interface XrayImage {
   id: string;
@@ -41,9 +42,9 @@ export default function ImagingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-stone-900">Imaging</h2>
+          <h2 className="text-xl font-bold text-stone-900">{ptBR.patientWorkflow.imaging.title}</h2>
           <p className="mt-1 text-sm text-stone-500">
-            {images?.length ?? 0} images on file
+            {images?.length ?? 0} {ptBR.patientWorkflow.imaging.total}
           </p>
         </div>
         <button
@@ -77,7 +78,7 @@ export default function ImagingPage() {
             No Images Yet
           </h3>
           <p className="mt-1 text-sm text-stone-500">
-            Upload X-rays and dental images for this patient.
+            {ptBR.patientWorkflow.imaging.noImagesDescription}
           </p>
           <button
             onClick={() => setShowUploader(true)}

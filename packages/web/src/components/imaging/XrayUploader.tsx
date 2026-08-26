@@ -3,7 +3,9 @@
 import { useState, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Upload, FileImage, Loader2 } from 'lucide-react';
-import { apiUpload } from '@/lib/api';
+import { apiUpload } from "@/lib/api";
+import { localizeErrorMessage } from "@/lib/errorMessages";
+import { ptBR } from "@/i18n";
 
 interface XrayUploaderProps {
   patientId: string;
@@ -12,15 +14,7 @@ interface XrayUploaderProps {
   onUploaded: () => void;
 }
 
-const IMAGE_TYPES = [
-  { value: 'periapical', label: 'Periapical' },
-  { value: 'bitewing', label: 'Bitewing' },
-  { value: 'panoramic', label: 'Panoramic' },
-  { value: 'cephalometric', label: 'Cephalometric' },
-  { value: 'cbct', label: 'CBCT' },
-  { value: 'intraoral', label: 'Intraoral Photo' },
-  { value: 'other', label: 'Other' },
-];
+const IMAGE_TYPES = Object.entries(ptBR.patientWorkflow.imaging.types).map(([value, label]) => ({ value, label }));
 
 export function XrayUploader({
   patientId,
@@ -81,7 +75,7 @@ export function XrayUploader({
       }
       onUploaded();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(localizeErrorMessage(err instanceof Error ? err.message : undefined, ptBR.patientWorkflow.imaging.uploadFailed));
     } finally {
       setUploading(false);
     }
@@ -97,7 +91,7 @@ export function XrayUploader({
               Upload X-ray
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
+              <button aria-label={ptBR.patientWorkflow.imaging.closeUploader} className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
                 <X className="h-5 w-5" />
               </button>
             </Dialog.Close>
@@ -120,7 +114,7 @@ export function XrayUploader({
               <p className="mt-2 text-sm font-medium text-stone-700">
                 Drag and drop images here
               </p>
-              <p className="mt-1 text-xs text-stone-500">or</p>
+              <p className="mt-1 text-xs text-stone-500">{ptBR.patientWorkflow.imaging.or}</p>
               <label className="mt-2 cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-medium text-teal-600 shadow-sm ring-1 ring-stone-200 hover:bg-stone-50">
                 Browse Files
                 <input
@@ -151,6 +145,7 @@ export function XrayUploader({
                       </span>
                     </div>
                     <button
+                      aria-label={ptBR.patientWorkflow.imaging.removeFile}
                       onClick={() => removeFile(i)}
                       className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
                     >
@@ -189,7 +184,7 @@ export function XrayUploader({
                   max={32}
                   value={toothNumber}
                   onChange={(e) => setToothNumber(e.target.value)}
-                  placeholder="e.g., 14"
+                  placeholder={ptBR.patientWorkflow.imaging.toothPlaceholder}
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
               </div>

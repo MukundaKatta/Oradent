@@ -6,13 +6,15 @@ import { Plus } from 'lucide-react';
 import { usePatients } from '@/hooks/usePatient';
 import { PatientList } from '@/components/patients/PatientList';
 import { PatientSearch } from '@/components/patients/PatientSearch';
-import { PatientForm } from '@/components/patients/PatientForm';
+import { PatientForm } from "@/components/patients/PatientForm";
+import { ptBR } from "@/i18n";
 
+const copy = ptBR.patientWorkflow.list;
 const STATUS_TABS = [
-  { label: 'All', value: '' },
-  { label: 'Active', value: 'active' },
-  { label: 'Inactive', value: 'inactive' },
-  { label: 'Archived', value: 'archived' },
+  { label: ptBR.patientWorkflow.common.all, value: "" },
+  { label: ptBR.patientWorkflow.common.active, value: "active" },
+  { label: ptBR.patientWorkflow.common.inactive, value: "inactive" },
+  { label: ptBR.patientWorkflow.common.archived, value: "archived" },
 ];
 
 export default function PatientsPage() {
@@ -37,9 +39,9 @@ export default function PatientsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900">Patients</h1>
+          <h1 className="text-2xl font-bold text-stone-900">{copy.title}</h1>
           <p className="mt-1 text-sm text-stone-500">
-            {data?.total ?? 0} patients total
+            {data?.total ?? 0} {copy.total}
           </p>
         </div>
         <button
@@ -92,7 +94,7 @@ export default function PatientsPage() {
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between rounded-xl border border-stone-200 bg-white px-6 py-3 shadow-sm">
           <p className="text-sm text-stone-500">
-            Page {data.page} of {data.totalPages}
+            {copy.page} {data.page} {copy.of} {data.totalPages}
           </p>
           <div className="flex gap-2">
             <button

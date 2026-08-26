@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { getCenterSurfaceLabel } from '@/lib/toothMap';
+import { getCenterSurfaceLabel } from "@/lib/toothMap";
+import { ptBR } from "@/i18n";
 
 export interface SurfaceSelectorProps {
   toothNumber: number;
@@ -99,7 +100,7 @@ export default function SurfaceSelector({
           );
         })}
       </svg>
-      <p className="text-xs text-slate-500">Click surfaces to select</p>
+      <p className="text-xs text-slate-500">{ptBR.patientWorkflow.chart.clickSurfaces}</p>
     </div>
   );
 }

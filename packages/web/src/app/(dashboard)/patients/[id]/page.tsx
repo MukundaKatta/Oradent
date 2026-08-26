@@ -3,7 +3,6 @@
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  User,
   Phone,
   Mail,
   Shield,
@@ -15,19 +14,12 @@ import {
   Activity,
 } from 'lucide-react';
 import { usePatient } from '@/hooks/usePatient';
-import {
-  formatDate,
-  formatAge,
-  formatPhone,
-  getInitials,
-} from '@/lib/formatters';
+import { formatDate, formatAge, formatPhone, formatCurrency, getInitials } from "@/lib/formatters";
+import { ptBR } from "@/i18n";
 
+const copy = ptBR.patientWorkflow.profile;
 const TABS = [
-  { label: 'Chart', href: 'chart', icon: ClipboardList },
-  { label: 'Treatments', href: 'treatments', icon: FileText },
-  { label: 'History', href: 'history', icon: Activity },
-  { label: 'Imaging', href: 'imaging', icon: Image },
-  { label: 'Billing', href: 'billing', icon: DollarSign },
+  { label: copy.chart, href: "chart", icon: ClipboardList }, { label: copy.treatments, href: "treatments", icon: FileText }, { label: copy.history, href: "history", icon: Activity }, { label: copy.imaging, href: "imaging", icon: Image }, { label: copy.billing.title, href: "billing", icon: DollarSign },
 ];
 
 export default function PatientProfilePage() {
@@ -50,7 +42,7 @@ export default function PatientProfilePage() {
   if (!patient) {
     return (
       <div className="flex h-64 items-center justify-center rounded-xl border border-stone-200 bg-white">
-        <p className="text-stone-500">Patient not found.</p>
+        <p className="text-stone-500">{copy.notFound}</p>
       </div>
     );
   }
@@ -77,13 +69,13 @@ export default function PatientProfilePage() {
                     : 'bg-stone-100 text-stone-600'
                 }`}
               >
-                {patient.status.charAt(0).toUpperCase() + patient.status.slice(1)}
+                {ptBR.patient.status[patient.status.toUpperCase() as keyof typeof ptBR.patient.status] ?? patient.status}
               </span>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-stone-500">
               <span className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
-                DOB: {formatDate(patient.dateOfBirth)} ({formatAge(patient.dateOfBirth)})
+                {copy.birthDate}: {formatDate(patient.dateOfBirth)} ({formatAge(patient.dateOfBirth)})
               </span>
               <span className="flex items-center gap-1.5">
                 <Phone className="h-4 w-4" />
@@ -124,29 +116,29 @@ export default function PatientProfilePage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Recent Activity */}
         <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-stone-900">Recent Activity</h3>
+          <h3 className="text-sm font-semibold text-stone-900">{copy.recentActivity}</h3>
           <div className="mt-4 space-y-3">
             {patient.lastVisit ? (
               <div className="flex items-start gap-3">
                 <div className="mt-1 h-2 w-2 rounded-full bg-teal-500" />
                 <div>
-                  <p className="text-sm text-stone-700">Last visit</p>
+                  <p className="text-sm text-stone-700">{copy.lastVisit}</p>
                   <p className="text-xs text-stone-500">{formatDate(patient.lastVisit)}</p>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-stone-400">No recent activity</p>
+              <p className="text-sm text-stone-400">{copy.noRecentActivity}</p>
             )}
           </div>
         </div>
 
         {/* Medical Alerts */}
         <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-stone-900">Medical Alerts</h3>
+          <h3 className="text-sm font-semibold text-stone-900">{copy.medicalAlerts}</h3>
           <div className="mt-4 space-y-2">
             {patient.allergies.length > 0 ? (
               <div>
-                <p className="text-xs font-medium text-stone-500">Allergies</p>
+                <p className="text-xs font-medium text-stone-500">{copy.allergies}</p>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {patient.allergies.map((a) => (
                     <span
@@ -159,11 +151,11 @@ export default function PatientProfilePage() {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-stone-400">No allergies recorded</p>
+              <p className="text-sm text-stone-400">{copy.noAllergies}</p>
             )}
             {patient.medications.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-stone-500">Medications</p>
+                <p className="text-xs font-medium text-stone-500">{copy.medications}</p>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {patient.medications.map((m) => (
                     <span
@@ -181,11 +173,11 @@ export default function PatientProfilePage() {
 
         {/* Account Summary */}
         <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-stone-900">Account Summary</h3>
+          <h3 className="text-sm font-semibold text-stone-900">{copy.accountSummary}</h3>
           <div className="mt-4">
-            <p className="text-xs text-stone-500">Balance</p>
+            <p className="text-xs text-stone-500">{copy.balance}</p>
             <p className="text-2xl font-bold text-stone-900">
-              ${(patient.accountBalance ?? 0).toFixed(2)}
+              {formatCurrency(patient.accountBalance ?? 0)}
             </p>
           </div>
           <Link
