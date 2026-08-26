@@ -117,6 +117,9 @@ export const ptBR = {
     sidebar: {
       expand: "Expandir menu lateral",
       collapse: "Recolher menu lateral",
+      practiceLabel: "Prática odontológica",
+      practiceSettings: "Configurações da prática",
+      openPracticeMenu: "Abrir menu da prática",
     },
     commandPalette: {
       label: "Paleta de comandos",

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/appStore";
 import { ptBR } from "@/i18n";
@@ -15,7 +16,7 @@ import {
   Brain,
   Settings,
   ChevronLeft,
-  ChevronRight,
+  ChevronDown,
   LogOut,
 } from "lucide-react";
 
@@ -43,10 +44,21 @@ const settingsItem = { name: ptBR.shell.navigation.settings, href: "/settings", 
 
 type NavItem = { name: string; href: string; icon: typeof LayoutDashboard };
 
+function ToothIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <path
+        d="M12 2C9.5 2 7.5 3 6.5 5C5.5 7 5 9 5 11C5 13 5.5 15 6 17C6.5 19 7 21 8.5 22C9.5 22.5 10.5 21 11 19C11.3 17.5 11.7 17.5 12 17.5C12.3 17.5 12.7 17.5 13 19C13.5 21 14.5 22.5 15.5 22C17 21 17.5 19 18 17C18.5 15 19 13 19 11C19 9 18.5 7 17.5 5C16.5 3 14.5 2 12 2Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { provider, isCollapsed, toggleSidebar, logout } = useAppStore();
+  const { provider, practice, isCollapsed, toggleSidebar, logout } = useAppStore();
 
   const isItemActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname?.startsWith(href + "/");
@@ -112,36 +124,75 @@ export function Sidebar() {
       transition={{ duration: 0.2, ease: "easeInOut" }}
       className="glass-dark relative flex h-screen flex-col"
     >
-      {/* Logo / Brand */}
-      <div className="flex h-14 items-center gap-3 border-b border-white/10 px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-white"
+      {/* Practice switcher */}
+      <div className="flex h-14 shrink-0 items-center gap-1 border-b border-white/10 px-2">
+        {isCollapsed ? (
+          <button
+            onClick={toggleSidebar}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-600 transition-opacity hover:opacity-90"
+            title={ptBR.shell.sidebar.expand}
+            aria-label={ptBR.shell.sidebar.expand}
           >
-            <path
-              d="M12 2C9.5 2 7.5 3 6.5 5C5.5 7 5 9 5 11C5 13 5.5 15 6 17C6.5 19 7 21 8.5 22C9.5 22.5 10.5 21 11 19C11.3 17.5 11.7 17.5 12 17.5C12.3 17.5 12.7 17.5 13 19C13.5 21 14.5 22.5 15.5 22C17 21 17.5 19 18 17C18.5 15 19 13 19 11C19 9 18.5 7 17.5 5C16.5 3 14.5 2 12 2Z"
-              fill="currentColor"
-            />
-          </svg>
-        </div>
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.15 }}
-              className="overflow-hidden whitespace-nowrap text-lg font-semibold text-white"
+            <ToothIcon className="h-[18px] w-[18px] text-white" />
+          </button>
+        ) : (
+          <>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-1.5 pl-1 pr-2 text-left transition-colors hover:bg-white/5"
+                  aria-label={ptBR.shell.sidebar.openPracticeMenu}
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600">
+                    <ToothIcon className="h-[18px] w-[18px] text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold leading-tight text-white">
+                      {practice?.name || "Oradent"}
+                    </p>
+                    <p className="truncate text-[11px] leading-tight text-stone-500">
+                      {ptBR.shell.sidebar.practiceLabel}
+                    </p>
+                  </div>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-stone-500" />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="start"
+                  sideOffset={8}
+                  className="glass-card z-50 min-w-[220px] overflow-hidden p-1 shadow-apple-lg animate-in fade-in-0 zoom-in-95"
+                >
+                  <div className="px-3 py-2 border-b border-stone-100 dark:border-white/10 mb-1">
+                    <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                      {practice?.name || "Oradent"}
+                    </p>
+                    <p className="text-xs text-stone-500 dark:text-stone-400">
+                      {ptBR.shell.sidebar.practiceLabel}
+                    </p>
+                  </div>
+                  <DropdownMenu.Item asChild>
+                    <Link
+                      href="/settings"
+                      className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-stone-700 dark:text-stone-200 outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100 dark:hover:bg-stone-800 dark:focus:bg-stone-800"
+                    >
+                      <Settings className="h-4 w-4" />
+                      {ptBR.shell.sidebar.practiceSettings}
+                    </Link>
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+            <button
+              onClick={toggleSidebar}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-stone-500 transition-colors hover:bg-white/10 hover:text-stone-300"
+              title={ptBR.shell.sidebar.collapse}
+              aria-label={ptBR.shell.sidebar.collapse}
             >
-              Oradent
-            </motion.span>
-          )}
-        </AnimatePresence>
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Navigation */}
@@ -207,21 +258,6 @@ export function Sidebar() {
           </AnimatePresence>
         </div>
       </div>
-
-      {/* Collapse toggle button */}
-      <button
-        onClick={toggleSidebar}
-        className="absolute -right-3 top-[4.25rem] z-10 flex h-6 w-6 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-500 shadow-sm transition-colors hover:bg-stone-50 hover:text-stone-700"
-        aria-label={
-          isCollapsed ? ptBR.shell.sidebar.expand : ptBR.shell.sidebar.collapse
-        }
-      >
-        {isCollapsed ? (
-          <ChevronRight className="h-3.5 w-3.5" />
-        ) : (
-          <ChevronLeft className="h-3.5 w-3.5" />
-        )}
-      </button>
     </motion.aside>
   );
 }
