@@ -60,7 +60,7 @@
     "tailwindcss": "^3.4.0",
     "postcss": "^8.4.0",
     "autoprefixer": "^10.4.0",
-    "/plugin-react": "^4.7.0",
+    "@vitejs/plugin-react": "^4.7.0",
     "vitest": "^4.0.18"
   }
 }

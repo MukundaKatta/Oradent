@@ -11,22 +11,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { clinicalPtBR, ptBR } from "@/i18n";
+
 // ═══════════════════ APPOINTMENT TYPES ═══════════════════
 
-export const APPOINTMENT_TYPE_LABELS: Record<string, string> = {
-  EXAM: "Exam",
-  CLEANING: "Cleaning",
-  FILLING: "Filling",
-  CROWN: "Crown",
-  ROOT_CANAL: "Root Canal",
-  EXTRACTION: "Extraction",
-  IMPLANT: "Implant",
-  COSMETIC: "Cosmetic",
-  EMERGENCY: "Emergency",
-  CONSULTATION: "Consultation",
-  FOLLOW_UP: "Follow Up",
-  OTHER: "Other",
-};
+export const APPOINTMENT_TYPE_LABELS: Record<string, string> = { ...clinicalPtBR.appointmentType };
 
 export const APPOINTMENT_TYPE_COLORS: Record<string, string> = {
   EXAM: "#14b8a6",
@@ -60,16 +49,7 @@ export const APPOINTMENT_TYPE_DURATIONS: Record<string, number> = {
 
 // ═══════════════════ APPOINTMENT STATUS ═══════════════════
 
-export const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
-  SCHEDULED: "Scheduled",
-  CONFIRMED: "Confirmed",
-  CHECKED_IN: "Checked In",
-  IN_CHAIR: "In Chair",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-  NO_SHOW: "No Show",
-  RESCHEDULED: "Rescheduled",
-};
+export const APPOINTMENT_STATUS_LABELS: Record<string, string> = { ...clinicalPtBR.appointmentStatus };
 
 export const APPOINTMENT_STATUS_COLORS: Record<string, string> = {
   SCHEDULED: "#3b82f6",
@@ -88,64 +68,50 @@ export const TOOTH_CONDITION_TYPES: Record<
   string,
   { label: string; color: string; icon: string }
 > = {
-  cavity: { label: "Cavity", color: "#ef4444", icon: "circle" },
-  filling: { label: "Filling", color: "#3b82f6", icon: "square" },
-  filling_composite: { label: "Composite Filling", color: "#3b82f6", icon: "square" },
-  filling_amalgam: { label: "Amalgam Filling", color: "#64748b", icon: "square" },
-  crown: { label: "Crown", color: "#f59e0b", icon: "pentagon" },
-  root_canal: { label: "Root Canal", color: "#8b5cf6", icon: "triangle" },
-  extraction_needed: { label: "Extraction Needed", color: "#ef4444", icon: "x" },
-  missing: { label: "Missing", color: "#64748b", icon: "x" },
-  implant: { label: "Implant", color: "#06b6d4", icon: "diamond" },
-  bridge: { label: "Bridge", color: "#f97316", icon: "link" },
-  veneer: { label: "Veneer", color: "#ec4899", icon: "rectangle" },
-  sealant: { label: "Sealant", color: "#22c55e", icon: "shield" },
-  watch: { label: "Watch", color: "#eab308", icon: "eye" },
-  fracture: { label: "Fracture", color: "#ef4444", icon: "zap" },
-  abscess: { label: "Abscess", color: "#dc2626", icon: "alert" },
-  impacted: { label: "Impacted", color: "#78716c", icon: "arrow-down" },
-  periodontal: { label: "Periodontal Issue", color: "#f97316", icon: "waves" },
+  cavity: { label: clinicalPtBR.dentalCondition.cavity, color: "#ef4444", icon: "circle" },
+  filling: { label: clinicalPtBR.dentalCondition.filling, color: "#3b82f6", icon: "square" },
+  filling_composite: { label: clinicalPtBR.dentalCondition.filling_composite, color: "#3b82f6", icon: "square" },
+  filling_amalgam: { label: clinicalPtBR.dentalCondition.filling_amalgam, color: "#64748b", icon: "square" },
+  crown: { label: clinicalPtBR.dentalCondition.crown, color: "#f59e0b", icon: "pentagon" },
+  root_canal: { label: clinicalPtBR.dentalCondition.root_canal, color: "#8b5cf6", icon: "triangle" },
+  extraction_needed: { label: clinicalPtBR.dentalCondition.extraction_needed, color: "#ef4444", icon: "x" },
+  missing: { label: clinicalPtBR.dentalCondition.missing, color: "#64748b", icon: "x" },
+  implant: { label: clinicalPtBR.dentalCondition.implant, color: "#06b6d4", icon: "diamond" },
+  bridge: { label: clinicalPtBR.dentalCondition.bridge, color: "#f97316", icon: "link" },
+  veneer: { label: clinicalPtBR.dentalCondition.veneer, color: "#ec4899", icon: "rectangle" },
+  sealant: { label: clinicalPtBR.dentalCondition.sealant, color: "#22c55e", icon: "shield" },
+  watch: { label: clinicalPtBR.dentalCondition.watch, color: "#eab308", icon: "eye" },
+  fracture: { label: clinicalPtBR.dentalCondition.fracture, color: "#ef4444", icon: "zap" },
+  abscess: { label: clinicalPtBR.dentalCondition.abscess, color: "#dc2626", icon: "alert" },
+  impacted: { label: clinicalPtBR.dentalCondition.impacted, color: "#78716c", icon: "arrow-down" },
+  periodontal: { label: clinicalPtBR.dentalCondition.periodontal, color: "#f97316", icon: "waves" },
 };
 
 export const TOOTH_SURFACES = ["M", "O", "D", "B", "L"] as const;
 export type ToothSurface = (typeof TOOTH_SURFACES)[number];
 
-export const TOOTH_SURFACE_LABELS: Record<string, string> = {
-  M: "Mesial",
-  O: "Occlusal",
-  D: "Distal",
-  B: "Buccal",
-  L: "Lingual",
-};
+export const TOOTH_SURFACE_LABELS: Record<string, string> = { ...clinicalPtBR.toothSurface };
 
 // ═══════════════════ CDT CODE CATEGORIES ═══════════════════
 
 export const CDT_CATEGORIES: Record<string, { label: string; range: string }> = {
-  diagnostic: { label: "Diagnostic", range: "D0100-D0999" },
-  preventive: { label: "Preventive", range: "D1000-D1999" },
-  restorative: { label: "Restorative", range: "D2000-D2999" },
-  endodontics: { label: "Endodontics", range: "D3000-D3999" },
-  periodontics: { label: "Periodontics", range: "D4000-D4999" },
-  prosthodontics_removable: { label: "Prosthodontics (Removable)", range: "D5000-D5899" },
-  maxillofacial: { label: "Maxillofacial Prosthetics", range: "D5900-D5999" },
-  implant: { label: "Implant Services", range: "D6000-D6199" },
-  prosthodontics_fixed: { label: "Prosthodontics (Fixed)", range: "D6200-D6999" },
-  oral_surgery: { label: "Oral & Maxillofacial Surgery", range: "D7000-D7999" },
-  orthodontics: { label: "Orthodontics", range: "D8000-D8999" },
-  adjunctive: { label: "Adjunctive General Services", range: "D9000-D9999" },
+  diagnostic: { label: clinicalPtBR.cdtCategory.diagnostic, range: "D0100-D0999" },
+  preventive: { label: clinicalPtBR.cdtCategory.preventive, range: "D1000-D1999" },
+  restorative: { label: clinicalPtBR.cdtCategory.restorative, range: "D2000-D2999" },
+  endodontics: { label: clinicalPtBR.cdtCategory.endodontics, range: "D3000-D3999" },
+  periodontics: { label: clinicalPtBR.cdtCategory.periodontics, range: "D4000-D4999" },
+  prosthodontics_removable: { label: clinicalPtBR.cdtCategory.prosthodontics_removable, range: "D5000-D5899" },
+  maxillofacial: { label: clinicalPtBR.cdtCategory.maxillofacial, range: "D5900-D5999" },
+  implant: { label: clinicalPtBR.cdtCategory.implant, range: "D6000-D6199" },
+  prosthodontics_fixed: { label: clinicalPtBR.cdtCategory.prosthodontics_fixed, range: "D6200-D6999" },
+  oral_surgery: { label: clinicalPtBR.cdtCategory.oral_surgery, range: "D7000-D7999" },
+  orthodontics: { label: clinicalPtBR.cdtCategory.orthodontics, range: "D8000-D8999" },
+  adjunctive: { label: clinicalPtBR.cdtCategory.adjunctive, range: "D9000-D9999" },
 };
 
 // ═══════════════════ INVOICE STATUS ═══════════════════
 
-export const INVOICE_STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Draft",
-  PENDING: "Pending",
-  PARTIALLY_PAID: "Partially Paid",
-  PAID: "Paid",
-  OVERDUE: "Overdue",
-  VOID: "Void",
-  WRITE_OFF: "Write Off",
-};
+export const INVOICE_STATUS_LABELS: Record<string, string> = { ...ptBR.invoice.status };
 
 export const INVOICE_STATUS_COLORS: Record<string, string> = {
   DRAFT: "#78716c",
@@ -159,27 +125,11 @@ export const INVOICE_STATUS_COLORS: Record<string, string> = {
 
 // ═══════════════════ CLAIM STATUS ═══════════════════
 
-export const CLAIM_STATUS_LABELS: Record<string, string> = {
-  DRAFTED: "Drafted",
-  SUBMITTED: "Submitted",
-  IN_REVIEW: "In Review",
-  APPROVED: "Approved",
-  PARTIALLY_APPROVED: "Partially Approved",
-  DENIED: "Denied",
-  APPEALED: "Appealed",
-  PAID: "Paid",
-  WRITE_OFF: "Write Off",
-};
+export const CLAIM_STATUS_LABELS: Record<string, string> = { ...ptBR.claim.status };
 
 // ═══════════════════ PROVIDER ROLES ═══════════════════
 
-export const PROVIDER_ROLE_LABELS: Record<string, string> = {
-  OWNER: "Owner",
-  DENTIST: "Dentist",
-  HYGIENIST: "Hygienist",
-  ASSISTANT: "Assistant",
-  FRONT_DESK: "Front Desk",
-};
+export const PROVIDER_ROLE_LABELS: Record<string, string> = { ...ptBR.provider.role };
 
 // ═══════════════════ NAVIGATION ═══════════════════
 
@@ -194,75 +144,75 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   {
-    label: "Schedule",
+    label: ptBR.navigation.schedule,
     href: "/schedule",
     icon: Calendar,
   },
   {
-    label: "Patients",
+    label: ptBR.navigation.patients,
     href: "/patients",
     icon: Users,
   },
   {
-    label: "Clinical",
+    label: ptBR.navigation.clinical,
     href: "/clinical",
     icon: Stethoscope,
     children: [
-      { label: "Dental Chart", href: "/clinical/chart" },
-      { label: "Treatment Plans", href: "/clinical/treatment-plans" },
-      { label: "Clinical Notes", href: "/clinical/notes" },
-      { label: "Perio Chart", href: "/clinical/perio" },
+      { label: ptBR.navigation.dentalChart, href: "/clinical/chart" },
+      { label: ptBR.navigation.treatmentPlans, href: "/clinical/treatment-plans" },
+      { label: ptBR.navigation.clinicalNotes, href: "/clinical/notes" },
+      { label: ptBR.navigation.perioChart, href: "/clinical/perio" },
     ],
   },
   {
-    label: "Imaging",
+    label: ptBR.navigation.imaging,
     href: "/imaging",
     icon: Image,
   },
   {
-    label: "Billing",
+    label: ptBR.navigation.billing,
     href: "/billing",
     icon: DollarSign,
     children: [
-      { label: "Invoices", href: "/billing/invoices" },
-      { label: "Payments", href: "/billing/payments" },
-      { label: "Insurance Claims", href: "/billing/claims" },
-      { label: "Fee Schedule", href: "/billing/fee-schedule" },
+      { label: ptBR.navigation.invoices, href: "/billing/invoices" },
+      { label: ptBR.navigation.payments, href: "/billing/payments" },
+      { label: ptBR.navigation.insuranceClaims, href: "/billing/claims" },
+      { label: ptBR.navigation.feeSchedule, href: "/billing/fee-schedule" },
     ],
   },
   {
-    label: "Reports",
+    label: ptBR.navigation.reports,
     href: "/reports",
     icon: BarChart3,
     children: [
-      { label: "Production", href: "/reports/production" },
-      { label: "Collections", href: "/reports/collections" },
-      { label: "Appointments", href: "/reports/appointments" },
-      { label: "Patients", href: "/reports/patients" },
+      { label: ptBR.navigation.production, href: "/reports/production" },
+      { label: ptBR.navigation.collections, href: "/reports/collections" },
+      { label: ptBR.navigation.appointments, href: "/reports/appointments" },
+      { label: ptBR.navigation.patients, href: "/reports/patients" },
     ],
     roles: ["OWNER", "DENTIST"],
   },
   {
-    label: "Documents",
+    label: ptBR.navigation.documents,
     href: "/documents",
     icon: FileText,
   },
   {
-    label: "Tasks",
+    label: ptBR.navigation.tasks,
     href: "/tasks",
     icon: ClipboardList,
   },
   {
-    label: "Settings",
+    label: ptBR.navigation.settings,
     href: "/settings",
     icon: Settings,
     roles: ["OWNER"],
     children: [
-      { label: "Practice", href: "/settings/practice" },
-      { label: "Providers", href: "/settings/providers" },
-      { label: "Chairs", href: "/settings/chairs" },
-      { label: "Fee Schedule", href: "/settings/fee-schedule" },
-      { label: "Integrations", href: "/settings/integrations" },
+      { label: ptBR.navigation.practice, href: "/settings/practice" },
+      { label: ptBR.navigation.providers, href: "/settings/providers" },
+      { label: ptBR.navigation.chairs, href: "/settings/chairs" },
+      { label: ptBR.navigation.feeSchedule, href: "/settings/fee-schedule" },
+      { label: ptBR.navigation.integrations, href: "/settings/integrations" },
     ],
   },
 ];
@@ -270,73 +220,65 @@ export const NAV_ITEMS: NavItem[] = [
 // ═══════════════════ MISC ═══════════════════
 
 export const GENDER_OPTIONS = [
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "other", label: "Other" },
-  { value: "prefer_not_to_say", label: "Prefer not to say" },
+  { value: "male", label: ptBR.patient.gender.male },
+  { value: "female", label: ptBR.patient.gender.female },
+  { value: "other", label: ptBR.patient.gender.other },
+  { value: "prefer_not_to_say", label: ptBR.patient.gender.prefer_not_to_say },
 ];
 
 export const US_STATES = [
-  { value: "AL", label: "Alabama" },
-  { value: "AK", label: "Alaska" },
-  { value: "AZ", label: "Arizona" },
-  { value: "AR", label: "Arkansas" },
-  { value: "CA", label: "California" },
-  { value: "CO", label: "Colorado" },
-  { value: "CT", label: "Connecticut" },
-  { value: "DE", label: "Delaware" },
-  { value: "FL", label: "Florida" },
-  { value: "GA", label: "Georgia" },
-  { value: "HI", label: "Hawaii" },
-  { value: "ID", label: "Idaho" },
-  { value: "IL", label: "Illinois" },
-  { value: "IN", label: "Indiana" },
-  { value: "IA", label: "Iowa" },
-  { value: "KS", label: "Kansas" },
-  { value: "KY", label: "Kentucky" },
-  { value: "LA", label: "Louisiana" },
-  { value: "ME", label: "Maine" },
-  { value: "MD", label: "Maryland" },
-  { value: "MA", label: "Massachusetts" },
-  { value: "MI", label: "Michigan" },
-  { value: "MN", label: "Minnesota" },
-  { value: "MS", label: "Mississippi" },
-  { value: "MO", label: "Missouri" },
-  { value: "MT", label: "Montana" },
-  { value: "NE", label: "Nebraska" },
-  { value: "NV", label: "Nevada" },
-  { value: "NH", label: "New Hampshire" },
-  { value: "NJ", label: "New Jersey" },
-  { value: "NM", label: "New Mexico" },
-  { value: "NY", label: "New York" },
-  { value: "NC", label: "North Carolina" },
-  { value: "ND", label: "North Dakota" },
-  { value: "OH", label: "Ohio" },
-  { value: "OK", label: "Oklahoma" },
-  { value: "OR", label: "Oregon" },
-  { value: "PA", label: "Pennsylvania" },
-  { value: "RI", label: "Rhode Island" },
-  { value: "SC", label: "South Carolina" },
-  { value: "SD", label: "South Dakota" },
-  { value: "TN", label: "Tennessee" },
-  { value: "TX", label: "Texas" },
-  { value: "UT", label: "Utah" },
-  { value: "VT", label: "Vermont" },
-  { value: "VA", label: "Virginia" },
-  { value: "WA", label: "Washington" },
-  { value: "WV", label: "West Virginia" },
-  { value: "WI", label: "Wisconsin" },
-  { value: "WY", label: "Wyoming" },
+  { value: "AL", label: ptBR.usState.AL },
+  { value: "AK", label: ptBR.usState.AK },
+  { value: "AZ", label: ptBR.usState.AZ },
+  { value: "AR", label: ptBR.usState.AR },
+  { value: "CA", label: ptBR.usState.CA },
+  { value: "CO", label: ptBR.usState.CO },
+  { value: "CT", label: ptBR.usState.CT },
+  { value: "DE", label: ptBR.usState.DE },
+  { value: "FL", label: ptBR.usState.FL },
+  { value: "GA", label: ptBR.usState.GA },
+  { value: "HI", label: ptBR.usState.HI },
+  { value: "ID", label: ptBR.usState.ID },
+  { value: "IL", label: ptBR.usState.IL },
+  { value: "IN", label: ptBR.usState.IN },
+  { value: "IA", label: ptBR.usState.IA },
+  { value: "KS", label: ptBR.usState.KS },
+  { value: "KY", label: ptBR.usState.KY },
+  { value: "LA", label: ptBR.usState.LA },
+  { value: "ME", label: ptBR.usState.ME },
+  { value: "MD", label: ptBR.usState.MD },
+  { value: "MA", label: ptBR.usState.MA },
+  { value: "MI", label: ptBR.usState.MI },
+  { value: "MN", label: ptBR.usState.MN },
+  { value: "MS", label: ptBR.usState.MS },
+  { value: "MO", label: ptBR.usState.MO },
+  { value: "MT", label: ptBR.usState.MT },
+  { value: "NE", label: ptBR.usState.NE },
+  { value: "NV", label: ptBR.usState.NV },
+  { value: "NH", label: ptBR.usState.NH },
+  { value: "NJ", label: ptBR.usState.NJ },
+  { value: "NM", label: ptBR.usState.NM },
+  { value: "NY", label: ptBR.usState.NY },
+  { value: "NC", label: ptBR.usState.NC },
+  { value: "ND", label: ptBR.usState.ND },
+  { value: "OH", label: ptBR.usState.OH },
+  { value: "OK", label: ptBR.usState.OK },
+  { value: "OR", label: ptBR.usState.OR },
+  { value: "PA", label: ptBR.usState.PA },
+  { value: "RI", label: ptBR.usState.RI },
+  { value: "SC", label: ptBR.usState.SC },
+  { value: "SD", label: ptBR.usState.SD },
+  { value: "TN", label: ptBR.usState.TN },
+  { value: "TX", label: ptBR.usState.TX },
+  { value: "UT", label: ptBR.usState.UT },
+  { value: "VT", label: ptBR.usState.VT },
+  { value: "VA", label: ptBR.usState.VA },
+  { value: "WA", label: ptBR.usState.WA },
+  { value: "WV", label: ptBR.usState.WV },
+  { value: "WI", label: ptBR.usState.WI },
+  { value: "WY", label: ptBR.usState.WY },
 ];
 
-export const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  CASH: "Cash",
-  CHECK: "Check",
-  CREDIT_CARD: "Credit Card",
-  DEBIT_CARD: "Debit Card",
-  INSURANCE: "Insurance",
-  FINANCING: "Financing",
-  OTHER: "Other",
-};
+export const PAYMENT_METHOD_LABELS: Record<string, string> = { ...ptBR.payment.method };
 
 export const ITEMS_PER_PAGE = 25;
