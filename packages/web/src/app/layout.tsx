@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={dmSans.variable}>
+    <html lang="pt-BR" className={dmSans.variable}>
       <body className="font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
