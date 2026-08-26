@@ -142,7 +142,7 @@ export function LedgerView({ patientId, patientName, onBack }: LedgerViewProps) 
       )}
       {!loading && entries.length === 0 && (
         <div className="py-12 text-center text-sm text-stone-400">
-          No ledger entries found.
+          {billingText.noLedgerEntries}
         </div>
       )}
     </div>

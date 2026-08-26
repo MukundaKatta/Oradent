@@ -254,7 +254,7 @@ export default function BillingPage() {
               <DollarSign className="mx-auto h-12 w-12 text-stone-300" />
               <h3 className="mt-3 text-lg font-medium text-stone-700">Histórico de pagamentos</h3>
               <p className="mt-1 text-sm text-stone-500">
-                Select a patient from the Invoices tab to view their payment ledger.
+                {billingText.selectInvoice}
               </p>
             </div>
           )}
@@ -370,7 +370,7 @@ export default function BillingPage() {
             </table>
             {feeSchedule.length === 0 && !loading && (
               <div className="py-12 text-center text-sm text-stone-400">
-                No fee schedule entries found.
+                {billingText.noFeeSchedule}
               </div>
             )}
           </div>
