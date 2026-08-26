@@ -6,6 +6,7 @@ import { X, Upload, FileImage, Loader2 } from 'lucide-react';
 import { apiUpload } from "@/lib/api";
 import { localizeErrorMessage } from "@/lib/errorMessages";
 import { ptBR } from "@/i18n";
+import { formatUploadButtonLabel } from "@/lib/imagingLabels";
 
 interface XrayUploaderProps {
   patientId: string;
@@ -218,7 +219,7 @@ export function XrayUploader({
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    Upload {files.length > 0 ? `(${files.length})` : ''}
+                    {formatUploadButtonLabel(files.length)}
                   </>
                 )}
               </button>
