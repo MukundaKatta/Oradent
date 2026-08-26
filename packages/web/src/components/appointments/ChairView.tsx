@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format } from 'date-fns';
 import { formatTime } from '@/lib/formatters';
 import { t } from '@/i18n';
 import { APPOINTMENT_TYPE_COLORS } from '@/lib/constants';
@@ -50,7 +49,10 @@ export function ChairView({
   onEventClick,
   onSlotClick,
 }: ChairViewProps) {
-  const dateStr = format(currentDate, 'yyyy-MM-dd');
+  const dateKey = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+  const dateStr = dateKey(currentDate);
 
   const chairGroups = useMemo(() => {
     const groups: Record<string, Appointment[]> = {};
@@ -83,7 +85,7 @@ export function ChairView({
 
   const getCurrentTimePosition = () => {
     const now = new Date();
-    const nowDateStr = format(now, 'yyyy-MM-dd');
+    const nowDateStr = dateKey(now);
     if (nowDateStr !== dateStr) return null;
     const hours = now.getHours() + now.getMinutes() / 60;
     if (hours < 8 || hours > 17) return null;

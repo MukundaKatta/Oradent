@@ -262,9 +262,9 @@ export function AppointmentModal({
   };
 
   const onSubmit = async (data: AppointmentFormData) => {
+    setSaveError(null);
     setSaving(true);
     try {
-    setSaveError(null);
       const payload = {
         ...data,
         startTime: `${data.date}T${data.startTime}:00`,
@@ -278,8 +278,8 @@ export function AppointmentModal({
       onSave();
     } catch (error) {
       console.error('Failed to save appointment:', error);
-    } finally {
       setSaveError(t('appointments.saveError', 'Não foi possível salvar a consulta. Tente novamente.'));
+    } finally {
       setSaving(false);
     }
   };
