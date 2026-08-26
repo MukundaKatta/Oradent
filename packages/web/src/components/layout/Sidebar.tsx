@@ -19,20 +19,75 @@ import {
   LogOut,
 } from "lucide-react";
 
-const navigation = [
-  { name: ptBR.shell.navigation.dashboard, href: "/", icon: LayoutDashboard },
-  { name: ptBR.shell.navigation.patients, href: "/patients", icon: Users },
-  { name: ptBR.shell.navigation.appointments, href: "/appointments", icon: Calendar },
-  { name: ptBR.shell.navigation.billing, href: "/billing", icon: Receipt },
-  { name: ptBR.shell.navigation.reports, href: "/reports", icon: BarChart3 },
-  { name: ptBR.shell.navigation.aiAssistant, href: "/ai-assistant", icon: Brain },
-  { name: ptBR.shell.navigation.settings, href: "/settings", icon: Settings },
+const topLevel = { name: ptBR.shell.navigation.dashboard, href: "/", icon: LayoutDashboard };
+
+const groups = [
+  {
+    label: ptBR.shell.navigation.groupClinic,
+    items: [
+      { name: ptBR.shell.navigation.patients, href: "/patients", icon: Users },
+      { name: ptBR.shell.navigation.appointments, href: "/appointments", icon: Calendar },
+      { name: ptBR.shell.navigation.billing, href: "/billing", icon: Receipt },
+    ],
+  },
+  {
+    label: ptBR.shell.navigation.groupInsights,
+    items: [
+      { name: ptBR.shell.navigation.reports, href: "/reports", icon: BarChart3 },
+      { name: ptBR.shell.navigation.aiAssistant, href: "/ai-assistant", icon: Brain },
+    ],
+  },
 ];
+
+const settingsItem = { name: ptBR.shell.navigation.settings, href: "/settings", icon: Settings };
+
+type NavItem = { name: string; href: string; icon: typeof LayoutDashboard };
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { provider, isCollapsed, toggleSidebar, logout } = useAppStore();
+
+  const isItemActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname === href || pathname?.startsWith(href + "/");
+
+  const renderNavItem = (item: NavItem) => {
+    const isActive = isItemActive(item.href);
+
+    return (
+      <Link
+        key={item.name}
+        href={item.href}
+        className={cn(
+          "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+          isActive
+            ? "bg-white/10 text-teal-300 shadow-[inset_0_1px_0_0_rgb(255_255_255_/_0.1)]"
+            : "text-stone-400 hover:bg-stone-800 hover:text-stone-100"
+        )}
+        title={isCollapsed ? item.name : undefined}
+      >
+        <item.icon
+          className={cn(
+            "h-5 w-5 shrink-0 transition-colors",
+            isActive ? "text-teal-400" : "text-stone-500 group-hover:text-stone-300"
+          )}
+        />
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.span
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: "auto" }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.15 }}
+              className="overflow-hidden whitespace-nowrap"
+            >
+              {item.name}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </Link>
+    );
+  };
 
   const initials = provider?.name
     ? provider.name
@@ -90,50 +145,23 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4 scrollbar-thin">
-        {navigation.map((item) => {
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname === item.href || pathname?.startsWith(item.href + "/");
+      <nav className="flex-1 space-y-4 overflow-y-auto px-2 py-4 scrollbar-thin">
+        <div className="space-y-1">{renderNavItem(topLevel)}</div>
 
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-white/10 text-teal-300 shadow-[inset_0_1px_0_0_rgb(255_255_255_/_0.1)]"
-                  : "text-stone-400 hover:bg-stone-800 hover:text-stone-100"
-              )}
-              title={isCollapsed ? item.name : undefined}
-            >
-              <item.icon
-                className={cn(
-                  "h-5 w-5 shrink-0 transition-colors",
-                  isActive
-                    ? "text-teal-400"
-                    : "text-stone-500 group-hover:text-stone-300"
-                )}
-              />
-              <AnimatePresence>
-                {!isCollapsed && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="overflow-hidden whitespace-nowrap"
-                  >
-                    {item.name}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Link>
-          );
-        })}
+        {groups.map((group) => (
+          <div key={group.label} className="space-y-1">
+            {!isCollapsed && (
+              <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-stone-600">
+                {group.label}
+              </p>
+            )}
+            {group.items.map(renderNavItem)}
+          </div>
+        ))}
       </nav>
+
+      {/* Settings — pinned apart from the daily-use workflow above */}
+      <div className="border-t border-white/10 px-2 py-2">{renderNavItem(settingsItem)}</div>
 
       {/* Provider avatar + logout */}
       <div className="border-t border-white/10 p-3">

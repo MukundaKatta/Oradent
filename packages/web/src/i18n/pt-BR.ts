@@ -102,6 +102,8 @@ export const ptBR = {
       reports: "Relatórios",
       aiAssistant: "Assistente de IA",
       settings: "Configurações",
+      groupClinic: "Clínica",
+      groupInsights: "Análise",
     },
     search: {
       placeholder: "Buscar pacientes, ações...",
