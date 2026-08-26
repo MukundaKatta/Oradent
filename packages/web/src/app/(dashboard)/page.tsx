@@ -38,12 +38,12 @@ interface DashboardStats {
 
 function StatCardSkeleton() {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+    <div className="glass-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <div className="w-10 h-10 bg-stone-200 animate-pulse rounded-lg" />
+        <div className="w-10 h-10 bg-stone-200/70 animate-pulse rounded-xl" />
       </div>
-      <div className="h-8 w-24 bg-stone-200 animate-pulse rounded" />
-      <div className="h-4 w-32 bg-stone-200 animate-pulse rounded mt-2" />
+      <div className="h-8 w-24 bg-stone-200/70 animate-pulse rounded" />
+      <div className="h-4 w-32 bg-stone-200/70 animate-pulse rounded mt-2" />
     </div>
   );
 }
@@ -67,14 +67,14 @@ export default function DashboardPage() {
         <div className="flex gap-3">
           <Link
             href="/patients?new=true"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-50 text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/70 border border-stone-200/70 rounded-full text-stone-700 shadow-apple-sm backdrop-blur-sm hover:bg-white text-sm font-medium transition-all active:scale-[0.97]"
           >
             <Plus className="w-4 h-4" />
             {t('dashboard.newPatient', 'Novo paciente')}
           </Link>
           <Link
             href="/appointments?new=true"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-full hover:bg-teal-700 text-sm font-medium shadow-apple-sm transition-all active:scale-[0.97]"
           >
             <Calendar className="w-4 h-4" />
             {t('dashboard.newAppointment', 'Nova consulta')}
@@ -94,9 +94,9 @@ export default function DashboardPage() {
         {isLoading ? (
           <StatCardSkeleton />
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+          <div className="glass-card p-6 transition-transform hover:-translate-y-0.5">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2.5 rounded-lg bg-teal-100">
+              <div className="p-2.5 rounded-xl bg-teal-100/80">
                 <Calendar className="w-5 h-5 text-teal-600" />
               </div>
               {stats?.todayAppointments !== undefined && stats.todayAppointments > 0 && (
@@ -142,32 +142,32 @@ export default function DashboardPage() {
 
         {/* Quick Actions & AI sidebar */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-stone-200 p-6 shadow-sm">
+          <div className="glass-card p-6">
             <h3 className="text-lg font-semibold text-stone-900 mb-4">{t('dashboard.quickActions', 'Ações rápidas')}</h3>
             <div className="grid grid-cols-1 gap-2">
               <Link
                 href="/patients?new=true"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition-colors group"
               >
-                <div className="p-2 bg-teal-100 rounded-lg group-hover:bg-teal-200 transition-colors">
+                <div className="p-2 bg-teal-100/80 rounded-lg group-hover:bg-teal-200/80 transition-colors">
                   <Users className="w-4 h-4 text-teal-600" />
                 </div>
                 <span className="text-sm font-medium text-stone-700">{t('dashboard.newPatient', 'Novo paciente')}</span>
               </Link>
               <Link
                 href="/appointments?new=true"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition-colors group"
               >
-                <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                <div className="p-2 bg-blue-100/80 rounded-lg group-hover:bg-blue-200/80 transition-colors">
                   <Calendar className="w-4 h-4 text-blue-600" />
                 </div>
                 <span className="text-sm font-medium text-stone-700">{t('dashboard.newAppointment', 'Nova consulta')}</span>
               </Link>
               <Link
                 href="/ai-assistant"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition-colors group"
               >
-                <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                <div className="p-2 bg-purple-100/80 rounded-lg group-hover:bg-purple-200/80 transition-colors">
                   <Brain className="w-4 h-4 text-purple-600" />
                 </div>
                 <span className="text-sm font-medium text-stone-700">{t('dashboard.aiAnalysis', 'Análise com IA')}</span>

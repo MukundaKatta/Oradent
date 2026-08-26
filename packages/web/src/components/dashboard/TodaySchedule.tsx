@@ -68,7 +68,7 @@ export default function TodaySchedule() {
   const { data: schedule, isLoading, isError } = useTodaySchedule();
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-stone-200">
+    <div className="glass-card">
       <div className="flex items-center justify-between p-6 pb-4">
         <h2 className="text-lg font-semibold text-stone-900">
           {t('dashboard.todaySchedule', 'Agenda de hoje')}

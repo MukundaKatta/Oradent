@@ -55,11 +55,10 @@ export function Sidebar() {
       initial={false}
       animate={{ width: isCollapsed ? 64 : 240 }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="relative flex h-screen flex-col border-r border-stone-800 bg-stone-900"
-      style={{ backgroundColor: "#1c1917" }}
+      className="glass-dark relative flex h-screen flex-col"
     >
       {/* Logo / Brand */}
-      <div className="flex h-14 items-center gap-3 border-b border-stone-800 px-4">
+      <div className="flex h-14 items-center gap-3 border-b border-white/10 px-4">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600">
           <svg
             width="18"
@@ -105,7 +104,7 @@ export function Sidebar() {
               className={cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-teal-600/20 text-teal-400"
+                  ? "bg-white/10 text-teal-300 shadow-[inset_0_1px_0_0_rgb(255_255_255_/_0.1)]"
                   : "text-stone-400 hover:bg-stone-800 hover:text-stone-100"
               )}
               title={isCollapsed ? item.name : undefined}
@@ -137,7 +136,7 @@ export function Sidebar() {
       </nav>
 
       {/* Provider avatar + logout */}
-      <div className="border-t border-stone-800 p-3">
+      <div className="border-t border-white/10 p-3">
         <div className="flex items-center gap-3">
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-medium text-white"

@@ -9,3 +9,4 @@ uploads/
 coverage/
 .turbo
 packages/web/tsconfig.tsbuildinfo
+packages/web/next-env.d.ts

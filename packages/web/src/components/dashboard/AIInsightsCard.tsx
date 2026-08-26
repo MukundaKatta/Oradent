@@ -25,7 +25,7 @@ const typeIcons: Record<string, { bg: string; text: string }> = {
 export default function AIInsightsCard({ insights, isLoading }: AIInsightsCardProps) {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+      <div className="glass-card p-6">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-5 h-5 bg-stone-200 animate-pulse rounded" />
           <div className="w-24 h-5 bg-stone-200 animate-pulse rounded" />
@@ -43,7 +43,7 @@ export default function AIInsightsCard({ insights, isLoading }: AIInsightsCardPr
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+    <div className="glass-card p-6">
       <div className="flex items-center gap-2 mb-4">
         <svg
           className="w-5 h-5 text-teal-600"

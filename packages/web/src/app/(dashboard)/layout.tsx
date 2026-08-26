@@ -46,7 +46,7 @@ export default function DashboardLayout({
 
   if (isAuthed === null) {
     return (
-      <div className="flex h-screen items-center justify-center bg-stone-50">
+      <div className="app-shell-bg flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
           <p className="text-sm text-stone-500">{ptBR.patientWorkflow.common.loading}</p>
@@ -56,7 +56,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-stone-50">
+    <div className="app-shell-bg flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar />

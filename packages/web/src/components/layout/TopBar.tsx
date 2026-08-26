@@ -40,7 +40,7 @@ export function TopBar() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-stone-200 bg-white px-6">
+      <header className="glass relative z-30 flex h-16 shrink-0 items-center justify-between border-x-0 border-t-0 px-6 shadow-apple-sm">
         {/* Left: Practice name */}
         <div>
           <h1 className="text-lg font-semibold text-stone-900">
@@ -51,7 +51,7 @@ export function TopBar() {
         {/* Center: Search trigger */}
         <button
           onClick={() => setCommandOpen(true)}
-          className="flex h-9 w-80 items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm text-stone-400 transition-colors hover:border-stone-300 hover:bg-stone-100"
+          className="flex h-9 w-80 items-center gap-2 rounded-full border border-stone-200/70 bg-white/70 px-3.5 text-sm text-stone-400 shadow-apple-sm backdrop-blur-sm transition-colors hover:border-stone-300 hover:bg-white"
         >
           <Search className="h-4 w-4" />
           <span className="flex-1 text-left">{ptBR.shell.search.placeholder}</span>
@@ -104,7 +104,7 @@ export function TopBar() {
               <DropdownMenu.Content
                 align="end"
                 sideOffset={8}
-                className="z-50 min-w-[200px] overflow-hidden rounded-lg border border-stone-200 bg-white p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
+                className="glass-card z-50 min-w-[200px] overflow-hidden p-1 shadow-apple-lg animate-in fade-in-0 zoom-in-95"
               >
                 <div className="px-3 py-2 border-b border-stone-100 mb-1">
                   <p className="text-sm font-medium text-stone-900">
