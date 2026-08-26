@@ -16,9 +16,8 @@ import { CreateInvoice } from '@/components/billing/CreateInvoice';
 import { PaymentModal } from '@/components/billing/PaymentModal';
 import { InsuranceClaimForm } from '@/components/billing/InsuranceClaimForm';
 import { LedgerView } from '@/components/billing/LedgerView';
+import { billingText, formatBillingCurrency, getClaimStatusLabel } from '@/components/billing/billingLabels';
 import {
-  CLAIM_STATUS_LABELS,
-  INVOICE_STATUS_LABELS,
   INVOICE_STATUS_COLORS,
 } from '@/lib/constants';
 
@@ -114,9 +113,6 @@ export default function BillingPage() {
     }
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-
   const claimsByStage = CLAIM_PIPELINE_STAGES.reduce(
     (acc, stage) => {
       acc[stage] = claims.filter((c) => c.status === stage);
@@ -135,9 +131,9 @@ export default function BillingPage() {
               <AlertCircle className="h-5 w-5 text-red-500" />
             </div>
             <div>
-              <p className="text-sm text-stone-500">Total Outstanding</p>
+              <p className="text-sm text-stone-500">Total em aberto</p>
               <p className="text-xl font-bold text-stone-900">
-                {formatCurrency(summary.totalOutstanding)}
+                {formatBillingCurrency(summary.totalOutstanding)}
               </p>
             </div>
           </div>
@@ -148,9 +144,9 @@ export default function BillingPage() {
               <TrendingUp className="h-5 w-5 text-teal-600" />
             </div>
             <div>
-              <p className="text-sm text-stone-500">MTD Revenue</p>
+              <p className="text-sm text-stone-500">Receita do mês</p>
               <p className="text-xl font-bold text-stone-900">
-                {formatCurrency(summary.mtdRevenue)}
+                {formatBillingCurrency(summary.mtdRevenue)}
               </p>
             </div>
           </div>
@@ -161,9 +157,9 @@ export default function BillingPage() {
               <FileText className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm text-stone-500">Pending Claims</p>
+              <p className="text-sm text-stone-500">Guias pendentes</p>
               <p className="text-xl font-bold text-stone-900">
-                {formatCurrency(summary.pendingClaims)}
+                {formatBillingCurrency(summary.pendingClaims)}
               </p>
             </div>
           </div>
@@ -174,7 +170,7 @@ export default function BillingPage() {
               <DollarSign className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-stone-500">Collection Rate</p>
+              <p className="text-sm text-stone-500">Índice de recebimento</p>
               <p className="text-xl font-bold text-stone-900">
                 {summary.collectionRate.toFixed(1)}%
               </p>
@@ -198,9 +194,7 @@ export default function BillingPage() {
                     : 'text-stone-600 hover:bg-stone-100'
                 )}
               >
-                {tab === 'fee-schedule'
-                  ? 'Fee Schedule'
-                  : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab === 'invoices' ? billingText.invoices : tab === 'payments' ? billingText.payments : tab === 'claims' ? billingText.claims : billingText.feeSchedule}
               </Tabs.Trigger>
             ))}
           </Tabs.List>
@@ -258,7 +252,7 @@ export default function BillingPage() {
           ) : (
             <div className="rounded-xl border border-stone-200 bg-white p-8 text-center shadow-sm">
               <DollarSign className="mx-auto h-12 w-12 text-stone-300" />
-              <h3 className="mt-3 text-lg font-medium text-stone-700">Payment History</h3>
+              <h3 className="mt-3 text-lg font-medium text-stone-700">Histórico de pagamentos</h3>
               <p className="mt-1 text-sm text-stone-500">
                 Select a patient from the Invoices tab to view their payment ledger.
               </p>
@@ -273,7 +267,7 @@ export default function BillingPage() {
               <div key={stage} className="rounded-xl border border-stone-200 bg-stone-50 p-3">
                 <div className="mb-3 flex items-center justify-between">
                   <h4 className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-                    {CLAIM_STATUS_LABELS[stage] || stage}
+                    {getClaimStatusLabel(stage)}
                   </h4>
                   <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-medium text-stone-600">
                     {claimsByStage[stage]?.length || 0}
@@ -295,7 +289,7 @@ export default function BillingPage() {
                         {claim.insuranceProvider}
                       </p>
                       <p className="mt-1 text-sm font-semibold text-stone-700">
-                        {formatCurrency(claim.amount)}
+                        {formatBillingCurrency(claim.amount)}
                       </p>
                     </div>
                   ))}
@@ -316,12 +310,12 @@ export default function BillingPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-stone-200">
-                  <th className="px-4 py-3 text-left font-medium text-stone-500">CDT Code</th>
-                  <th className="px-4 py-3 text-left font-medium text-stone-500">Description</th>
-                  <th className="px-4 py-3 text-left font-medium text-stone-500">Category</th>
-                  <th className="px-4 py-3 text-right font-medium text-stone-500">Fee</th>
-                  <th className="px-4 py-3 text-right font-medium text-stone-500">Insurance Allowance</th>
-                  <th className="px-4 py-3 text-right font-medium text-stone-500">Actions</th>
+                  <th className="px-4 py-3 text-left font-medium text-stone-500">Código CDT</th>
+                  <th className="px-4 py-3 text-left font-medium text-stone-500">Descrição</th>
+                  <th className="px-4 py-3 text-left font-medium text-stone-500">Categoria</th>
+                  <th className="px-4 py-3 text-right font-medium text-stone-500">Valor</th>
+                  <th className="px-4 py-3 text-right font-medium text-stone-500">Cobertura do convênio</th>
+                  <th className="px-4 py-3 text-right font-medium text-stone-500">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -355,12 +349,12 @@ export default function BillingPage() {
                         />
                       ) : (
                         <span className="font-medium text-stone-900">
-                          {formatCurrency(entry.fee)}
+                          {formatBillingCurrency(entry.fee)}
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right text-stone-600">
-                      {formatCurrency(entry.insuranceAllowance)}
+                      {formatBillingCurrency(entry.insuranceAllowance)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button

@@ -24,6 +24,7 @@ import {
 import { apiGet, apiPut, apiPost } from '@/lib/api';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/lib/utils';
+import { ptBR } from '@/i18n';
 import type { Practice, PracticeSettings, Provider, Chair, ProviderRole } from '@/types';
 
 // ═══════════════════ SCHEMAS ═══════════════════
@@ -73,15 +74,9 @@ const ROLE_COLORS: Record<ProviderRole, string> = {
   FRONT_DESK: 'bg-stone-100 text-stone-700 border-stone-200',
 };
 
-const ROLE_LABELS: Record<ProviderRole, string> = {
-  OWNER: 'Owner',
-  DENTIST: 'Dentist',
-  HYGIENIST: 'Hygienist',
-  ASSISTANT: 'Assistant',
-  FRONT_DESK: 'Front Desk',
-};
+const ROLE_LABELS: Record<ProviderRole, string> = ptBR.provider.role;
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 // ═══════════════════ TOAST ═══════════════════
 
@@ -200,7 +195,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
   return (
     <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
       <div className="border-b border-stone-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-stone-900">Practice Information</h2>
+        <h2 className="text-lg font-semibold text-stone-900">Dados da clínica</h2>
         <p className="mt-1 text-sm text-stone-500">
           Update your practice details visible to staff and on documents.
         </p>
@@ -388,7 +383,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
       <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-stone-900">Team Members</h2>
+            <h2 className="text-lg font-semibold text-stone-900">Membros da equipe</h2>
             <p className="mt-1 text-sm text-stone-500">
               Manage providers and staff associated with your practice.
             </p>
@@ -409,7 +404,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
           ) : !providers || providers.length === 0 ? (
             <div className="py-12 text-center">
               <Users className="mx-auto h-12 w-12 text-stone-300" />
-              <h3 className="mt-3 text-sm font-medium text-stone-700">No team members</h3>
+              <h3 className="mt-3 text-sm font-medium text-stone-700">Nenhum membro na equipe</h3>
               <p className="mt-1 text-xs text-stone-500">
                 No providers have been added to this practice yet.
               </p>
@@ -488,7 +483,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-xl border border-stone-200 bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-stone-900">Invite Team Member</h3>
+              <h3 className="text-lg font-semibold text-stone-900">Convidar membro da equipe</h3>
               <button
                 onClick={() => { setShowInvite(false); resetInvite(); }}
                 className="rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
@@ -501,7 +496,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
               className="p-6 space-y-4"
             >
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Full Name</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Nome completo</label>
                 <input
                   {...registerInvite('name')}
                   className={cn(
@@ -527,7 +522,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Title</label>
+                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Título</label>
                   <input
                     {...registerInvite('title')}
                     className={cn(
@@ -539,7 +534,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                   {inviteErrors.title && <p className="mt-1 text-xs text-red-600">{inviteErrors.title.message}</p>}
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Role</label>
+                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Função</label>
                   <select
                     {...registerInvite('role')}
                     className="w-full rounded-lg border border-stone-300 px-3.5 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -552,7 +547,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Temporary Password</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Senha temporária</label>
                 <input
                   {...registerInvite('tempPassword')}
                   type="password"
@@ -637,7 +632,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
       <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-stone-900">Operatory Chairs</h2>
+            <h2 className="text-lg font-semibold text-stone-900">Cadeiras de atendimento</h2>
             <p className="mt-1 text-sm text-stone-500">
               Manage the chairs and operatories in your practice.
             </p>
@@ -656,7 +651,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
           ) : !chairs || chairs.length === 0 ? (
             <div className="py-12 text-center">
               <Armchair className="mx-auto h-12 w-12 text-stone-300" />
-              <h3 className="mt-3 text-sm font-medium text-stone-700">No chairs configured</h3>
+              <h3 className="mt-3 text-sm font-medium text-stone-700">Nenhuma cadeira configurada</h3>
               <p className="mt-1 text-xs text-stone-500">
                 Add operatory chairs to start scheduling appointments.
               </p>
@@ -696,7 +691,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-xl border border-stone-200 bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-stone-900">Add New Chair</h3>
+              <h3 className="text-lg font-semibold text-stone-900">Adicionar nova cadeira</h3>
               <button
                 onClick={() => {
                   setShowForm(false);
@@ -822,7 +817,7 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
       {/* Appointment Settings */}
       <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
         <div className="border-b border-stone-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-stone-900">Scheduling Preferences</h2>
+          <h2 className="text-lg font-semibold text-stone-900">Preferências de agendamento</h2>
           <p className="mt-1 text-sm text-stone-500">
             Configure default appointment duration, working hours, and reminder settings.
           </p>
@@ -1068,7 +1063,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-stone-900">Settings</h1>
+        <h1 className="text-2xl font-bold text-stone-900">Configurações</h1>
         <p className="mt-1 text-sm text-stone-500">
           Manage your practice configuration, team, and preferences.
         </p>

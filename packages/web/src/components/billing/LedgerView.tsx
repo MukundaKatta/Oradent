@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { formatCurrency, formatDate } from '@/lib/formatters';
+import { billingText, getLedgerTypeLabel } from './billingLabels';
 import { ArrowLeft, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { apiGet } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -43,14 +44,11 @@ export function LedgerView({ patientId, patientName, onBack }: LedgerViewProps) 
     }
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-
   const TYPE_STYLES: Record<string, { label: string; style: string; icon: typeof ArrowDownLeft }> = {
-    charge: { label: 'Charge', style: 'text-red-600', icon: ArrowUpRight },
-    payment: { label: 'Payment', style: 'text-green-600', icon: ArrowDownLeft },
-    adjustment: { label: 'Adjustment', style: 'text-amber-600', icon: ArrowDownLeft },
-    insurance: { label: 'Insurance', style: 'text-blue-600', icon: ArrowDownLeft },
+    charge: { label: getLedgerTypeLabel('charge'), style: 'text-red-600', icon: ArrowUpRight },
+    payment: { label: getLedgerTypeLabel('payment'), style: 'text-green-600', icon: ArrowDownLeft },
+    adjustment: { label: getLedgerTypeLabel('adjustment'), style: 'text-amber-600', icon: ArrowDownLeft },
+    insurance: { label: getLedgerTypeLabel('insurance'), style: 'text-blue-600', icon: ArrowDownLeft },
   };
 
   const currentBalance = entries.length > 0 ? entries[entries.length - 1].balance : 0;
@@ -67,12 +65,12 @@ export function LedgerView({ patientId, patientName, onBack }: LedgerViewProps) 
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h3 className="text-sm font-semibold text-stone-900">Patient Ledger</h3>
+            <h3 className="text-sm font-semibold text-stone-900">Extrato do paciente</h3>
             <p className="text-xs text-stone-500">{patientName}</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xs text-stone-500">Current Balance</p>
+          <p className="text-xs text-stone-500">Saldo atual</p>
           <p
             className={cn(
               'text-lg font-bold',
@@ -95,12 +93,12 @@ export function LedgerView({ patientId, patientName, onBack }: LedgerViewProps) 
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-stone-200">
-              <th className="px-4 py-3 text-left font-medium text-stone-500">Date</th>
-              <th className="px-4 py-3 text-left font-medium text-stone-500">Description</th>
-              <th className="px-4 py-3 text-left font-medium text-stone-500">Type</th>
-              <th className="px-4 py-3 text-left font-medium text-stone-500">Reference</th>
-              <th className="px-4 py-3 text-right font-medium text-stone-500">Amount</th>
-              <th className="px-4 py-3 text-right font-medium text-stone-500">Balance</th>
+              <th className="px-4 py-3 text-left font-medium text-stone-500">Data</th>
+              <th className="px-4 py-3 text-left font-medium text-stone-500">Descrição</th>
+              <th className="px-4 py-3 text-left font-medium text-stone-500">Tipo</th>
+              <th className="px-4 py-3 text-left font-medium text-stone-500">Referência</th>
+              <th className="px-4 py-3 text-right font-medium text-stone-500">Valor</th>
+              <th className="px-4 py-3 text-right font-medium text-stone-500">Saldo</th>
             </tr>
           </thead>
           <tbody>
@@ -113,7 +111,7 @@ export function LedgerView({ patientId, patientName, onBack }: LedgerViewProps) 
                   className="border-b border-stone-100 hover:bg-stone-50 transition-colors"
                 >
                   <td className="px-4 py-3 text-stone-600">
-                    {format(new Date(entry.date), 'MMM d, yyyy')}
+                    {formatDate(entry.date)}
                   </td>
                   <td className="px-4 py-3 font-medium text-stone-900">
                     {entry.description}

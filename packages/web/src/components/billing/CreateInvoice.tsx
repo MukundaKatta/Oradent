@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Plus, Trash2, Search, User } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api';
+import { formatCurrency } from '@/lib/formatters';
 
 const invoiceSchema = z.object({
   patientId: z.string().min(1, 'Patient is required'),
@@ -112,9 +113,6 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
     setSearchResults([]);
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-
   const onSubmit = async (data: InvoiceFormData) => {
     setSaving(true);
     try {
@@ -146,7 +144,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Patient */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-stone-700">Patient</label>
+              <label className="mb-1.5 block text-sm font-medium text-stone-700">Paciente</label>
               {selectedPatient ? (
                 <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-stone-50 px-3 py-2">
                   <div className="flex items-center gap-2">
@@ -204,7 +202,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
             {/* Dates */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Invoice Date</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Data da fatura</label>
                 <input
                   type="date"
                   {...register('date')}
@@ -212,7 +210,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Due Date</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Data de vencimento</label>
                 <input
                   type="date"
                   {...register('dueDate')}
@@ -224,7 +222,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
             {/* Line Items */}
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label className="text-sm font-medium text-stone-700">Line Items</label>
+                <label className="text-sm font-medium text-stone-700">Itens da fatura</label>
                 <button
                   type="button"
                   onClick={() =>
@@ -240,7 +238,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                 {fields.map((field, index) => (
                   <div key={field.id} className="grid grid-cols-[100px_1fr_70px_60px_100px_32px] gap-2 items-end">
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">CDT Code</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Código CDT</span>}
                       <input
                         {...register(`items.${index}.cdtCode`)}
                         placeholder="D0120"
@@ -256,7 +254,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                       />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Tooth</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Dente</span>}
                       <input
                         {...register(`items.${index}.toothNumber`)}
                         placeholder="#"
@@ -264,7 +262,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                       />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Qty</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Qtd.</span>}
                       <input
                         type="number"
                         {...register(`items.${index}.quantity`, { valueAsNumber: true })}
@@ -272,7 +270,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                       />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Fee</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Valor</span>}
                       <input
                         type="number"
                         step="0.01"
@@ -312,7 +310,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
 
             {/* Notes */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-stone-700">Notes</label>
+              <label className="mb-1.5 block text-sm font-medium text-stone-700">Observações</label>
               <textarea
                 {...register('notes')}
                 rows={2}
