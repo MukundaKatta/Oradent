@@ -44,4 +44,17 @@ describe("catálogos pt-BR", () => {
     expect(NAV_ITEMS[0].label).toBe(ptBR.navigation.schedule);
     expect(US_STATES.find(({ value }) => value === "CA")?.label).toBe(ptBR.usState.CA);
   });
+
+  it("cobre as uniões clínicas que ainda não possuem rótulos", () => {
+    expect(clinicalPtBR).toHaveProperty("toothStatus.PRESENT", "Presente");
+    expect(clinicalPtBR).toHaveProperty("treatmentPlanStatus.PRESENTED", "Apresentado");
+    expect(clinicalPtBR).toHaveProperty("imageType.INTRAORAL_PHOTO", "Fotografia intraoral");
+    expect(clinicalPtBR).toHaveProperty("imageType.EXTRAORAL_PHOTO", "Fotografia extraoral");
+  });
+
+  it("centraliza os textos da interface do Assistente de IA", () => {
+    expect(ptBR).toHaveProperty("aiAssistant.title", "Assistente de IA");
+    expect(ptBR).toHaveProperty("aiAssistant.note.generate", "Gerar nota SOAP");
+    expect(ptBR).toHaveProperty("aiAssistant.history.empty", "Nenhum histórico de análises encontrado para este paciente.");
+  });
 });

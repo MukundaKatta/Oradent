@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { TOOTH_MAP, getCenterSurfaceLabel } from "@/lib/toothMap";
+import { ptBR } from "@/i18n";
 import { getConditionColor } from "@/lib/conditionColors";
 import { formatToothAriaLabel } from "@/lib/clinicalLabels";
 
@@ -128,7 +129,7 @@ export default function ToothSVG({
         height={size}
         className="block"
         role="img"
-        aria-label={formatToothAriaLabel(toothNumber, tooth.name)}
+        aria-label={formatToothAriaLabel(toothNumber, ptBR.toothNames[toothNumber as keyof typeof ptBR.toothNames] ?? tooth.name)}
       >
         {/* Selected ring */}
         {isSelected && (

@@ -116,7 +116,7 @@ export function formatPatientName(
   firstName: string | undefined,
   lastName: string | undefined
 ): string {
-  if (!firstName && !lastName) return "Unknown";
+  if (!firstName && !lastName) return NOT_INFORMED;
   return `${firstName || ""} ${lastName || ""}`.trim();
 }
 

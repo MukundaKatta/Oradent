@@ -449,10 +449,10 @@ export default function ReportsPage() {
             </div>
             <div>
               <h2 className="text-base font-semibold text-stone-900">
-                Provider Productivity
+                Produtividade por profissional
               </h2>
               <p className="text-xs text-stone-500">
-                Performance metrics by provider
+                Indicadores de desempenho por profissional
               </p>
             </div>
           </div>
@@ -466,22 +466,22 @@ export default function ReportsPage() {
               <thead>
                 <tr className="border-b border-stone-200 bg-stone-50">
                   <th className="px-6 py-3 text-left font-medium text-stone-500">
-                    Provider
+                    Profissional
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Appointments
+                    Consultas
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Procedures
+                    Procedimentos
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Revenue
+                    Receita
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Avg / Visit
+                    Média por consulta
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Cancel Rate
+                    Taxa de cancelamento
                   </th>
                 </tr>
               </thead>

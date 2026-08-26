@@ -177,10 +177,10 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
       queryClient.invalidateQueries({ queryKey: ['settings', 'practice'] });
       updatePractice(data);
       reset(data);
-      addToast('success', 'Practice information updated successfully');
+      addToast('success', 'Dados da clínica atualizados com sucesso.');
     },
     onError: () => {
-      addToast('error', 'Failed to update practice information');
+      addToast('error', 'Não foi possível atualizar os dados da clínica.');
     },
   });
 
@@ -188,7 +188,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
 
   if (error) {
     return (
-      <ErrorCard message="Failed to load practice information. Please try again." />
+      <ErrorCard message="Não foi possível carregar os dados da clínica. Tente novamente." />
     );
   }
 
@@ -219,7 +219,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
                   'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                   errors.name ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                 )}
-                placeholder="e.g. Bright Smile Dental"
+                placeholder="Ex.: Sorriso Brilhante Odontologia"
               />
               {errors.name && (
                 <p className="mt-1.5 text-xs text-red-600">{errors.name.message}</p>
@@ -240,7 +240,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
                   'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                   errors.address ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                 )}
-                placeholder="123 Main St, Suite 100, City, ST 12345"
+                placeholder="Rua Principal, 100, sala 10, Cidade, UF, 12345-678"
               />
               {errors.address && (
                 <p className="mt-1.5 text-xs text-red-600">{errors.address.message}</p>
@@ -284,7 +284,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
                     'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     errors.email ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   )}
-                  placeholder="office@practice.com"
+                  placeholder="contato@clinica.com"
                 />
                 {errors.email && (
                   <p className="mt-1.5 text-xs text-red-600">{errors.email.message}</p>
@@ -360,7 +360,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
       addToast('success', 'Team member invited successfully');
     },
     onError: () => {
-      addToast('error', 'Failed to invite team member. Email may already be in use.');
+      addToast('error', 'Não foi possível convidar o membro da equipe. O e-mail pode já estar em uso.');
     },
   });
 
@@ -369,13 +369,13 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
       apiPut(`/api/settings/providers/${id}`, { isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', 'providers'] });
-      addToast('success', 'Provider status updated');
+      addToast('success', 'Status do profissional atualizado.');
     },
-    onError: () => addToast('error', 'Failed to update provider'),
+    onError: () => addToast('error', 'Não foi possível atualizar o profissional.'),
   });
 
   if (error) {
-    return <ErrorCard message="Failed to load team members. Please try again." />;
+    return <ErrorCard message="Não foi possível carregar os membros da equipe. Tente novamente." />;
   }
 
   return (
@@ -503,7 +503,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                     'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     inviteErrors.name ? 'border-red-300 bg-red-50' : 'border-stone-300'
                   )}
-                  placeholder="Dr. Jane Smith"
+                  placeholder="Dra. Ana Silva"
                 />
                 {inviteErrors.name && <p className="mt-1 text-xs text-red-600">{inviteErrors.name.message}</p>}
               </div>
@@ -516,7 +516,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                     'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     inviteErrors.email ? 'border-red-300 bg-red-50' : 'border-stone-300'
                   )}
-                  placeholder="jane@practice.com"
+                  placeholder="ana@clinica.com"
                 />
                 {inviteErrors.email && <p className="mt-1 text-xs text-red-600">{inviteErrors.email.message}</p>}
               </div>
@@ -555,7 +555,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                     'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     inviteErrors.tempPassword ? 'border-red-300 bg-red-50' : 'border-stone-300'
                   )}
-                  placeholder="Min. 8 characters"
+                  placeholder="Mín. 8 caracteres"
                 />
                 {inviteErrors.tempPassword && <p className="mt-1 text-xs text-red-600">{inviteErrors.tempPassword.message}</p>}
               </div>
@@ -565,7 +565,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                   onClick={() => { setShowInvite(false); resetInvite(); }}
                   className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   type="submit"
@@ -617,14 +617,14 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
       addToast('success', 'Chair added successfully');
     },
     onError: () => {
-      addToast('error', 'Failed to add chair');
+      addToast('error', 'Não foi possível adicionar a cadeira.');
     },
   });
 
   const onSubmit = (data: ChairFormData) => mutation.mutate(data);
 
   if (error) {
-    return <ErrorCard message="Failed to load chairs. Please try again." />;
+    return <ErrorCard message="Não foi possível carregar as cadeiras. Tente novamente." />;
   }
 
   return (
@@ -714,7 +714,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
                     'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     errors.name ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   )}
-                  placeholder="e.g. Chair 1, Operatory A"
+                  placeholder="Ex.: Cadeira 1, Consultório A"
                   autoFocus
                 />
                 {errors.name && (
@@ -730,7 +730,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
                   }}
                   className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   type="submit"
@@ -802,14 +802,14 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
       addToast('success', 'Preferences updated successfully');
     },
     onError: () => {
-      addToast('error', 'Failed to update preferences');
+      addToast('error', 'Não foi possível atualizar as preferências.');
     },
   });
 
   const onSubmit = (data: PreferencesFormData) => mutation.mutate(data);
 
   if (error) {
-    return <ErrorCard message="Failed to load preferences. Please try again." />;
+    return <ErrorCard message="Não foi possível carregar as preferências. Tente novamente." />;
   }
 
   return (
@@ -969,11 +969,11 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
                     errors.currency ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   )}
                 >
-                  <option value="USD">USD - US Dollar</option>
-                  <option value="CAD">CAD - Canadian Dollar</option>
-                  <option value="GBP">GBP - British Pound</option>
+                  <option value="USD">USD - Dólar americano</option>
+                  <option value="CAD">CAD - Dólar canadense</option>
+                  <option value="GBP">GBP - Libra esterlina</option>
                   <option value="EUR">EUR - Euro</option>
-                  <option value="AUD">AUD - Australian Dollar</option>
+                  <option value="AUD">AUD - Dólar australiano</option>
                 </select>
                 {errors.currency && (
                   <p className="mt-1.5 text-xs text-red-600">{errors.currency.message}</p>

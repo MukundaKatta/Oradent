@@ -147,7 +147,7 @@ export default function DentalChart({
         <div className="my-3 flex items-center gap-2">
           <div className="flex-1 border-t border-dashed border-slate-200" />
           <span className="text-[10px] text-slate-400 font-medium shrink-0">
-            MIDLINE
+            {ptBR.patientWorkflow.chart.midline}
           </span>
           <div className="flex-1 border-t border-dashed border-slate-200" />
         </div>
@@ -180,7 +180,7 @@ export default function DentalChart({
       {/* Legend */}
       <div className="w-full max-w-4xl bg-white rounded-lg border border-slate-200 px-4 py-2 shadow-sm">
         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-          Legend
+          {ptBR.patientWorkflow.chart.legend}
         </p>
         <ChartLegend />
       </div>

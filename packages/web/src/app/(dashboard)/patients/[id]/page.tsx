@@ -184,7 +184,7 @@ export default function PatientProfilePage() {
             href={`/patients/${params.id}/billing`}
             className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-teal-600 hover:text-teal-700"
           >
-            View Billing
+            {copy.viewBilling}
             <DollarSign className="h-3.5 w-3.5" />
           </Link>
         </div>

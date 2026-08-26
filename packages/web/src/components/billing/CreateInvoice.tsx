@@ -132,7 +132,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <Dialog.Title className="text-lg font-semibold text-stone-900">
-              Create Invoice
+              Criar fatura
             </Dialog.Title>
             <Dialog.Close asChild>
               <button className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100">
@@ -326,7 +326,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                 onClick={onClose}
                 className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
-                Cancel
+                Cancelar
               </button>
               <button
                 type="submit"

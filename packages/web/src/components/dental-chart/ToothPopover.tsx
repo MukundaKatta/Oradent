@@ -101,7 +101,7 @@ export default function ToothPopover({
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-900">
-              #{toothNumber} &mdash; {tooth.name}
+              #{toothNumber} &mdash; {ptBR.toothNames[toothNumber as keyof typeof ptBR.toothNames] ?? tooth.name}
             </h3>
             <Popover.Close asChild>
               <button
@@ -116,11 +116,11 @@ export default function ToothPopover({
           {/* Current conditions */}
           <div className="mb-3">
             <p className="text-xs font-medium text-slate-500 mb-1.5">
-              Current Conditions
+              {ptBR.patientWorkflow.chart.currentConditions}
             </p>
             {conditions.length === 0 ? (
               <p className="text-xs text-slate-400 italic">
-                No conditions recorded
+                {ptBR.patientWorkflow.chart.noConditions}
               </p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
@@ -148,7 +148,7 @@ export default function ToothPopover({
           {showAddForm ? (
             <div className="space-y-3 border-t border-slate-100 pt-3">
               <p className="text-xs font-medium text-slate-500">
-                Select Condition
+                {ptBR.patientWorkflow.chart.selectCondition}
               </p>
               <ConditionPalette
                 selectedCondition={selectedCondition}
@@ -156,7 +156,7 @@ export default function ToothPopover({
               />
 
               <p className="text-xs font-medium text-slate-500 mt-2">
-                Select Surfaces
+                {ptBR.patientWorkflow.chart.selectSurfaces}
               </p>
               <div className="flex justify-center">
                 <SurfaceSelector
@@ -175,7 +175,7 @@ export default function ToothPopover({
                   className="flex-1 rounded-md bg-teal-600 px-3 py-1.5 text-xs font-medium text-white
                     hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Add
+                  {ptBR.patientWorkflow.chart.add}
                 </button>
                 <button
                   type="button"
@@ -183,7 +183,7 @@ export default function ToothPopover({
                   className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600
                     hover:bg-slate-50 transition-colors"
                 >
-                  Cancel
+                  {ptBR.patientWorkflow.common.cancel}
                 </button>
               </div>
             </div>
@@ -196,14 +196,14 @@ export default function ToothPopover({
                 transition-colors w-full justify-center"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Condition
+              {ptBR.patientWorkflow.chart.addCondition}
             </button>
           )}
 
           {/* Notes */}
           <div className="mt-3 border-t border-slate-100 pt-3">
             <label className="text-xs font-medium text-slate-500 mb-1 block">
-              Notes
+              {ptBR.patientWorkflow.common.notes}
             </label>
             <textarea
               value={notes}
@@ -225,7 +225,7 @@ export default function ToothPopover({
                 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
             >
               <Save className="h-3.5 w-3.5" />
-              Save
+              {ptBR.patientWorkflow.common.save}
             </button>
             <Popover.Close asChild>
               <button
@@ -233,7 +233,7 @@ export default function ToothPopover({
                 className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600
                   hover:bg-slate-50 transition-colors"
               >
-                Cancel
+                {ptBR.patientWorkflow.common.cancel}
               </button>
             </Popover.Close>
           </div>

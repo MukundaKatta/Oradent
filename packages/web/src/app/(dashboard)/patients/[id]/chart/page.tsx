@@ -40,11 +40,11 @@ export default function DentalChartPage() {
             className="flex items-center gap-2 rounded-lg border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors"
           >
             <RotateCcw className="h-4 w-4" />
-            Refresh
+            {ptBR.patientWorkflow.common.refresh}
           </button>
           <button className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors">
             <Save className="h-4 w-4" />
-            Save
+            {ptBR.patientWorkflow.common.save}
           </button>
         </div>
       </div>

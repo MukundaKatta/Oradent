@@ -63,6 +63,32 @@ export const clinicalPtBR = {
     orthodontics: "Ortodontia",
     adjunctive: "Serviços gerais complementares",
   },
+  toothStatus: {
+    PRESENT: "Presente",
+    MISSING: "Ausente",
+    IMPACTED: "Impactado",
+    UNERUPTED: "Não irrompido",
+    IMPLANT: "Implante",
+    PONTIC: "Pôntico",
+  },
+  treatmentPlanStatus: {
+    PROPOSED: "Proposto",
+    PRESENTED: "Apresentado",
+    ACCEPTED: "Aceito",
+    IN_PROGRESS: "Em andamento",
+    COMPLETED: "Concluído",
+    DECLINED: "Recusado",
+  },
+  imageType: {
+    PERIAPICAL: "Periapical",
+    BITEWING: "Interproximal",
+    PANORAMIC: "Panorâmica",
+    CEPHALOMETRIC: "Cefalométrica",
+    CBCT: "Tomografia computadorizada de feixe cônico",
+    INTRAORAL_PHOTO: "Fotografia intraoral",
+    EXTRAORAL_PHOTO: "Fotografia extraoral",
+    OTHER: "Outro",
+  },
 } as const;
 
 export type ClinicalPtBRCatalog = typeof clinicalPtBR;

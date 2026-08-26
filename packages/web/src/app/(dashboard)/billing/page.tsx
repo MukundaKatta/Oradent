@@ -361,7 +361,7 @@ export default function BillingPage() {
                         onClick={() => setEditingFee(entry.id)}
                         className="text-xs text-teal-600 hover:text-teal-700 font-medium"
                       >
-                        Edit
+                        {billingText.edit}
                       </button>
                     </td>
                   </tr>

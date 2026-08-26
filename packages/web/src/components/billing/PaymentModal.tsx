@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { X, DollarSign } from 'lucide-react';
 import { apiPost } from '@/lib/api';
 import { formatCurrency } from '@/lib/formatters';
-import { getPaymentMethodLabel } from './billingLabels';
+import { billingText, getPaymentMethodLabel } from './billingLabels';
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
 
 const paymentSchema = z.object({
@@ -174,7 +174,7 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
                 onClick={onClose}
                 className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
-                Cancel
+                {billingText.cancel}
               </button>
               <button
                 type="submit"
