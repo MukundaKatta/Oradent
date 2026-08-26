@@ -3,6 +3,7 @@
 import { Component, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { ptBR } from "@/i18n";
+import { localizeErrorMessage } from "@/lib/errorMessages";
 
 interface Props {
   children: ReactNode;
@@ -44,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
               {ptBR.shell.errorBoundary.title}
             </h3>
             <p className="mt-1 text-sm text-stone-500">
-              {this.state.error?.message || ptBR.shell.errorBoundary.unexpectedError}
+              {localizeErrorMessage(this.state.error?.message, ptBR.shell.errorBoundary.unexpectedError)}
             </p>
             <button
               onClick={this.handleRetry}

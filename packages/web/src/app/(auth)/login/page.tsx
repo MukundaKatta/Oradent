@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { ptBR } from "@/i18n";
+import { localizeErrorMessage } from "@/lib/errorMessages";
 
 const loginSchema = z.object({
   email: z.string().email(ptBR.auth.login.invalidEmail),
@@ -70,7 +71,7 @@ export default function LoginPage() {
     } catch (error) {
       setServerError(
         error instanceof Error
-          ? error.message
+          ? localizeErrorMessage(error.message, ptBR.auth.login.unexpectedError)
           : ptBR.auth.login.unexpectedError
       );
     }

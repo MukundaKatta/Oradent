@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { ptBR } from "@/i18n";
+import { localizeErrorMessage } from "@/lib/errorMessages";
 
 const registerSchema = z.object({
   practiceName: z.string().min(2, ptBR.auth.register.practiceNameRequired),
@@ -79,7 +80,7 @@ export default function RegisterPage() {
     } catch (error) {
       setServerError(
         error instanceof Error
-          ? error.message
+          ? localizeErrorMessage(error.message, ptBR.auth.register.unexpectedError)
           : ptBR.auth.register.unexpectedError
       );
     }
