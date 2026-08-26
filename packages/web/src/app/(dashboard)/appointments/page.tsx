@@ -1,27 +1,18 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
 import { format } from 'date-fns';
+import { ptBR as dateFnsPtBR } from 'date-fns/locale';
 import {
   Calendar,
   ChevronLeft,
   ChevronRight,
   Plus,
   LayoutGrid,
-  List,
-  Clock,
 } from 'lucide-react';
 import { apiGet } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import {
-  APPOINTMENT_TYPE_COLORS,
-  APPOINTMENT_TYPE_LABELS,
-  APPOINTMENT_STATUS_COLORS,
-} from '@/lib/constants';
+import { t } from '@/i18n';
 import { CalendarView } from '@/components/appointments/CalendarView';
 import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 import { ChairView } from '@/components/appointments/ChairView';
@@ -48,6 +39,7 @@ type ViewMode = 'calendar' | 'chair';
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarView, setCalendarView] = useState<string>('timeGridWeek');
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
@@ -57,6 +49,7 @@ export default function AppointmentsPage() {
 
   const fetchAppointments = useCallback(async (start: string, end: string) => {
     setLoading(true);
+    setError(false);
     try {
       const data = await apiGet<Appointment[]>(
         `/api/appointments?start=${start}&end=${end}`
@@ -64,6 +57,7 @@ export default function AppointmentsPage() {
       setAppointments(data);
     } catch (error) {
       console.error('Failed to fetch appointments:', error);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -153,7 +147,7 @@ export default function AppointmentsPage() {
               )}
             >
               <Calendar className="h-4 w-4" />
-              Calendar
+              {t('appointments.calendar', 'Calendário')}
             </button>
             <button
               onClick={() => setViewMode('chair')}
@@ -165,7 +159,7 @@ export default function AppointmentsPage() {
               )}
             >
               <LayoutGrid className="h-4 w-4" />
-              Chair View
+              {t('appointments.chairView', 'Visualização por cadeira')}
             </button>
           </div>
 
@@ -180,7 +174,7 @@ export default function AppointmentsPage() {
                     : 'text-stone-600 hover:bg-stone-100'
                 )}
               >
-                Day
+                {t('appointments.day', 'Dia')}
               </button>
               <button
                 onClick={() => setCalendarView('timeGridWeek')}
@@ -191,7 +185,7 @@ export default function AppointmentsPage() {
                     : 'text-stone-600 hover:bg-stone-100'
                 )}
               >
-                Week
+                {t('appointments.week', 'Semana')}
               </button>
               <button
                 onClick={() => setCalendarView('dayGridMonth')}
@@ -202,7 +196,7 @@ export default function AppointmentsPage() {
                     : 'text-stone-600 hover:bg-stone-100'
                 )}
               >
-                Month
+                {t('appointments.month', 'Mês')}
               </button>
             </div>
           )}
@@ -212,22 +206,24 @@ export default function AppointmentsPage() {
               onClick={() => navigateDate('prev')}
               className="rounded-lg border border-stone-200 bg-white p-1.5 text-stone-600 hover:bg-stone-50"
             >
+              aria-label={t('appointments.previousPeriod', 'Período anterior')}
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => navigateDate('today')}
               className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50"
             >
-              Today
+              {t('appointments.today', 'Hoje')}
             </button>
             <button
               onClick={() => navigateDate('next')}
               className="rounded-lg border border-stone-200 bg-white p-1.5 text-stone-600 hover:bg-stone-50"
             >
               <ChevronRight className="h-4 w-4" />
+              aria-label={t('appointments.nextPeriod', 'Próximo período')}
             </button>
             <h2 className="ml-2 text-lg font-semibold text-stone-900">
-              {format(currentDate, 'MMMM yyyy')}
+              {format(currentDate, 'MMMM yyyy', { locale: dateFnsPtBR })}
             </h2>
           </div>
         </div>
@@ -237,7 +233,7 @@ export default function AppointmentsPage() {
           className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-700 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          New Appointment
+          {t('appointments.new', 'Nova consulta')}
         </button>
       </div>
 
@@ -247,9 +243,11 @@ export default function AppointmentsPage() {
           <div className="flex h-[600px] items-center justify-center">
             <div className="flex flex-col items-center gap-3">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-              <p className="text-sm text-stone-500">Loading appointments...</p>
+              <p className="text-sm text-stone-500">{t('appointments.loading', 'Carregando consultas...')}</p>
             </div>
           </div>
+        ) : error ? (
+          <div className="flex h-[600px] items-center justify-center px-6 text-center text-sm text-stone-500">{t('appointments.loadError', 'Não foi possível carregar as consultas. Tente novamente.')}</div>
         ) : viewMode === 'calendar' ? (
           <CalendarView
             appointments={appointments}

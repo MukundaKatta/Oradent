@@ -1,5 +1,8 @@
 'use client';
 
+
+import { formatCurrency } from '@/lib/formatters';
+import { t } from '@/i18n';
 interface RevenueCardProps {
   revenue?: number;
   trend?: number;
@@ -20,12 +23,7 @@ export default function RevenueCard({ revenue, trend, isLoading }: RevenueCardPr
     );
   }
 
-  const formattedRevenue = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(revenue ?? 0);
+  const formattedRevenue = formatCurrency(revenue ?? 0);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
@@ -45,7 +43,7 @@ export default function RevenueCard({ revenue, trend, isLoading }: RevenueCardPr
             />
           </svg>
         </div>
-        <span className="text-sm font-medium text-stone-500">Month Revenue</span>
+        <span className="text-sm font-medium text-stone-500">{t('dashboard.monthRevenue', 'Receita do mês')}</span>
       </div>
       <p className="text-2xl font-semibold text-stone-900 font-mono">
         {formattedRevenue}
@@ -64,7 +62,7 @@ export default function RevenueCard({ revenue, trend, isLoading }: RevenueCardPr
           <span className={`text-sm font-medium ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {Math.abs(trend)}%
           </span>
-          <span className="text-xs text-stone-400">vs last month</span>
+          <span className="text-xs text-stone-400">{t('dashboard.comparedToLastMonth', 'em relação ao mês anterior')}</span>
         </div>
       )}
     </div>

@@ -6,13 +6,15 @@ import { Plus } from 'lucide-react';
 import { usePatients } from '@/hooks/usePatient';
 import { PatientList } from '@/components/patients/PatientList';
 import { PatientSearch } from '@/components/patients/PatientSearch';
-import { PatientForm } from '@/components/patients/PatientForm';
+import { PatientForm } from "@/components/patients/PatientForm";
+import { ptBR } from "@/i18n";
 
+const copy = ptBR.patientWorkflow.list;
 const STATUS_TABS = [
-  { label: 'All', value: '' },
-  { label: 'Active', value: 'active' },
-  { label: 'Inactive', value: 'inactive' },
-  { label: 'Archived', value: 'archived' },
+  { label: ptBR.patientWorkflow.common.all, value: "" },
+  { label: ptBR.patientWorkflow.common.active, value: "active" },
+  { label: ptBR.patientWorkflow.common.inactive, value: "inactive" },
+  { label: ptBR.patientWorkflow.common.archived, value: "archived" },
 ];
 
 export default function PatientsPage() {
@@ -37,9 +39,9 @@ export default function PatientsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900">Patients</h1>
+          <h1 className="text-2xl font-bold text-stone-900">{copy.title}</h1>
           <p className="mt-1 text-sm text-stone-500">
-            {data?.total ?? 0} patients total
+            {data?.total ?? 0} {copy.total}
           </p>
         </div>
         <button
@@ -47,7 +49,7 @@ export default function PatientsPage() {
           className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          New Patient
+          {ptBR.patientWorkflow.list.newPatient}
         </button>
       </div>
 
@@ -92,7 +94,7 @@ export default function PatientsPage() {
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between rounded-xl border border-stone-200 bg-white px-6 py-3 shadow-sm">
           <p className="text-sm text-stone-500">
-            Page {data.page} of {data.totalPages}
+            {copy.page} {data.page} {copy.of} {data.totalPages}
           </p>
           <div className="flex gap-2">
             <button
@@ -100,20 +102,20 @@ export default function PatientsPage() {
               disabled={page <= 1}
               className="rounded-lg border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              {ptBR.patientWorkflow.common.previous}
             </button>
             <button
               onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
               disabled={page >= data.totalPages}
               className="rounded-lg border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              {ptBR.patientWorkflow.common.next}
             </button>
           </div>
         </div>
       )}
 
-      {/* New Patient Modal */}
+      {/* {ptBR.patientWorkflow.list.newPatient} Modal */}
       {showNewPatient && (
         <PatientForm
           open={showNewPatient}

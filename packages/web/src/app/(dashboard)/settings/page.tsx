@@ -24,32 +24,33 @@ import {
 import { apiGet, apiPut, apiPost } from '@/lib/api';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/lib/utils';
+import { ptBR } from '@/i18n';
 import type { Practice, PracticeSettings, Provider, Chair, ProviderRole } from '@/types';
 
 // ═══════════════════ SCHEMAS ═══════════════════
 
 const practiceSchema = z.object({
-  name: z.string().min(1, 'Practice name is required'),
-  address: z.string().min(1, 'Address is required'),
-  phone: z.string().min(1, 'Phone number is required'),
-  email: z.string().email('Invalid email address'),
+  name: z.string().min(1, 'O nome da clínica é obrigatório'),
+  address: z.string().min(1, 'O endereço é obrigatório'),
+  phone: z.string().min(1, 'O telefone é obrigatório'),
+  email: z.string().email('Informe um e-mail válido'),
 });
 
 type PracticeFormData = z.infer<typeof practiceSchema>;
 
 const chairSchema = z.object({
-  name: z.string().min(1, 'Chair name is required'),
+  name: z.string().min(1, 'O nome da cadeira é obrigatório'),
 });
 
 type ChairFormData = z.infer<typeof chairSchema>;
 
 const preferencesSchema = z.object({
-  appointmentDuration: z.coerce.number().min(5, 'Minimum 5 minutes').max(480, 'Maximum 8 hours'),
-  workingHoursStart: z.string().min(1, 'Start time is required'),
-  workingHoursEnd: z.string().min(1, 'End time is required'),
-  workingDays: z.array(z.number()).min(1, 'Select at least one working day'),
-  reminderHoursBefore: z.coerce.number().min(1, 'Minimum 1 hour').max(168, 'Maximum 7 days'),
-  currency: z.string().min(1, 'Currency is required'),
+  appointmentDuration: z.coerce.number().min(5, 'Mínimo de 5 minutos').max(480, 'Máximo de 8 horas'),
+  workingHoursStart: z.string().min(1, 'O horário de início é obrigatório'),
+  workingHoursEnd: z.string().min(1, 'O horário de término é obrigatório'),
+  workingDays: z.array(z.number()).min(1, 'Selecione pelo menos um dia de trabalho'),
+  reminderHoursBefore: z.coerce.number().min(1, 'Mínimo de 1 hora').max(168, 'Máximo de 7 dias'),
+  currency: z.string().min(1, 'A moeda é obrigatória'),
 });
 
 type PreferencesFormData = z.infer<typeof preferencesSchema>;
@@ -57,10 +58,10 @@ type PreferencesFormData = z.infer<typeof preferencesSchema>;
 // ═══════════════════ CONSTANTS ═══════════════════
 
 const TABS = [
-  { id: 'practice', label: 'Practice Info', icon: Building2 },
-  { id: 'team', label: 'Team', icon: Users },
-  { id: 'chairs', label: 'Chairs', icon: Armchair },
-  { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
+  { id: 'practice', label: ptBR.settings.tabs.practice, icon: Building2 },
+  { id: 'team', label: ptBR.settings.tabs.team, icon: Users },
+  { id: 'chairs', label: ptBR.settings.tabs.chairs, icon: Armchair },
+  { id: 'preferences', label: ptBR.settings.tabs.preferences, icon: SlidersHorizontal },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -73,15 +74,9 @@ const ROLE_COLORS: Record<ProviderRole, string> = {
   FRONT_DESK: 'bg-stone-100 text-stone-700 border-stone-200',
 };
 
-const ROLE_LABELS: Record<ProviderRole, string> = {
-  OWNER: 'Owner',
-  DENTIST: 'Dentist',
-  HYGIENIST: 'Hygienist',
-  ASSISTANT: 'Assistant',
-  FRONT_DESK: 'Front Desk',
-};
+const ROLE_LABELS: Record<ProviderRole, string> = ptBR.provider.role;
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 // ═══════════════════ TOAST ═══════════════════
 
@@ -182,10 +177,10 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
       queryClient.invalidateQueries({ queryKey: ['settings', 'practice'] });
       updatePractice(data);
       reset(data);
-      addToast('success', 'Practice information updated successfully');
+      addToast('success', 'Dados da clínica atualizados com sucesso.');
     },
     onError: () => {
-      addToast('error', 'Failed to update practice information');
+      addToast('error', 'Não foi possível atualizar os dados da clínica.');
     },
   });
 
@@ -193,14 +188,14 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
 
   if (error) {
     return (
-      <ErrorCard message="Failed to load practice information. Please try again." />
+      <ErrorCard message="Não foi possível carregar os dados da clínica. Tente novamente." />
     );
   }
 
   return (
     <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
       <div className="border-b border-stone-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-stone-900">Practice Information</h2>
+        <h2 className="text-lg font-semibold text-stone-900">Dados da clínica</h2>
         <p className="mt-1 text-sm text-stone-500">
           Update your practice details visible to staff and on documents.
         </p>
@@ -224,7 +219,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
                   'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                   errors.name ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                 )}
-                placeholder="e.g. Bright Smile Dental"
+                placeholder="Ex.: Sorriso Brilhante Odontologia"
               />
               {errors.name && (
                 <p className="mt-1.5 text-xs text-red-600">{errors.name.message}</p>
@@ -245,7 +240,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
                   'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                   errors.address ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                 )}
-                placeholder="123 Main St, Suite 100, City, ST 12345"
+                placeholder="Rua Principal, 100, sala 10, Cidade, UF, 12345-678"
               />
               {errors.address && (
                 <p className="mt-1.5 text-xs text-red-600">{errors.address.message}</p>
@@ -289,7 +284,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
                     'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     errors.email ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   )}
-                  placeholder="office@practice.com"
+                  placeholder="contato@clinica.com"
                 />
                 {errors.email && (
                   <p className="mt-1.5 text-xs text-red-600">{errors.email.message}</p>
@@ -309,7 +304,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
                 )}
               >
                 <Save className="h-4 w-4" />
-                {mutation.isPending ? 'Saving...' : 'Save Changes'}
+                {mutation.isPending ? 'Salvando...' : 'Salvar alterações'}
               </button>
             </div>
           </form>
@@ -365,7 +360,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
       addToast('success', 'Team member invited successfully');
     },
     onError: () => {
-      addToast('error', 'Failed to invite team member. Email may already be in use.');
+      addToast('error', 'Não foi possível convidar o membro da equipe. O e-mail pode já estar em uso.');
     },
   });
 
@@ -374,13 +369,13 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
       apiPut(`/api/settings/providers/${id}`, { isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', 'providers'] });
-      addToast('success', 'Provider status updated');
+      addToast('success', 'Status do profissional atualizado.');
     },
-    onError: () => addToast('error', 'Failed to update provider'),
+    onError: () => addToast('error', 'Não foi possível atualizar o profissional.'),
   });
 
   if (error) {
-    return <ErrorCard message="Failed to load team members. Please try again." />;
+    return <ErrorCard message="Não foi possível carregar os membros da equipe. Tente novamente." />;
   }
 
   return (
@@ -388,7 +383,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
       <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-stone-900">Team Members</h2>
+            <h2 className="text-lg font-semibold text-stone-900">Membros da equipe</h2>
             <p className="mt-1 text-sm text-stone-500">
               Manage providers and staff associated with your practice.
             </p>
@@ -409,7 +404,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
           ) : !providers || providers.length === 0 ? (
             <div className="py-12 text-center">
               <Users className="mx-auto h-12 w-12 text-stone-300" />
-              <h3 className="mt-3 text-sm font-medium text-stone-700">No team members</h3>
+              <h3 className="mt-3 text-sm font-medium text-stone-700">Nenhum membro na equipe</h3>
               <p className="mt-1 text-xs text-stone-500">
                 No providers have been added to this practice yet.
               </p>
@@ -488,7 +483,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-xl border border-stone-200 bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-stone-900">Invite Team Member</h3>
+              <h3 className="text-lg font-semibold text-stone-900">Convidar membro da equipe</h3>
               <button
                 onClick={() => { setShowInvite(false); resetInvite(); }}
                 className="rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
@@ -501,14 +496,14 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
               className="p-6 space-y-4"
             >
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Full Name</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Nome completo</label>
                 <input
                   {...registerInvite('name')}
                   className={cn(
                     'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     inviteErrors.name ? 'border-red-300 bg-red-50' : 'border-stone-300'
                   )}
-                  placeholder="Dr. Jane Smith"
+                  placeholder="Dra. Ana Silva"
                 />
                 {inviteErrors.name && <p className="mt-1 text-xs text-red-600">{inviteErrors.name.message}</p>}
               </div>
@@ -521,13 +516,13 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                     'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     inviteErrors.email ? 'border-red-300 bg-red-50' : 'border-stone-300'
                   )}
-                  placeholder="jane@practice.com"
+                  placeholder="ana@clinica.com"
                 />
                 {inviteErrors.email && <p className="mt-1 text-xs text-red-600">{inviteErrors.email.message}</p>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Title</label>
+                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Título</label>
                   <input
                     {...registerInvite('title')}
                     className={cn(
@@ -539,20 +534,20 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                   {inviteErrors.title && <p className="mt-1 text-xs text-red-600">{inviteErrors.title.message}</p>}
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Role</label>
+                  <label className="mb-1.5 block text-sm font-medium text-stone-700">Função</label>
                   <select
                     {...registerInvite('role')}
                     className="w-full rounded-lg border border-stone-300 px-3.5 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                   >
-                    <option value="DENTIST">Dentist</option>
-                    <option value="HYGIENIST">Hygienist</option>
-                    <option value="ASSISTANT">Assistant</option>
-                    <option value="FRONT_DESK">Front Desk</option>
+                    <option value="DENTIST">Dentista</option>
+                    <option value="HYGIENIST">Higienista</option>
+                    <option value="ASSISTANT">Auxiliar</option>
+                    <option value="FRONT_DESK">Recepção</option>
                   </select>
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Temporary Password</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Senha temporária</label>
                 <input
                   {...registerInvite('tempPassword')}
                   type="password"
@@ -560,7 +555,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                     'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     inviteErrors.tempPassword ? 'border-red-300 bg-red-50' : 'border-stone-300'
                   )}
-                  placeholder="Min. 8 characters"
+                  placeholder="Mín. 8 caracteres"
                 />
                 {inviteErrors.tempPassword && <p className="mt-1 text-xs text-red-600">{inviteErrors.tempPassword.message}</p>}
               </div>
@@ -570,7 +565,7 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                   onClick={() => { setShowInvite(false); resetInvite(); }}
                   className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   type="submit"
@@ -622,14 +617,14 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
       addToast('success', 'Chair added successfully');
     },
     onError: () => {
-      addToast('error', 'Failed to add chair');
+      addToast('error', 'Não foi possível adicionar a cadeira.');
     },
   });
 
   const onSubmit = (data: ChairFormData) => mutation.mutate(data);
 
   if (error) {
-    return <ErrorCard message="Failed to load chairs. Please try again." />;
+    return <ErrorCard message="Não foi possível carregar as cadeiras. Tente novamente." />;
   }
 
   return (
@@ -637,7 +632,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
       <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-stone-900">Operatory Chairs</h2>
+            <h2 className="text-lg font-semibold text-stone-900">Cadeiras de atendimento</h2>
             <p className="mt-1 text-sm text-stone-500">
               Manage the chairs and operatories in your practice.
             </p>
@@ -656,7 +651,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
           ) : !chairs || chairs.length === 0 ? (
             <div className="py-12 text-center">
               <Armchair className="mx-auto h-12 w-12 text-stone-300" />
-              <h3 className="mt-3 text-sm font-medium text-stone-700">No chairs configured</h3>
+              <h3 className="mt-3 text-sm font-medium text-stone-700">Nenhuma cadeira configurada</h3>
               <p className="mt-1 text-xs text-stone-500">
                 Add operatory chairs to start scheduling appointments.
               </p>
@@ -696,7 +691,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-xl border border-stone-200 bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-stone-900">Add New Chair</h3>
+              <h3 className="text-lg font-semibold text-stone-900">Adicionar nova cadeira</h3>
               <button
                 onClick={() => {
                   setShowForm(false);
@@ -719,7 +714,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
                     'focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500',
                     errors.name ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   )}
-                  placeholder="e.g. Chair 1, Operatory A"
+                  placeholder="Ex.: Cadeira 1, Consultório A"
                   autoFocus
                 />
                 {errors.name && (
@@ -735,7 +730,7 @@ function ChairsTab({ addToast }: { addToast: (type: 'success' | 'error', msg: st
                   }}
                   className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   type="submit"
@@ -807,14 +802,14 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
       addToast('success', 'Preferences updated successfully');
     },
     onError: () => {
-      addToast('error', 'Failed to update preferences');
+      addToast('error', 'Não foi possível atualizar as preferências.');
     },
   });
 
   const onSubmit = (data: PreferencesFormData) => mutation.mutate(data);
 
   if (error) {
-    return <ErrorCard message="Failed to load preferences. Please try again." />;
+    return <ErrorCard message="Não foi possível carregar as preferências. Tente novamente." />;
   }
 
   return (
@@ -822,7 +817,7 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
       {/* Appointment Settings */}
       <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
         <div className="border-b border-stone-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-stone-900">Scheduling Preferences</h2>
+          <h2 className="text-lg font-semibold text-stone-900">Preferências de agendamento</h2>
           <p className="mt-1 text-sm text-stone-500">
             Configure default appointment duration, working hours, and reminder settings.
           </p>
@@ -974,11 +969,11 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
                     errors.currency ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   )}
                 >
-                  <option value="USD">USD - US Dollar</option>
-                  <option value="CAD">CAD - Canadian Dollar</option>
-                  <option value="GBP">GBP - British Pound</option>
+                  <option value="USD">USD - Dólar americano</option>
+                  <option value="CAD">CAD - Dólar canadense</option>
+                  <option value="GBP">GBP - Libra esterlina</option>
                   <option value="EUR">EUR - Euro</option>
-                  <option value="AUD">AUD - Australian Dollar</option>
+                  <option value="AUD">AUD - Dólar australiano</option>
                 </select>
                 {errors.currency && (
                   <p className="mt-1.5 text-xs text-red-600">{errors.currency.message}</p>
@@ -997,7 +992,7 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
                   )}
                 >
                   <Save className="h-4 w-4" />
-                  {mutation.isPending ? 'Saving...' : 'Save Preferences'}
+                  {mutation.isPending ? 'Salvando...' : 'Salvar preferências'}
                 </button>
               </div>
             </form>
@@ -1068,7 +1063,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-stone-900">Settings</h1>
+        <h1 className="text-2xl font-bold text-stone-900">Configurações</h1>
         <p className="mt-1 text-sm text-stone-500">
           Manage your practice configuration, team, and preferences.
         </p>

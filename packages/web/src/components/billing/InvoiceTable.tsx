@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Fragment } from 'react';
-import { format } from 'date-fns';
+import { formatDate, formatCurrency } from '@/lib/formatters';
 import {
   ChevronDown,
   ChevronUp,
@@ -61,9 +61,6 @@ export function InvoiceTable({
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-
   const filtered = invoices
     .filter(
       (inv) =>
@@ -103,7 +100,7 @@ export function InvoiceTable({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
           <input
             type="text"
-            placeholder="Search invoices..."
+            placeholder="Buscar faturas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-lg border border-stone-200 py-2 pl-10 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -115,8 +112,8 @@ export function InvoiceTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-stone-200">
-            <th className="px-4 py-3 text-left font-medium text-stone-500">Invoice #</th>
-            <th className="px-4 py-3 text-left font-medium text-stone-500">Patient</th>
+            <th className="px-4 py-3 text-left font-medium text-stone-500">Fatura nº</th>
+            <th className="px-4 py-3 text-left font-medium text-stone-500">Paciente</th>
             <th
               className="cursor-pointer px-4 py-3 text-left font-medium text-stone-500 hover:text-stone-700"
               onClick={() => toggleSort('date')}
@@ -133,7 +130,7 @@ export function InvoiceTable({
                 Total <SortIcon field="total" />
               </span>
             </th>
-            <th className="px-4 py-3 text-right font-medium text-stone-500">Balance</th>
+            <th className="px-4 py-3 text-right font-medium text-stone-500">Saldo</th>
             <th
               className="cursor-pointer px-4 py-3 text-left font-medium text-stone-500 hover:text-stone-700"
               onClick={() => toggleSort('status')}
@@ -142,7 +139,7 @@ export function InvoiceTable({
                 Status <SortIcon field="status" />
               </span>
             </th>
-            <th className="px-4 py-3 text-right font-medium text-stone-500">Actions</th>
+            <th className="px-4 py-3 text-right font-medium text-stone-500">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -158,7 +155,7 @@ export function InvoiceTable({
                   {invoice.patientName}
                 </td>
                 <td className="px-4 py-3 text-stone-600">
-                  {format(new Date(invoice.date), 'MMM d, yyyy')}
+                  {formatDate(invoice.date)}
                 </td>
                 <td className="px-4 py-3 text-right font-medium text-stone-900">
                   {formatCurrency(invoice.total)}
@@ -183,7 +180,7 @@ export function InvoiceTable({
                         setExpandedId(expandedId === invoice.id ? null : invoice.id)
                       }
                       className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
-                      title="View details"
+                      title="Ver detalhes"
                     >
                       <Eye className="h-4 w-4" />
                     </button>
@@ -191,7 +188,7 @@ export function InvoiceTable({
                       <button
                         onClick={() => onRecordPayment(invoice)}
                         className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
-                        title="Record payment"
+                        title="Registrar pagamento"
                       >
                         <CreditCard className="h-4 w-4" />
                       </button>
@@ -199,7 +196,7 @@ export function InvoiceTable({
                     <button
                       onClick={() => onViewLedger(invoice)}
                       className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
-                      title="View ledger"
+                      title="Ver extrato"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
@@ -215,11 +212,11 @@ export function InvoiceTable({
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="text-stone-400">
-                          <th className="pb-1 text-left font-medium">CDT Code</th>
-                          <th className="pb-1 text-left font-medium">Description</th>
-                          <th className="pb-1 text-left font-medium">Tooth</th>
-                          <th className="pb-1 text-right font-medium">Qty</th>
-                          <th className="pb-1 text-right font-medium">Fee</th>
+                          <th className="pb-1 text-left font-medium">Código CDT</th>
+                          <th className="pb-1 text-left font-medium">Descrição</th>
+                          <th className="pb-1 text-left font-medium">Dente</th>
+                          <th className="pb-1 text-right font-medium">Qtd.</th>
+                          <th className="pb-1 text-right font-medium">Valor</th>
                         </tr>
                       </thead>
                       <tbody>

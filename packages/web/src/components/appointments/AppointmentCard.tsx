@@ -1,10 +1,7 @@
-import { format } from 'date-fns';
 import { Clock, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  APPOINTMENT_TYPE_LABELS,
-  APPOINTMENT_STATUS_LABELS,
-} from '@/lib/constants';
+import { formatTime } from '@/lib/formatters';
+import { appointmentStatusLabel, appointmentTypeLabel } from './appointmentLabels';
 
 interface Appointment {
   id: string;
@@ -41,8 +38,8 @@ export function AppointmentCard({
 }: AppointmentCardProps) {
   const startTime = new Date(appointment.startTime);
   const endTime = new Date(appointment.endTime);
-  const typeLabel = APPOINTMENT_TYPE_LABELS[appointment.type] || appointment.type;
-  const statusLabel = APPOINTMENT_STATUS_LABELS[appointment.status] || appointment.status;
+  const typeLabel = appointmentTypeLabel(appointment.type);
+  const statusLabel = appointmentStatusLabel(appointment.status);
   const statusStyle = STATUS_STYLES[appointment.status] || 'bg-stone-100 text-stone-600';
 
   if (compact) {
@@ -68,7 +65,7 @@ export function AppointmentCard({
           <div className="mt-0.5 flex items-center gap-2 text-xs text-stone-500">
             <Clock className="h-3 w-3" />
             <span>
-              {format(startTime, 'h:mm a')} - {format(endTime, 'h:mm a')}
+              {formatTime(startTime)} - {formatTime(endTime)}
             </span>
             <span className="text-stone-300">|</span>
             <span>{typeLabel}</span>
@@ -94,7 +91,7 @@ export function AppointmentCard({
           <div className="mt-2 flex items-center gap-2 text-xs text-stone-500">
             <Clock className="h-3.5 w-3.5" />
             <span>
-              {format(startTime, 'h:mm a')} - {format(endTime, 'h:mm a')}
+              {formatTime(startTime)} - {formatTime(endTime)}
             </span>
           </div>
           <div className="mt-1 text-xs text-stone-500">

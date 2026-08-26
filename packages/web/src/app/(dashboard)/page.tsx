@@ -2,18 +2,16 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
-import { formatCurrency } from '@/lib/formatters';
 import {
   Calendar,
-  DollarSign,
   Users,
-  FileWarning,
   Plus,
   Brain,
-  ArrowUpRight,
-  ArrowDownRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { format } from 'date-fns';
+import { ptBR as dateFnsPtBR } from 'date-fns/locale';
+import { t } from '@/i18n';
 import TodaySchedule from '@/components/dashboard/TodaySchedule';
 import RevenueCard from '@/components/dashboard/RevenueCard';
 import PatientStatsCard from '@/components/dashboard/PatientStatsCard';
@@ -51,7 +49,7 @@ function StatCardSkeleton() {
 }
 
 export default function DashboardPage() {
-  const { data: stats, isLoading } = useQuery<DashboardStats>({
+  const { data: stats, isLoading, isError } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
     queryFn: () => apiGet('/api/reports/dashboard'),
   });
@@ -61,14 +59,9 @@ export default function DashboardPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-stone-900">{t('dashboard.title', 'Visão geral')}</h1>
           <p className="text-stone-500 text-sm mt-1">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
+            {format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: dateFnsPtBR })}
           </p>
         </div>
         <div className="flex gap-3">
@@ -77,17 +70,23 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-50 text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
-            New Patient
+            {t('dashboard.newPatient', 'Novo paciente')}
           </Link>
           <Link
             href="/appointments?new=true"
             className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-medium transition-colors"
           >
             <Calendar className="w-4 h-4" />
-            New Appointment
+            {t('dashboard.newAppointment', 'Nova consulta')}
           </Link>
         </div>
       </div>
+
+      {isError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {t('dashboard.loadError', 'Não foi possível carregar os indicadores. Tente novamente.')}
+        </div>
+      )}
 
       {/* Stat cards row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -102,14 +101,14 @@ export default function DashboardPage() {
               </div>
               {stats?.todayAppointments !== undefined && stats.todayAppointments > 0 && (
                 <span className="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
-                  Today
+                  {t('dashboard.today', 'Hoje')}
                 </span>
               )}
             </div>
             <p className="text-2xl font-semibold text-stone-900">
               {stats?.todayAppointments ?? 0}
             </p>
-            <p className="text-sm text-stone-500 mt-1">Today&apos;s Appointments</p>
+            <p className="text-sm text-stone-500 mt-1">{t('dashboard.todayAppointments', 'Consultas de hoje')}</p>
           </div>
         )}
 
@@ -144,7 +143,7 @@ export default function DashboardPage() {
         {/* Quick Actions & AI sidebar */}
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-stone-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-stone-900 mb-4">Quick Actions</h3>
+            <h3 className="text-lg font-semibold text-stone-900 mb-4">{t('dashboard.quickActions', 'Ações rápidas')}</h3>
             <div className="grid grid-cols-1 gap-2">
               <Link
                 href="/patients?new=true"
@@ -153,7 +152,7 @@ export default function DashboardPage() {
                 <div className="p-2 bg-teal-100 rounded-lg group-hover:bg-teal-200 transition-colors">
                   <Users className="w-4 h-4 text-teal-600" />
                 </div>
-                <span className="text-sm font-medium text-stone-700">New Patient</span>
+                <span className="text-sm font-medium text-stone-700">{t('dashboard.newPatient', 'Novo paciente')}</span>
               </Link>
               <Link
                 href="/appointments?new=true"
@@ -162,7 +161,7 @@ export default function DashboardPage() {
                 <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
                   <Calendar className="w-4 h-4 text-blue-600" />
                 </div>
-                <span className="text-sm font-medium text-stone-700">New Appointment</span>
+                <span className="text-sm font-medium text-stone-700">{t('dashboard.newAppointment', 'Nova consulta')}</span>
               </Link>
               <Link
                 href="/ai-assistant"
@@ -171,7 +170,7 @@ export default function DashboardPage() {
                 <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
                   <Brain className="w-4 h-4 text-purple-600" />
                 </div>
-                <span className="text-sm font-medium text-stone-700">AI Analysis</span>
+                <span className="text-sm font-medium text-stone-700">{t('dashboard.aiAnalysis', 'Análise com IA')}</span>
               </Link>
             </div>
           </div>

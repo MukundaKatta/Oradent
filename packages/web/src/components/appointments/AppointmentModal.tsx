@@ -9,25 +9,24 @@ import {
   X,
   Search,
   AlertTriangle,
-  Clock,
   User,
-  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '@/lib/api';
-import { cn } from '@/lib/utils';
+import { ptBR, t } from '@/i18n';
+import { localizeErrorMessage } from '@/lib/errorMessages';
 import {
   APPOINTMENT_TYPE_LABELS,
   APPOINTMENT_TYPE_DURATIONS,
 } from '@/lib/constants';
 
 const appointmentSchema = z.object({
-  patientId: z.string().min(1, 'Patient is required'),
-  providerId: z.string().min(1, 'Provider is required'),
-  chairId: z.string().min(1, 'Chair is required'),
-  date: z.string().min(1, 'Date is required'),
-  startTime: z.string().min(1, 'Start time is required'),
-  duration: z.number().min(15, 'Duration must be at least 15 minutes'),
-  type: z.string().min(1, 'Appointment type is required'),
+  patientId: z.string().min(1, t('appointments.patientRequired', 'Selecione um paciente')),
+  providerId: z.string().min(1, t('appointments.providerRequired', 'Selecione um profissional')),
+  chairId: z.string().min(1, t('appointments.chairRequired', 'Selecione uma cadeira')),
+  date: z.string().min(1, t('appointments.dateRequired', 'Informe a data')),
+  startTime: z.string().min(1, t('appointments.startTimeRequired', 'Informe o horário de início')),
+  duration: z.number().min(15, t('appointments.durationMinimum', 'A duração deve ser de pelo menos 15 minutos')),
+  type: z.string().min(1, t('appointments.typeRequired', 'Selecione o tipo de consulta')),
   reason: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -84,9 +83,9 @@ const DURATION_OPTIONS = [
   { value: 15, label: '15 min' },
   { value: 30, label: '30 min' },
   { value: 45, label: '45 min' },
-  { value: 60, label: '1 hour' },
-  { value: 90, label: '1.5 hours' },
-  { value: 120, label: '2 hours' },
+  { value: 60, label: '1 hora' },
+  { value: 90, label: '1h30' },
+  { value: 120, label: '2 horas' },
 ];
 
 export function AppointmentModal({
@@ -106,6 +105,7 @@ export function AppointmentModal({
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const isEditing = !!appointment;
 
@@ -240,7 +240,7 @@ export function AppointmentModal({
       const data = await apiGet<{ hasConflict: boolean; message?: string }>(
         `/api/appointments/check-conflict?date=${watchDate}&time=${watchStartTime}&providerId=${watchProviderId}&chairId=${watchChairId}${appointment ? `&excludeId=${appointment.id}` : ''}`
       );
-      setConflictWarning(data.hasConflict ? data.message || 'Time slot conflict detected' : null);
+      setConflictWarning(data.hasConflict ? localizeErrorMessage(data.message, t('appointments.conflict', 'Há um conflito neste horário.')) : null);
     } catch {
       setConflictWarning(null);
     }
@@ -262,6 +262,7 @@ export function AppointmentModal({
   };
 
   const onSubmit = async (data: AppointmentFormData) => {
+    setSaveError(null);
     setSaving(true);
     try {
       const payload = {
@@ -277,6 +278,7 @@ export function AppointmentModal({
       onSave();
     } catch (error) {
       console.error('Failed to save appointment:', error);
+      setSaveError(t('appointments.saveError', 'Não foi possível salvar a consulta. Tente novamente.'));
     } finally {
       setSaving(false);
     }
@@ -289,10 +291,10 @@ export function AppointmentModal({
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <Dialog.Title className="text-lg font-semibold text-stone-900">
-              {isEditing ? 'Edit Appointment' : 'New Appointment'}
+              {isEditing ? t('appointments.edit', 'Editar consulta') : t('appointments.new', 'Nova consulta')}
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
+              <button aria-label={t('appointments.closeModal', 'Fechar modal')} className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
                 <X className="h-5 w-5" />
               </button>
             </Dialog.Close>
@@ -302,7 +304,7 @@ export function AppointmentModal({
             {/* Patient Search */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                Patient
+                {t('appointments.patient', 'Paciente')}
               </label>
               {selectedPatient ? (
                 <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-stone-50 px-3 py-2">
@@ -324,7 +326,7 @@ export function AppointmentModal({
                     }}
                     className="text-xs text-teal-600 hover:text-teal-700"
                   >
-                    Change
+                    {t('appointments.changePatient', 'Alterar')}
                   </button>
                 </div>
               ) : (
@@ -332,7 +334,7 @@ export function AppointmentModal({
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                   <input
                     type="text"
-                    placeholder="Search patients by name or phone..."
+                    placeholder={t('appointments.patientSearchPlaceholder', 'Busque pacientes por nome ou telefone...')}
                     value={patientSearch}
                     onChange={(e) => {
                       setPatientSearch(e.target.value);
@@ -361,6 +363,7 @@ export function AppointmentModal({
                       ))}
                     </div>
                   )}
+                  {showSearch && patientSearch.length >= 2 && searchResults.length === 0 && <p className="mt-2 text-xs text-stone-500">{t('appointments.patientSearchEmpty', 'Nenhum paciente encontrado.')}</p>}
                 </div>
               )}
               {errors.patientId && (
@@ -372,16 +375,16 @@ export function AppointmentModal({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                  Provider
+                  {t('appointments.provider', 'Profissional')}
                 </label>
                 <select
                   {...register('providerId')}
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 >
-                  <option value="">Select provider</option>
+                  <option value="">{t('appointments.selectProvider', 'Selecione um profissional')}</option>
                   {providers.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.role})
+                      {p.name} ({ptBR.provider.role[p.role as keyof typeof ptBR.provider.role] ?? p.role})
                     </option>
                   ))}
                 </select>
@@ -391,13 +394,13 @@ export function AppointmentModal({
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                  Chair
+                  {t('appointments.chair', 'Cadeira')}
                 </label>
                 <select
                   {...register('chairId')}
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 >
-                  <option value="">Select chair</option>
+                  <option value="">{t('appointments.selectChair', 'Selecione uma cadeira')}</option>
                   {chairs.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -414,7 +417,7 @@ export function AppointmentModal({
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                  Date
+                  {t('appointments.date', 'Data')}
                 </label>
                 <input
                   type="date"
@@ -427,7 +430,7 @@ export function AppointmentModal({
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                  Start Time
+                  {t('appointments.startTime', 'Horário de início')}
                 </label>
                 <input
                   type="time"
@@ -441,7 +444,7 @@ export function AppointmentModal({
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                  Duration
+                  {t('appointments.duration', 'Duração')}
                 </label>
                 <Controller
                   name="duration"
@@ -466,7 +469,7 @@ export function AppointmentModal({
             {/* Type */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                Appointment Type
+                {t('appointments.type', 'Tipo de consulta')}
               </label>
               <select
                 {...register('type')}
@@ -483,12 +486,12 @@ export function AppointmentModal({
             {/* Reason */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                Reason
+                {t('appointments.reason', 'Motivo')}
               </label>
               <input
                 type="text"
                 {...register('reason')}
-                placeholder="Brief reason for visit"
+                placeholder={t('appointments.reasonPlaceholder', 'Motivo breve da consulta')}
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
@@ -496,12 +499,12 @@ export function AppointmentModal({
             {/* Notes */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                Notes
+                {t('appointments.notes', 'Observações')}
               </label>
               <textarea
                 {...register('notes')}
                 rows={3}
-                placeholder="Additional notes..."
+                placeholder={t('appointments.notesPlaceholder', 'Observações adicionais...')}
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
@@ -514,6 +517,9 @@ export function AppointmentModal({
               </div>
             )}
 
+            {saveError && (
+              <p className="text-sm text-red-600">{saveError}</p>
+            )}
             {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
@@ -521,14 +527,14 @@ export function AppointmentModal({
                 onClick={onClose}
                 className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
-                Cancel
+                {t('appointments.cancel', 'Cancelar')}
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
               >
-                {saving ? 'Saving...' : isEditing ? 'Update' : 'Create Appointment'}
+                {saving ? t('appointments.saving', 'Salvando...') : isEditing ? t('appointments.update', 'Atualizar') : t('appointments.create', 'Criar consulta')}
               </button>
             </div>
           </form>

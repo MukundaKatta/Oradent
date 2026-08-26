@@ -7,7 +7,8 @@ import { TOOTH_MAP } from '@/lib/toothMap';
 import { getConditionColor, getConditionLabel } from '@/lib/conditionColors';
 import SurfaceSelector from './SurfaceSelector';
 import ConditionPalette from './ConditionPalette';
-import type { ToothCondition } from './ToothSVG';
+import type { ToothCondition } from "./ToothSVG";
+import { ptBR } from "@/i18n";
 
 export interface ToothPopoverProps {
   toothNumber: number;
@@ -100,12 +101,12 @@ export default function ToothPopover({
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-900">
-              #{toothNumber} &mdash; {tooth.name}
+              #{toothNumber} &mdash; {ptBR.toothNames[toothNumber as keyof typeof ptBR.toothNames] ?? tooth.name}
             </h3>
             <Popover.Close asChild>
               <button
                 className="rounded-full p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                aria-label="Close"
+                aria-label={ptBR.patientWorkflow.chart.closePopover}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -115,11 +116,11 @@ export default function ToothPopover({
           {/* Current conditions */}
           <div className="mb-3">
             <p className="text-xs font-medium text-slate-500 mb-1.5">
-              Current Conditions
+              {ptBR.patientWorkflow.chart.currentConditions}
             </p>
             {conditions.length === 0 ? (
               <p className="text-xs text-slate-400 italic">
-                No conditions recorded
+                {ptBR.patientWorkflow.chart.noConditions}
               </p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
@@ -133,7 +134,7 @@ export default function ToothPopover({
                     <button
                       onClick={() => handleRemoveCondition(i)}
                       className="ml-0.5 rounded-full hover:bg-white/20 p-0.5"
-                      aria-label={`Remove ${c.condition} from ${c.surface}`}
+                      aria-label={ptBR.patientWorkflow.chart.removeCondition}
                     >
                       <X className="h-2.5 w-2.5" />
                     </button>
@@ -147,7 +148,7 @@ export default function ToothPopover({
           {showAddForm ? (
             <div className="space-y-3 border-t border-slate-100 pt-3">
               <p className="text-xs font-medium text-slate-500">
-                Select Condition
+                {ptBR.patientWorkflow.chart.selectCondition}
               </p>
               <ConditionPalette
                 selectedCondition={selectedCondition}
@@ -155,7 +156,7 @@ export default function ToothPopover({
               />
 
               <p className="text-xs font-medium text-slate-500 mt-2">
-                Select Surfaces
+                {ptBR.patientWorkflow.chart.selectSurfaces}
               </p>
               <div className="flex justify-center">
                 <SurfaceSelector
@@ -174,7 +175,7 @@ export default function ToothPopover({
                   className="flex-1 rounded-md bg-teal-600 px-3 py-1.5 text-xs font-medium text-white
                     hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Add
+                  {ptBR.patientWorkflow.chart.add}
                 </button>
                 <button
                   type="button"
@@ -182,7 +183,7 @@ export default function ToothPopover({
                   className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600
                     hover:bg-slate-50 transition-colors"
                 >
-                  Cancel
+                  {ptBR.patientWorkflow.common.cancel}
                 </button>
               </div>
             </div>
@@ -195,19 +196,19 @@ export default function ToothPopover({
                 transition-colors w-full justify-center"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Condition
+              {ptBR.patientWorkflow.chart.addCondition}
             </button>
           )}
 
           {/* Notes */}
           <div className="mt-3 border-t border-slate-100 pt-3">
             <label className="text-xs font-medium text-slate-500 mb-1 block">
-              Notes
+              {ptBR.patientWorkflow.common.notes}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Clinical notes for this tooth..."
+              placeholder={ptBR.patientWorkflow.chart.notesPlaceholder}
               rows={2}
               className="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-700
                 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30
@@ -224,7 +225,7 @@ export default function ToothPopover({
                 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
             >
               <Save className="h-3.5 w-3.5" />
-              Save
+              {ptBR.patientWorkflow.common.save}
             </button>
             <Popover.Close asChild>
               <button
@@ -232,7 +233,7 @@ export default function ToothPopover({
                 className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600
                   hover:bg-slate-50 transition-colors"
               >
-                Cancel
+                {ptBR.patientWorkflow.common.cancel}
               </button>
             </Popover.Close>
           </div>

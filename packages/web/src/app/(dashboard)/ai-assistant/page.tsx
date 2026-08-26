@@ -7,6 +7,9 @@ import { z } from 'zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiGet, apiPost } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/formatters';
+import { localizeErrorMessage } from '@/lib/errorMessages';
+import { ptBR } from '@/i18n';
 import {
   Brain,
   FileText,
@@ -22,6 +25,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+
+const ai = ptBR.aiAssistant;
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -71,22 +76,22 @@ interface AnalysisHistoryEntry {
 // ---------------------------------------------------------------------------
 
 const noteSchema = z.object({
-  briefNote: z.string().min(1, 'Please enter clinical notes'),
+  briefNote: z.string().min(1, ai.note.required),
   noteType: z.enum(['general', 'periodic', 'limited', 'comprehensive', 'emergency']),
   patientId: z.string().optional(),
 });
 
 const treatmentSchema = z.object({
-  patientId: z.string().min(1, 'Patient ID is required'),
+  patientId: z.string().min(1, ai.treatment.patientRequired),
 });
 
 const preAuthSchema = z.object({
-  patientId: z.string().min(1, 'Patient ID is required'),
-  treatmentPlanId: z.string().min(1, 'Treatment plan ID is required'),
+  patientId: z.string().min(1, ai.preAuth.patientRequired),
+  treatmentPlanId: z.string().min(1, ai.preAuth.treatmentPlanRequired),
 });
 
 const historySchema = z.object({
-  patientId: z.string().min(1, 'Patient ID is required'),
+  patientId: z.string().min(1, ai.history.patientRequired),
 });
 
 type NoteFormData = z.infer<typeof noteSchema>;
@@ -102,7 +107,7 @@ function AiDisclaimer() {
   return (
     <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
       <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-      <span>AI-generated content requires clinical review</span>
+      <span>{ai.disclaimerShort}</span>
     </div>
   );
 }
@@ -160,8 +165,8 @@ function SmartClinicalNotes() {
             <FileText className="h-5 w-5 text-teal-600" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-semibold text-stone-900">Smart Clinical Notes</h3>
-            <p className="text-xs text-stone-500">Generate structured SOAP notes from brief observations</p>
+            <h3 className="text-sm font-semibold text-stone-900">{ai.note.title}</h3>
+            <p className="text-xs text-stone-500">{ai.note.description}</p>
           </div>
         </div>
         {expanded ? (
@@ -176,25 +181,25 @@ function SmartClinicalNotes() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium text-stone-600">Note Type</label>
+                <label className="mb-1 block text-xs font-medium text-stone-600">{ai.note.type}</label>
                 <select
                   {...register('noteType')}
                   className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 >
-                  <option value="general">General</option>
-                  <option value="periodic">Periodic Exam</option>
-                  <option value="limited">Limited Exam</option>
-                  <option value="comprehensive">Comprehensive Exam</option>
-                  <option value="emergency">Emergency</option>
+                  <option value="general">{ai.note.types.general}</option>
+                  <option value="periodic">{ai.note.types.periodic}</option>
+                  <option value="limited">{ai.note.types.limited}</option>
+                  <option value="comprehensive">{ai.note.types.comprehensive}</option>
+                  <option value="emergency">{ai.note.types.emergency}</option>
                 </select>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-stone-600">
-                  Patient ID <span className="text-stone-400">(optional)</span>
+                  {ai.common.patientId} <span className="text-stone-400">({ai.common.optional})</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. PAT-001"
+                  placeholder={ai.common.patientPlaceholder}
                   {...register('patientId')}
                   className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
@@ -202,10 +207,10 @@ function SmartClinicalNotes() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-stone-600">Brief Clinical Notes</label>
+              <label className="mb-1 block text-xs font-medium text-stone-600">{ai.note.briefNotes}</label>
               <textarea
                 rows={4}
-                placeholder="Enter brief clinical observations, findings, and notes..."
+                placeholder={ai.note.placeholder}
                 {...register('briefNote')}
                 className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
@@ -220,20 +225,20 @@ function SmartClinicalNotes() {
               className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
             >
               {mutation.isPending ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-              Generate SOAP Note
+              {ai.note.generate}
             </button>
           </form>
 
           {mutation.isPending && (
             <div className="flex items-center justify-center py-6">
               <Spinner />
-              <span className="ml-2 text-sm text-stone-500">Generating clinical note...</span>
+              <span className="ml-2 text-sm text-stone-500">{ai.note.generating}</span>
             </div>
           )}
 
           {mutation.isError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {mutation.error instanceof Error ? mutation.error.message : 'Failed to generate note. Please try again.'}
+              {localizeErrorMessage(mutation.error instanceof Error ? mutation.error.message : undefined, ai.note.error)}
             </div>
           )}
 
@@ -244,7 +249,7 @@ function SmartClinicalNotes() {
                 {(['subjective', 'objective', 'assessment', 'plan'] as const).map((section) => (
                   <div key={section} className="px-4 py-3">
                     <h4 className="mb-1 text-xs font-bold uppercase tracking-wide text-teal-700">
-                      {section.charAt(0).toUpperCase()} &mdash; {section}
+                      {section.charAt(0).toUpperCase()} &mdash; {ai.note.sections[section]}
                     </h4>
                     <p className="whitespace-pre-wrap text-sm text-stone-700">{result[section]}</p>
                   </div>
@@ -253,7 +258,7 @@ function SmartClinicalNotes() {
 
               {result.icdCodes && result.icdCodes.length > 0 && (
                 <div className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-3">
-                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-purple-700">ICD-10 Codes</h4>
+                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-purple-700">{ai.note.icdCodes}</h4>
                   <div className="flex flex-wrap gap-2">
                     {result.icdCodes.map((c) => (
                       <span
@@ -270,7 +275,7 @@ function SmartClinicalNotes() {
 
               {result.cdtCodes && result.cdtCodes.length > 0 && (
                 <div className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-3">
-                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-teal-700">CDT Codes</h4>
+                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-teal-700">{ai.note.cdtCodes}</h4>
                   <div className="flex flex-wrap gap-2">
                     {result.cdtCodes.map((c) => (
                       <span
@@ -338,8 +343,8 @@ function TreatmentPlanSuggestions() {
             <ClipboardList className="h-5 w-5 text-purple-600" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-semibold text-stone-900">Treatment Plan Suggestions</h3>
-            <p className="text-xs text-stone-500">AI-powered prioritized treatment recommendations</p>
+            <h3 className="text-sm font-semibold text-stone-900">{ai.treatment.title}</h3>
+            <p className="text-xs text-stone-500">{ai.treatment.description}</p>
           </div>
         </div>
         {expanded ? (
@@ -353,10 +358,10 @@ function TreatmentPlanSuggestions() {
         <div className="border-t border-stone-100 px-5 pb-5 pt-4 space-y-4">
           <form onSubmit={handleSubmit(onSubmit)} className="flex items-end gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-xs font-medium text-stone-600">Patient ID</label>
+              <label className="mb-1 block text-xs font-medium text-stone-600">{ai.common.patientId}</label>
               <input
                 type="text"
-                placeholder="e.g. PAT-001"
+                placeholder={ai.common.patientPlaceholder}
                 {...register('patientId')}
                 className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
@@ -370,20 +375,20 @@ function TreatmentPlanSuggestions() {
               className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
             >
               {mutation.isPending ? <Spinner className="h-4 w-4 text-white" /> : <Sparkles className="h-4 w-4" />}
-              Suggest Plan
+              {ai.treatment.suggest}
             </button>
           </form>
 
           {mutation.isPending && (
             <div className="flex items-center justify-center py-6">
               <Spinner />
-              <span className="ml-2 text-sm text-stone-500">Analyzing patient records...</span>
+              <span className="ml-2 text-sm text-stone-500">{ai.treatment.analyzing}</span>
             </div>
           )}
 
           {mutation.isError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {mutation.error instanceof Error ? mutation.error.message : 'Failed to generate suggestions. Please try again.'}
+              {localizeErrorMessage(mutation.error instanceof Error ? mutation.error.message : undefined, ai.treatment.error)}
             </div>
           )}
 
@@ -393,7 +398,7 @@ function TreatmentPlanSuggestions() {
 
               {result.patientName && (
                 <p className="text-sm text-stone-600">
-                  Suggestions for <span className="font-medium text-stone-900">{result.patientName}</span>
+                  {ai.treatment.suggestionsFor} <span className="font-medium text-stone-900">{result.patientName}</span>
                 </p>
               )}
 
@@ -406,11 +411,11 @@ function TreatmentPlanSuggestions() {
                   <thead>
                     <tr className="border-b border-stone-200 bg-stone-50">
                       <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">#</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">Procedure</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">{ai.treatment.procedure}</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">CDT</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">Tooth</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">Urgency</th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-stone-500">Est. Cost</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">{ai.treatment.tooth}</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">{ai.treatment.urgency}</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-stone-500">{ai.treatment.estimatedCost}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -427,14 +432,12 @@ function TreatmentPlanSuggestions() {
                               urgencyColors[item.urgency] ?? 'bg-stone-100 text-stone-600'
                             )}
                           >
-                            {item.urgency}
+                            {ai.treatment.urgencyLabels[item.urgency] ?? item.urgency}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-right text-stone-700">
                           {item.estimatedCost != null
-                            ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-                                item.estimatedCost
-                              )
+                            ? formatCurrency(item.estimatedCost)
                             : '—'}
                         </td>
                       </tr>
@@ -506,8 +509,8 @@ function InsurancePreAuthLetter() {
             <ShieldCheck className="h-5 w-5 text-teal-600" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-semibold text-stone-900">Insurance Pre-Auth Letter</h3>
-            <p className="text-xs text-stone-500">Generate pre-authorization letters for insurance claims</p>
+            <h3 className="text-sm font-semibold text-stone-900">{ai.preAuth.title}</h3>
+            <p className="text-xs text-stone-500">{ai.preAuth.description}</p>
           </div>
         </div>
         {expanded ? (
@@ -522,10 +525,10 @@ function InsurancePreAuthLetter() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium text-stone-600">Patient ID</label>
+                <label className="mb-1 block text-xs font-medium text-stone-600">{ai.common.patientId}</label>
                 <input
                   type="text"
-                  placeholder="e.g. PAT-001"
+                  placeholder={ai.common.patientPlaceholder}
                   {...register('patientId')}
                   className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
@@ -534,10 +537,10 @@ function InsurancePreAuthLetter() {
                 )}
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-stone-600">Treatment Plan ID</label>
+                <label className="mb-1 block text-xs font-medium text-stone-600">{ai.common.treatmentPlanId}</label>
                 <input
                   type="text"
-                  placeholder="e.g. TP-001"
+                  placeholder={ai.common.treatmentPlanPlaceholder}
                   {...register('treatmentPlanId')}
                   className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
@@ -553,20 +556,20 @@ function InsurancePreAuthLetter() {
               className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
             >
               {mutation.isPending ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-              Generate Letter
+              {ai.preAuth.generate}
             </button>
           </form>
 
           {mutation.isPending && (
             <div className="flex items-center justify-center py-6">
               <Spinner />
-              <span className="ml-2 text-sm text-stone-500">Drafting pre-authorization letter...</span>
+              <span className="ml-2 text-sm text-stone-500">{ai.preAuth.generating}</span>
             </div>
           )}
 
           {mutation.isError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {mutation.error instanceof Error ? mutation.error.message : 'Failed to generate letter. Please try again.'}
+              {localizeErrorMessage(mutation.error instanceof Error ? mutation.error.message : undefined, ai.preAuth.error)}
             </div>
           )}
 
@@ -576,7 +579,7 @@ function InsurancePreAuthLetter() {
 
               <div className="relative rounded-lg border border-stone-200 bg-stone-50">
                 <div className="flex items-center justify-between border-b border-stone-200 px-4 py-2">
-                  <span className="text-xs font-medium text-stone-500">Generated Pre-Auth Letter</span>
+                  <span className="text-xs font-medium text-stone-500">{ai.preAuth.generated}</span>
                   <button
                     type="button"
                     onClick={handleCopy}
@@ -585,12 +588,12 @@ function InsurancePreAuthLetter() {
                     {copied ? (
                       <>
                         <Check className="h-3.5 w-3.5 text-green-600" />
-                        Copied
+                        {ai.preAuth.copied}
                       </>
                     ) : (
                       <>
                         <Copy className="h-3.5 w-3.5" />
-                        Copy
+                        {ai.preAuth.copy}
                       </>
                     )}
                   </button>
@@ -644,9 +647,9 @@ function AiAnalysisHistory() {
   };
 
   const typeLabels: Record<string, string> = {
-    'generate-note': 'Clinical Note',
-    'suggest-treatment': 'Treatment Plan',
-    'pre-auth-letter': 'Pre-Auth Letter',
+    'generate-note': ai.history.types['generate-note'],
+    'suggest-treatment': ai.history.types['suggest-treatment'],
+    'pre-auth-letter': ai.history.types['pre-auth-letter'],
   };
 
   return (
@@ -661,8 +664,8 @@ function AiAnalysisHistory() {
             <History className="h-5 w-5 text-stone-600" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-semibold text-stone-900">AI Analysis History</h3>
-            <p className="text-xs text-stone-500">View past AI-generated analyses for a patient</p>
+            <h3 className="text-sm font-semibold text-stone-900">{ai.history.title}</h3>
+            <p className="text-xs text-stone-500">{ai.history.description}</p>
           </div>
         </div>
         {expanded ? (
@@ -676,10 +679,10 @@ function AiAnalysisHistory() {
         <div className="border-t border-stone-100 px-5 pb-5 pt-4 space-y-4">
           <form onSubmit={handleSubmit(onSubmit)} className="flex items-end gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-xs font-medium text-stone-600">Patient ID</label>
+              <label className="mb-1 block text-xs font-medium text-stone-600">{ai.common.patientId}</label>
               <input
                 type="text"
-                placeholder="e.g. PAT-001"
+                placeholder={ai.common.patientPlaceholder}
                 {...register('patientId')}
                 className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
@@ -693,27 +696,27 @@ function AiAnalysisHistory() {
               className="inline-flex items-center gap-2 rounded-lg bg-stone-800 px-4 py-2 text-sm font-medium text-white hover:bg-stone-900 disabled:opacity-50 transition-colors"
             >
               {isLoading ? <Spinner className="h-4 w-4 text-white" /> : <History className="h-4 w-4" />}
-              Load History
+              {ai.history.load}
             </button>
           </form>
 
           {isLoading && (
             <div className="flex items-center justify-center py-6">
               <Spinner />
-              <span className="ml-2 text-sm text-stone-500">Loading analysis history...</span>
+              <span className="ml-2 text-sm text-stone-500">{ai.history.loading}</span>
             </div>
           )}
 
           {isError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error instanceof Error ? error.message : 'Failed to load history. Please try again.'}
+              {localizeErrorMessage(error instanceof Error ? error.message : undefined, ai.history.error)}
             </div>
           )}
 
           {history && history.length === 0 && (
             <div className="rounded-lg border border-stone-200 bg-stone-50 py-8 text-center">
               <History className="mx-auto h-8 w-8 text-stone-300" />
-              <p className="mt-2 text-sm text-stone-500">No analysis history found for this patient.</p>
+              <p className="mt-2 text-sm text-stone-500">{ai.history.empty}</p>
             </div>
           )}
 
@@ -722,21 +725,17 @@ function AiAnalysisHistory() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-stone-200 bg-stone-50">
-                    <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">Date</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">Type</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">Summary</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">Status</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">{ai.common.date}</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">{ai.common.type}</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">{ai.common.summary}</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-stone-500">{ai.common.status}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.map((entry) => (
                     <tr key={entry.id} className="border-b border-stone-100 last:border-0">
                       <td className="px-3 py-2 whitespace-nowrap text-stone-600">
-                        {new Date(entry.createdAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
+                        {formatDate(entry.createdAt)}
                       </td>
                       <td className="px-3 py-2 text-stone-700 font-medium">
                         {typeLabels[entry.type] ?? entry.type}
@@ -749,7 +748,7 @@ function AiAnalysisHistory() {
                             statusColors[entry.status] ?? 'bg-stone-100 text-stone-600'
                           )}
                         >
-                          {entry.status}
+                          {ai.history.status[entry.status] ?? entry.status}
                         </span>
                       </td>
                     </tr>
@@ -778,9 +777,9 @@ export default function AiAssistantPage() {
             <Brain className="h-6 w-6 text-purple-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-stone-900">AI Assistant</h1>
+            <h1 className="text-2xl font-semibold text-stone-900">{ai.title}</h1>
             <p className="text-sm text-stone-500">
-              AI-powered tools to streamline clinical documentation and treatment planning
+              {ai.description}
             </p>
           </div>
         </div>
@@ -790,10 +789,9 @@ export default function AiAssistantPage() {
       <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
         <div>
-          <p className="text-sm font-medium text-amber-800">Clinical Review Required</p>
+          <p className="text-sm font-medium text-amber-800">{ai.disclaimerTitle}</p>
           <p className="text-xs text-amber-700">
-            All AI-generated content is intended as a clinical decision support tool only. Output must be
-            reviewed and verified by a licensed dental professional before use in patient records.
+            {ai.disclaimer}
           </p>
         </div>
       </div>

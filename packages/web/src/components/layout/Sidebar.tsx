@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/appStore";
+import { ptBR } from "@/i18n";
 import {
   LayoutDashboard,
   Users,
@@ -19,13 +20,13 @@ import {
 } from "lucide-react";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Patients", href: "/patients", icon: Users },
-  { name: "Appointments", href: "/appointments", icon: Calendar },
-  { name: "Billing", href: "/billing", icon: Receipt },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "AI Assistant", href: "/ai-assistant", icon: Brain },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: ptBR.shell.navigation.dashboard, href: "/", icon: LayoutDashboard },
+  { name: ptBR.shell.navigation.patients, href: "/patients", icon: Users },
+  { name: ptBR.shell.navigation.appointments, href: "/appointments", icon: Calendar },
+  { name: ptBR.shell.navigation.billing, href: "/billing", icon: Receipt },
+  { name: ptBR.shell.navigation.reports, href: "/reports", icon: BarChart3 },
+  { name: ptBR.shell.navigation.aiAssistant, href: "/ai-assistant", icon: Brain },
+  { name: ptBR.shell.navigation.settings, href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -154,7 +155,7 @@ export function Sidebar() {
                 className="flex-1 overflow-hidden"
               >
                 <p className="truncate text-sm font-medium text-stone-200">
-                  {provider?.name || "Provider"}
+                  {provider?.name || ptBR.shell.profile.provider}
                 </p>
                 <p className="truncate text-xs text-stone-500">
                   {provider?.title || provider?.role || ""}
@@ -170,7 +171,8 @@ export function Sidebar() {
                 exit={{ opacity: 0 }}
                 onClick={handleLogout}
                 className="shrink-0 rounded-md p-1.5 text-stone-500 hover:bg-stone-800 hover:text-stone-300 transition-colors"
-                title="Sign out"
+                title={ptBR.shell.profile.signOut}
+                aria-label={ptBR.shell.profile.signOut}
               >
                 <LogOut className="h-4 w-4" />
               </motion.button>
@@ -183,7 +185,9 @@ export function Sidebar() {
       <button
         onClick={toggleSidebar}
         className="absolute -right-3 top-[4.25rem] z-10 flex h-6 w-6 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-500 shadow-sm transition-colors hover:bg-stone-50 hover:text-stone-700"
-        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-label={
+          isCollapsed ? ptBR.shell.sidebar.expand : ptBR.shell.sidebar.collapse
+        }
       >
         {isCollapsed ? (
           <ChevronRight className="h-3.5 w-3.5" />

@@ -5,13 +5,11 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { cn } from '@/lib/utils';
+import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import {
   APPOINTMENT_TYPE_COLORS,
-  APPOINTMENT_TYPE_LABELS,
-  APPOINTMENT_STATUS_COLORS,
-  APPOINTMENT_STATUS_LABELS,
 } from '@/lib/constants';
+import { appointmentTypeLabel } from './appointmentLabels';
 
 interface Appointment {
   id: string;
@@ -86,6 +84,7 @@ export function CalendarView({
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        locale={ptBrLocale}
         initialView={view}
         initialDate={currentDate}
         headerToolbar={false}
@@ -127,7 +126,7 @@ export function CalendarView({
         }}
         eventContent={(arg) => {
           const apt = arg.event.extendedProps;
-          const typeLabel = APPOINTMENT_TYPE_LABELS[apt.type] || apt.type;
+          const typeLabel = appointmentTypeLabel(apt.type);
           const isTimeGrid = view.startsWith('timeGrid');
 
           return (

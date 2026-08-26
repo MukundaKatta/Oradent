@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { UPPER_TEETH, LOWER_TEETH, TOOTH_MAP } from '@/lib/toothMap';
+import React, { useState, useCallback } from "react";
+import { UPPER_TEETH, LOWER_TEETH } from "@/lib/toothMap";
 import ToothSVG, { type ToothCondition } from './ToothSVG';
 import ToothPopover from './ToothPopover';
-import ChartLegend from './ChartLegend';
+import ChartLegend from "./ChartLegend";
+import { ptBR } from "@/i18n";
 
 export interface ToothRecord {
   conditions: ToothCondition[];
@@ -121,10 +122,10 @@ export default function DentalChart({
         {/* Quadrant labels */}
         <div className="flex justify-between mb-1 px-1">
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            Upper Right
+            {ptBR.patientWorkflow.chart.upperRight}
           </span>
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            Upper Left
+            {ptBR.patientWorkflow.chart.upperLeft}
           </span>
         </div>
 
@@ -146,7 +147,7 @@ export default function DentalChart({
         <div className="my-3 flex items-center gap-2">
           <div className="flex-1 border-t border-dashed border-slate-200" />
           <span className="text-[10px] text-slate-400 font-medium shrink-0">
-            MIDLINE
+            {ptBR.patientWorkflow.chart.midline}
           </span>
           <div className="flex-1 border-t border-dashed border-slate-200" />
         </div>
@@ -168,10 +169,10 @@ export default function DentalChart({
         {/* Lower quadrant labels */}
         <div className="flex justify-between mt-1 px-1">
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            Lower Right
+            {ptBR.patientWorkflow.chart.lowerRight}
           </span>
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-            Lower Left
+            {ptBR.patientWorkflow.chart.lowerLeft}
           </span>
         </div>
       </div>
@@ -179,7 +180,7 @@ export default function DentalChart({
       {/* Legend */}
       <div className="w-full max-w-4xl bg-white rounded-lg border border-slate-200 px-4 py-2 shadow-sm">
         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-          Legend
+          {ptBR.patientWorkflow.chart.legend}
         </p>
         <ChartLegend />
       </div>

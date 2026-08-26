@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Brain, Calendar } from 'lucide-react';
-import { formatDate } from '@/lib/formatters';
+import { formatDate } from "@/lib/formatters";
+import { ptBR } from "@/i18n";
 
 interface XrayImage {
   id: string;
@@ -23,15 +24,7 @@ interface XrayGalleryProps {
   onSelect: (image: XrayImage) => void;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  periapical: 'Periapical',
-  bitewing: 'Bitewing',
-  panoramic: 'Panoramic',
-  cephalometric: 'Cephalometric',
-  cbct: 'CBCT',
-  intraoral: 'Intraoral',
-  other: 'Other',
-};
+const TYPE_LABELS: Record<string, string> = ptBR.patientWorkflow.imaging.types;
 
 export function XrayGallery({ images, onSelect }: XrayGalleryProps) {
   const [filter, setFilter] = useState<string>('');
@@ -106,7 +99,7 @@ export function XrayGallery({ images, onSelect }: XrayGalleryProps) {
 
       {filtered.length === 0 && (
         <div className="py-8 text-center text-sm text-stone-400">
-          No images match the selected filter.
+          {ptBR.patientWorkflow.imaging.noFilterMatches}
         </div>
       )}
     </div>

@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Clock, FileText, Filter } from 'lucide-react';
+import { FileText } from "lucide-react";
 import { apiGet } from '@/lib/api';
-import { formatDate, formatCurrency } from '@/lib/formatters';
-import { TreatmentTimeline } from '@/components/treatments/TreatmentTimeline';
+import { TreatmentTimeline } from "@/components/treatments/TreatmentTimeline";
+import { ptBR } from "@/i18n";
 
 interface TreatmentRecord {
   id: string;
@@ -50,9 +50,9 @@ export default function TreatmentHistoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-stone-900">Treatment History</h2>
+          <h2 className="text-xl font-bold text-stone-900">{ptBR.patientWorkflow.history.title}</h2>
           <p className="mt-1 text-sm text-stone-500">
-            {data?.total ?? 0} treatments on record
+            {data?.total ?? 0} {ptBR.patientWorkflow.history.total}
           </p>
         </div>
         <div className="flex gap-2">
@@ -64,10 +64,10 @@ export default function TreatmentHistoryPage() {
             }}
             className="rounded-lg border border-stone-200 px-3 py-2 text-sm text-stone-600 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           >
-            <option value="">All Status</option>
-            <option value="completed">Completed</option>
-            <option value="planned">Planned</option>
-            <option value="in_progress">In Progress</option>
+            <option value="">{ptBR.patientWorkflow.history.allStatus}</option>
+            <option value="completed">{ptBR.patientWorkflow.history.completed}</option>
+            <option value="planned">{ptBR.patientWorkflow.history.planned}</option>
+            <option value="in_progress">{ptBR.patientWorkflow.history.inProgress}</option>
           </select>
         </div>
       </div>
@@ -91,10 +91,10 @@ export default function TreatmentHistoryPage() {
         <div className="rounded-xl border border-stone-200 bg-white p-12 text-center shadow-sm">
           <FileText className="mx-auto h-12 w-12 text-stone-300" />
           <h3 className="mt-3 text-lg font-medium text-stone-700">
-            No Treatment History
+            {ptBR.patientWorkflow.history.empty}
           </h3>
           <p className="mt-1 text-sm text-stone-500">
-            Treatment records will appear here after procedures are completed.
+            {ptBR.patientWorkflow.history.emptyDescription}
           </p>
         </div>
       )}
@@ -103,7 +103,7 @@ export default function TreatmentHistoryPage() {
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between rounded-xl border border-stone-200 bg-white px-6 py-3 shadow-sm">
           <p className="text-sm text-stone-500">
-            Page {data.page} of {data.totalPages}
+            {ptBR.patientWorkflow.list.page} {data.page} {ptBR.patientWorkflow.list.of} {data.totalPages}
           </p>
           <div className="flex gap-2">
             <button
@@ -111,14 +111,14 @@ export default function TreatmentHistoryPage() {
               disabled={page <= 1}
               className="rounded-lg border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              {ptBR.patientWorkflow.common.previous}
             </button>
             <button
               onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
               disabled={page >= data.totalPages}
               className="rounded-lg border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              {ptBR.patientWorkflow.common.next}
             </button>
           </div>
         </div>

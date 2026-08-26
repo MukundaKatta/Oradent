@@ -1,5 +1,8 @@
 'use client';
 
+
+import { formatCurrency } from '@/lib/formatters';
+import { t } from '@/i18n';
 interface PendingClaimsCardProps {
   pendingClaims?: number;
   totalAmount?: number;
@@ -20,12 +23,7 @@ export default function PendingClaimsCard({ pendingClaims, totalAmount, isLoadin
     );
   }
 
-  const formattedAmount = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(totalAmount ?? 0);
+  const formattedAmount = formatCurrency(totalAmount ?? 0);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
@@ -45,14 +43,14 @@ export default function PendingClaimsCard({ pendingClaims, totalAmount, isLoadin
             />
           </svg>
         </div>
-        <span className="text-sm font-medium text-stone-500">Pending Claims</span>
+        <span className="text-sm font-medium text-stone-500">{t('dashboard.pendingClaims', 'Guias pendentes')}</span>
       </div>
       <p className="text-2xl font-semibold text-stone-900">
         {pendingClaims ?? 0}
       </p>
       {totalAmount !== undefined && (
         <p className="text-sm text-stone-500 mt-2">
-          <span className="font-mono">{formattedAmount}</span> total value
+          <span className="font-mono">{formattedAmount}</span> {t('dashboard.totalValue', 'em valor total')}
         </p>
       )}
     </div>

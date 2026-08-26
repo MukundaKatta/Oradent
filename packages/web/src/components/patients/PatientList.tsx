@@ -2,7 +2,8 @@
 
 import { User, Phone, Mail, Calendar } from 'lucide-react';
 import type { Patient } from '@/hooks/usePatient';
-import { formatDate, formatAge, formatPhone, getInitials } from '@/lib/formatters';
+import { formatDate, formatAge, formatPhone, getInitials } from "@/lib/formatters";
+import { ptBR } from "@/i18n";
 
 interface PatientListProps {
   patients: Patient[];
@@ -21,10 +22,10 @@ export function PatientList({ patients, onSelect }: PatientListProps) {
       <div className="rounded-xl border border-stone-200 bg-white p-12 text-center shadow-sm">
         <User className="mx-auto h-12 w-12 text-stone-300" />
         <h3 className="mt-3 text-lg font-medium text-stone-700">
-          No Patients Found
+          {ptBR.patientWorkflow.list.noPatients}
         </h3>
         <p className="mt-1 text-sm text-stone-500">
-          Try adjusting your search or filters.
+          {ptBR.patientWorkflow.list.adjustFilters}
         </p>
       </div>
     );
@@ -36,19 +37,19 @@ export function PatientList({ patients, onSelect }: PatientListProps) {
         <thead>
           <tr className="border-b border-stone-200">
             <th className="px-4 py-3 text-left font-medium text-stone-500">
-              Patient
+              {ptBR.patientWorkflow.common.patient}
             </th>
             <th className="px-4 py-3 text-left font-medium text-stone-500">
-              Contact
+              {ptBR.patientWorkflow.list.contact}
             </th>
             <th className="px-4 py-3 text-left font-medium text-stone-500">
-              Age
+              {ptBR.patientWorkflow.list.age}
             </th>
             <th className="px-4 py-3 text-left font-medium text-stone-500">
-              Last Visit
+              {ptBR.patientWorkflow.list.lastVisit}
             </th>
             <th className="px-4 py-3 text-left font-medium text-stone-500">
-              Status
+              {ptBR.patientWorkflow.common.status}
             </th>
           </tr>
         </thead>
@@ -98,7 +99,7 @@ export function PatientList({ patients, onSelect }: PatientListProps) {
                     STATUS_BADGE[patient.status] || 'bg-stone-100 text-stone-600'
                   }`}
                 >
-                  {patient.status}
+                  {ptBR.patient.status[patient.status.toUpperCase() as keyof typeof ptBR.patient.status] ?? patient.status}
                 </span>
               </td>
             </tr>

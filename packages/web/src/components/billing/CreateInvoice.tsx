@@ -7,22 +7,23 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Plus, Trash2, Search, User } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api';
+import { formatCurrency } from '@/lib/formatters';
 
 const invoiceSchema = z.object({
-  patientId: z.string().min(1, 'Patient is required'),
-  date: z.string().min(1, 'Date is required'),
-  dueDate: z.string().min(1, 'Due date is required'),
+  patientId: z.string().min(1, 'Selecione um paciente'),
+  date: z.string().min(1, 'A data é obrigatória'),
+  dueDate: z.string().min(1, 'A data de vencimento é obrigatória'),
   items: z
     .array(
       z.object({
-        cdtCode: z.string().min(1, 'CDT code required'),
-        description: z.string().min(1, 'Description required'),
+        cdtCode: z.string().min(1, 'O código CDT é obrigatório'),
+        description: z.string().min(1, 'A descrição é obrigatória'),
         toothNumber: z.string().optional(),
         quantity: z.number().min(1),
         fee: z.number().min(0),
       })
     )
-    .min(1, 'At least one item is required'),
+    .min(1, 'Inclua pelo menos um item'),
   notes: z.string().optional(),
 });
 
@@ -112,9 +113,6 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
     setSearchResults([]);
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-
   const onSubmit = async (data: InvoiceFormData) => {
     setSaving(true);
     try {
@@ -134,7 +132,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <Dialog.Title className="text-lg font-semibold text-stone-900">
-              Create Invoice
+              Criar fatura
             </Dialog.Title>
             <Dialog.Close asChild>
               <button className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100">
@@ -146,7 +144,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Patient */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-stone-700">Patient</label>
+              <label className="mb-1.5 block text-sm font-medium text-stone-700">Paciente</label>
               {selectedPatient ? (
                 <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-stone-50 px-3 py-2">
                   <div className="flex items-center gap-2">
@@ -171,7 +169,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                   <input
                     type="text"
-                    placeholder="Search patients..."
+                    placeholder="Busque pacientes..."
                     value={patientSearch}
                     onChange={(e) => {
                       setPatientSearch(e.target.value);
@@ -204,7 +202,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
             {/* Dates */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Invoice Date</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Data da fatura</label>
                 <input
                   type="date"
                   {...register('date')}
@@ -212,7 +210,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Due Date</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Data de vencimento</label>
                 <input
                   type="date"
                   {...register('dueDate')}
@@ -224,7 +222,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
             {/* Line Items */}
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label className="text-sm font-medium text-stone-700">Line Items</label>
+                <label className="text-sm font-medium text-stone-700">Itens da fatura</label>
                 <button
                   type="button"
                   onClick={() =>
@@ -240,7 +238,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                 {fields.map((field, index) => (
                   <div key={field.id} className="grid grid-cols-[100px_1fr_70px_60px_100px_32px] gap-2 items-end">
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">CDT Code</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Código CDT</span>}
                       <input
                         {...register(`items.${index}.cdtCode`)}
                         placeholder="D0120"
@@ -248,15 +246,15 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                       />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Description</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Descrição</span>}
                       <input
                         {...register(`items.${index}.description`)}
-                        placeholder="Description"
+                        placeholder="Descrição"
                         className="w-full rounded border border-stone-200 px-2 py-1.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                       />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Tooth</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Dente</span>}
                       <input
                         {...register(`items.${index}.toothNumber`)}
                         placeholder="#"
@@ -264,7 +262,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                       />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Qty</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Qtd.</span>}
                       <input
                         type="number"
                         {...register(`items.${index}.quantity`, { valueAsNumber: true })}
@@ -272,7 +270,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                       />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Fee</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Valor</span>}
                       <input
                         type="number"
                         step="0.01"
@@ -297,7 +295,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
               </div>
               {errors.items && (
                 <p className="mt-1 text-xs text-red-500">
-                  {typeof errors.items.message === 'string' ? errors.items.message : 'Fix item errors'}
+                  {typeof errors.items.message === 'string' ? errors.items.message : 'Corrija os erros dos itens'}
                 </p>
               )}
             </div>
@@ -312,11 +310,11 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
 
             {/* Notes */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-stone-700">Notes</label>
+              <label className="mb-1.5 block text-sm font-medium text-stone-700">Observações</label>
               <textarea
                 {...register('notes')}
                 rows={2}
-                placeholder="Optional notes..."
+                placeholder="Observações opcionais..."
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
@@ -328,14 +326,14 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                 onClick={onClose}
                 className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
-                Cancel
+                Cancelar
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
               >
-                {saving ? 'Creating...' : 'Create Invoice'}
+                {saving ? 'Criando...' : 'Criar fatura'}
               </button>
             </div>
           </form>

@@ -2,6 +2,8 @@
 
 import { useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { formatDate } from "@/lib/formatters";
+import { ptBR } from "@/i18n";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import {
@@ -24,19 +26,19 @@ interface CommandPaletteProps {
 }
 
 const navigationItems = [
-  { name: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Patients", href: "/patients", icon: Users },
-  { name: "Appointments", href: "/appointments", icon: Calendar },
-  { name: "Billing", href: "/billing", icon: Receipt },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "AI Assistant", href: "/ai-assistant", icon: Brain },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: ptBR.shell.navigation.dashboard, href: "/dashboard", icon: LayoutDashboard },
+  { name: ptBR.shell.navigation.patients, href: "/patients", icon: Users },
+  { name: ptBR.shell.navigation.appointments, href: "/appointments", icon: Calendar },
+  { name: ptBR.shell.navigation.billing, href: "/billing", icon: Receipt },
+  { name: ptBR.shell.navigation.reports, href: "/reports", icon: BarChart3 },
+  { name: ptBR.shell.navigation.aiAssistant, href: "/ai-assistant", icon: Brain },
+  { name: ptBR.shell.navigation.settings, href: "/settings", icon: Settings },
 ];
 
 const actionItems = [
-  { name: "New Patient", href: "/patients/new", icon: UserPlus },
-  { name: "New Appointment", href: "/appointments/new", icon: CalendarPlus },
-  { name: "New Invoice", href: "/billing/new", icon: FileText },
+  { name: ptBR.shell.commandPalette.newPatient, href: "/patients/new", icon: UserPlus },
+  { name: ptBR.shell.commandPalette.newAppointment, href: "/appointments/new", icon: CalendarPlus },
+  { name: ptBR.shell.commandPalette.newInvoice, href: "/billing/new", icon: FileText },
 ];
 
 // Mock patient search results
@@ -77,23 +79,23 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0" />
         <Dialog.Content className="fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-2xl animate-in fade-in-0 zoom-in-95">
-          <Command className="flex flex-col" label="Command palette">
+          <Command className="flex flex-col" label={ptBR.shell.commandPalette.label}>
             <div className="flex items-center gap-2 border-b border-stone-200 px-4">
               <Search className="h-4 w-4 shrink-0 text-stone-400" />
               <Command.Input
-                placeholder="Search patients, navigate, or run actions..."
+                placeholder={ptBR.shell.commandPalette.placeholder}
                 className="flex h-12 w-full bg-transparent text-sm text-stone-900 outline-none placeholder:text-stone-400"
               />
             </div>
 
             <Command.List className="max-h-80 overflow-y-auto p-2 scrollbar-thin">
               <Command.Empty className="py-8 text-center text-sm text-stone-500">
-                No results found.
+                {ptBR.shell.commandPalette.noResults}
               </Command.Empty>
 
               {/* Patients */}
               <Command.Group
-                heading="Patients"
+                heading={ptBR.shell.commandPalette.patients}
                 className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-stone-500"
               >
                 {mockPatients.map((patient) => (
@@ -112,7 +114,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     <div>
                       <p className="font-medium">{patient.name}</p>
                       <p className="text-xs text-stone-400">
-                        DOB: {patient.dob}
+                        {ptBR.shell.commandPalette.dateOfBirth}: {formatDate(patient.dob)}
                       </p>
                     </div>
                   </Command.Item>
@@ -121,7 +123,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
               {/* Navigation */}
               <Command.Group
-                heading="Navigation"
+                heading={ptBR.shell.commandPalette.navigation}
                 className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-stone-500"
               >
                 {navigationItems.map((item) => (
@@ -139,7 +141,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
               {/* Actions */}
               <Command.Group
-                heading="Actions"
+                heading={ptBR.shell.commandPalette.actions}
                 className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-stone-500"
               >
                 {actionItems.map((item) => (
@@ -162,19 +164,19 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   <kbd className="rounded border border-stone-200 bg-stone-50 px-1 py-0.5 font-mono text-[10px]">
                     ↑↓
                   </kbd>{" "}
-                  Navigate
+                  {ptBR.shell.commandPalette.navigate}
                 </span>
                 <span>
                   <kbd className="rounded border border-stone-200 bg-stone-50 px-1 py-0.5 font-mono text-[10px]">
                     ↵
                   </kbd>{" "}
-                  Select
+                  {ptBR.shell.commandPalette.select}
                 </span>
                 <span>
                   <kbd className="rounded border border-stone-200 bg-stone-50 px-1 py-0.5 font-mono text-[10px]">
                     Esc
                   </kbd>{" "}
-                  Close
+                  {ptBR.shell.commandPalette.close}
                 </span>
               </div>
             </div>
