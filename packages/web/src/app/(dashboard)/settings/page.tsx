@@ -33,7 +33,7 @@ const practiceSchema = z.object({
   name: z.string().min(1, 'O nome da clínica é obrigatório'),
   address: z.string().min(1, 'O endereço é obrigatório'),
   phone: z.string().min(1, 'O telefone é obrigatório'),
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Informe um e-mail válido'),
 });
 
 type PracticeFormData = z.infer<typeof practiceSchema>;
@@ -45,11 +45,11 @@ const chairSchema = z.object({
 type ChairFormData = z.infer<typeof chairSchema>;
 
 const preferencesSchema = z.object({
-  appointmentDuration: z.coerce.number().min(5, 'Minimum 5 minutes').max(480, 'Maximum 8 hours'),
+  appointmentDuration: z.coerce.number().min(5, 'Mínimo de 5 minutos').max(480, 'Máximo de 8 horas'),
   workingHoursStart: z.string().min(1, 'O horário de início é obrigatório'),
   workingHoursEnd: z.string().min(1, 'O horário de término é obrigatório'),
-  workingDays: z.array(z.number()).min(1, 'Select at least one working day'),
-  reminderHoursBefore: z.coerce.number().min(1, 'Minimum 1 hour').max(168, 'Maximum 7 days'),
+  workingDays: z.array(z.number()).min(1, 'Selecione pelo menos um dia de trabalho'),
+  reminderHoursBefore: z.coerce.number().min(1, 'Mínimo de 1 hora').max(168, 'Máximo de 7 dias'),
   currency: z.string().min(1, 'A moeda é obrigatória'),
 });
 
@@ -304,7 +304,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
                 )}
               >
                 <Save className="h-4 w-4" />
-                {mutation.isPending ? 'Salvando...' : 'Save Changes'}
+                {mutation.isPending ? 'Salvando...' : 'Salvar alterações'}
               </button>
             </div>
           </form>
@@ -992,7 +992,7 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
                   )}
                 >
                   <Save className="h-4 w-4" />
-                  {mutation.isPending ? 'Salvando...' : 'Save Preferences'}
+                  {mutation.isPending ? 'Salvando...' : 'Salvar preferências'}
                 </button>
               </div>
             </form>

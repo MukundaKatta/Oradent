@@ -249,7 +249,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                       {index === 0 && <span className="mb-1 block text-xs text-stone-400">Descrição</span>}
                       <input
                         {...register(`items.${index}.description`)}
-                        placeholder="Description"
+                        placeholder="Descrição"
                         className="w-full rounded border border-stone-200 px-2 py-1.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                       />
                     </div>
