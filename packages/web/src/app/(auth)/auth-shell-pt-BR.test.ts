@@ -32,4 +32,24 @@ describe("autenticação e navegação em pt-BR", () => {
     expect(sidebar).toContain('href: "/patients"');
     expect(commandPalette).toContain('href: "/appointments/new"');
   });
+
+  it("autentica pelo cliente de API configurado e preserva a localização de erros", () => {
+    const login = source("./login/page.tsx");
+
+    expect(login).toContain('import { apiPost } from "@/lib/api"');
+    expect(login).toContain("const result = await apiPost<{");
+    expect(login).toContain("const token = result.token || result.accessToken;");
+    expect(login).toContain('throw new Error("Login response did not include a token")');
+    expect(login).toContain("localizeErrorMessage(error.message, ptBR.auth.login.unexpectedError)");
+    expect(login).not.toContain('fetch("/api/auth/login"');
+    expect(login).not.toContain("const response = await");
+  });
+
+  it("mantém o layout pt-BR sem fonte remota", () => {
+    const layout = source("../layout.tsx");
+
+    expect(layout).toContain('<html lang="pt-BR">');
+    expect(layout).not.toContain("next/font/google");
+    expect(layout).not.toContain("dmSans");
+  });
 });

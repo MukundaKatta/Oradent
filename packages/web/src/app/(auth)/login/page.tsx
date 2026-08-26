@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { apiPost } from "@/lib/api";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { ptBR } from "@/i18n";
 import { localizeErrorMessage } from "@/lib/errorMessages";
@@ -40,25 +41,18 @@ export default function LoginPage() {
     setServerError(null);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
+      const result = await apiPost<{
+        token?: string;
+        accessToken?: string;
+        refreshToken?: string;
+      }, { email: string; password: string }>("/api/auth/login", {
+        email: data.email,
+        password: data.password,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.message || ptBR.auth.login.invalidCredentials
-        );
-      }
-
-      const result = await response.json();
-
-      localStorage.setItem("oradent_token", result.token || result.accessToken);
+      const token = result.token || result.accessToken;
+      if (!token) throw new Error("Login response did not include a token");
+      localStorage.setItem("oradent_token", token);
       if (result.refreshToken) {
         localStorage.setItem("oradent_refresh_token", result.refreshToken);
       }

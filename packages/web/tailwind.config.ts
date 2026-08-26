@@ -102,8 +102,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["DM Sans", "system-ui", "sans-serif"],
-        mono: ["IBM Plex Mono", "monospace"],
+        sans: ["system-ui", "sans-serif"],
+        mono: ["ui-monospace", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",
