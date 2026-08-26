@@ -13,9 +13,7 @@ import { format } from 'date-fns';
 import { ptBR as dateFnsPtBR } from 'date-fns/locale';
 import { t } from '@/i18n';
 import TodaySchedule from '@/components/dashboard/TodaySchedule';
-import RevenueCard from '@/components/dashboard/RevenueCard';
-import PatientStatsCard from '@/components/dashboard/PatientStatsCard';
-import PendingClaimsCard from '@/components/dashboard/PendingClaimsCard';
+import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
 import AIInsightsCard from '@/components/dashboard/AIInsightsCard';
 
 interface DashboardStats {
@@ -34,18 +32,6 @@ interface DashboardStats {
     priority: 'low' | 'medium' | 'high';
     actionUrl?: string;
   }[];
-}
-
-function StatCardSkeleton() {
-  return (
-    <div className="glass-card p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-10 h-10 bg-stone-200/70 animate-pulse rounded-xl" />
-      </div>
-      <div className="h-8 w-24 bg-stone-200/70 animate-pulse rounded" />
-      <div className="h-4 w-32 bg-stone-200/70 animate-pulse rounded mt-2" />
-    </div>
-  );
 }
 
 export default function DashboardPage() {
@@ -88,54 +74,20 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Stat cards row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Today's Appointments */}
-        {isLoading ? (
-          <StatCardSkeleton />
-        ) : (
-          <div className="glass-card p-6 transition-transform hover:-translate-y-0.5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2.5 rounded-xl bg-teal-100/80">
-                <Calendar className="w-5 h-5 text-teal-600" />
-              </div>
-              {stats?.todayAppointments !== undefined && stats.todayAppointments > 0 && (
-                <span className="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
-                  {t('dashboard.today', 'Hoje')}
-                </span>
-              )}
-            </div>
-            <p className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
-              {stats?.todayAppointments ?? 0}
-            </p>
-            <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">{t('dashboard.todayAppointments', 'Consultas de hoje')}</p>
-          </div>
-        )}
-
-        {/* Month Revenue */}
-        <RevenueCard
-          revenue={stats?.monthRevenue}
-          trend={stats?.revenueTrend}
-          isLoading={isLoading}
-        />
-
-        {/* Active Patients */}
-        <PatientStatsCard
-          activePatients={stats?.activePatients}
-          trend={stats?.patientsTrend}
-          isLoading={isLoading}
-        />
-
-        {/* Pending Claims */}
-        <PendingClaimsCard
-          pendingClaims={stats?.pendingClaims}
-          totalAmount={stats?.pendingClaimsAmount}
-          isLoading={isLoading}
-        />
-      </div>
+      {/* Metrics */}
+      <DashboardMetrics
+        todayAppointments={stats?.todayAppointments}
+        monthRevenue={stats?.monthRevenue}
+        revenueTrend={stats?.revenueTrend}
+        activePatients={stats?.activePatients}
+        patientsTrend={stats?.patientsTrend}
+        pendingClaims={stats?.pendingClaims}
+        pendingClaimsAmount={stats?.pendingClaimsAmount}
+        isLoading={isLoading}
+      />
 
       {/* Today's Schedule */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="lg:col-span-2">
           <TodaySchedule />
         </div>

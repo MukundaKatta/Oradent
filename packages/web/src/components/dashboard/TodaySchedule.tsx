@@ -2,7 +2,8 @@
 
 import { useTodaySchedule, type TodayScheduleItem } from '@/hooks/useAppointments';
 import { useRouter } from 'next/navigation';
-import { Clock } from 'lucide-react';
+import Link from 'next/link';
+import { Clock, CalendarPlus } from 'lucide-react';
 import { t } from '@/i18n';
 import { appointmentStatusLabel, appointmentTypeLabel } from '@/components/appointments/appointmentLabels';
 
@@ -83,8 +84,20 @@ export default function TodaySchedule() {
       ) : isError ? (
         <div className="py-12 text-center text-stone-500 dark:text-stone-400 text-sm px-6 pb-6">{t('dashboard.scheduleLoadError', 'Não foi possível carregar a agenda de hoje.')}</div>
       ) : !schedule || schedule.length === 0 ? (
-        <div className="py-12 text-center text-stone-500 dark:text-stone-400 text-sm px-6 pb-6">
-          {t('dashboard.scheduleEmpty', 'Não há consultas agendadas para hoje.')}
+        <div className="flex flex-col items-center gap-3 py-12 px-6 pb-6 text-center">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100 dark:bg-white/5">
+            <CalendarPlus className="h-5 w-5 text-stone-400 dark:text-stone-500" strokeWidth={1.75} />
+          </div>
+          <p className="text-sm text-stone-500 dark:text-stone-400">
+            {t('dashboard.scheduleEmpty', 'Não há consultas agendadas para hoje.')}
+          </p>
+          <Link
+            href="/appointments?new=true"
+            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-teal-600 px-3.5 py-1.5 text-xs font-medium text-white shadow-apple-sm transition-all hover:bg-teal-700 active:scale-[0.97]"
+          >
+            <CalendarPlus className="h-3.5 w-3.5" />
+            {t('dashboard.newAppointment', 'Nova consulta')}
+          </Link>
         </div>
       ) : (
         <div className="px-6 pb-6 space-y-1">
