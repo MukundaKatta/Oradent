@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
 import { formatCurrency } from '@/lib/formatters';
+import { formatProcedureCount } from '@/components/billing/billingLabels';
 import {
   PieChart as PieChartIcon,
   Clock,
@@ -340,7 +341,7 @@ export default function ReportsPage() {
                   </Pie>
                   <Tooltip
                     formatter={(value: number, name: string) => [
-                      ` procedimentos`,
+                      formatProcedureCount(value),
                       name,
                     ]}
                     contentStyle={{

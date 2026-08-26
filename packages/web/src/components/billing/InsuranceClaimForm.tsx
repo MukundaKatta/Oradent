@@ -10,12 +10,12 @@ import { apiGet, apiPost } from '@/lib/api';
 import { formatCurrency } from '@/lib/formatters';
 
 const claimSchema = z.object({
-  patientId: z.string().min(1, 'Patient is required'),
-  insuranceProvider: z.string().min(1, 'Insurance provider required'),
-  subscriberId: z.string().min(1, 'Subscriber ID required'),
+  patientId: z.string().min(1, 'Selecione um paciente'),
+  insuranceProvider: z.string().min(1, 'A operadora do convênio é obrigatória'),
+  subscriberId: z.string().min(1, 'O ID do beneficiário é obrigatório'),
   groupNumber: z.string().optional(),
-  providerNpi: z.string().min(1, 'Provider NPI required'),
-  diagnosisCodes: z.string().min(1, 'At least one diagnosis code required'),
+  providerNpi: z.string().min(1, 'O NPI do profissional é obrigatório'),
+  diagnosisCodes: z.string().min(1, 'Informe pelo menos um código de diagnóstico'),
   procedures: z
     .array(
       z.object({
@@ -154,7 +154,7 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                   <input
                     type="text"
-                    placeholder="Search patients..."
+                    placeholder="Busque pacientes..."
                     value={patientSearch}
                     onChange={(e) => { setPatientSearch(e.target.value); setShowSearch(true); }}
                     className="w-full rounded-lg border border-stone-200 py-2 pl-10 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -205,7 +205,7 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
                 <label className="mb-1.5 block text-sm font-medium text-stone-700">Número do grupo</label>
                 <input
                   {...register('groupNumber')}
-                  placeholder="Optional"
+                  placeholder="Opcional"
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
               </div>
@@ -277,13 +277,13 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-stone-700">Observações</label>
-              <textarea {...register('notes')} rows={2} placeholder="Additional notes..." className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              <textarea {...register('notes')} rows={2} placeholder="Observações adicionais..." className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={onClose} className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">Cancelar</button>
               <button type="submit" disabled={saving} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50">
-                {saving ? 'Submitting...' : 'Submit Claim'}
+                {saving ? 'Enviando...' : 'Enviar guia'}
               </button>
             </div>
           </form>

@@ -100,7 +100,7 @@ export function InvoiceTable({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
           <input
             type="text"
-            placeholder="Search invoices..."
+            placeholder="Buscar faturas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-lg border border-stone-200 py-2 pl-10 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -180,7 +180,7 @@ export function InvoiceTable({
                         setExpandedId(expandedId === invoice.id ? null : invoice.id)
                       }
                       className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
-                      title="View details"
+                      title="Ver detalhes"
                     >
                       <Eye className="h-4 w-4" />
                     </button>
@@ -188,7 +188,7 @@ export function InvoiceTable({
                       <button
                         onClick={() => onRecordPayment(invoice)}
                         className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
-                        title="Record payment"
+                        title="Registrar pagamento"
                       >
                         <CreditCard className="h-4 w-4" />
                       </button>
@@ -196,7 +196,7 @@ export function InvoiceTable({
                     <button
                       onClick={() => onViewLedger(invoice)}
                       className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
-                      title="View ledger"
+                      title="Ver extrato"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </button>

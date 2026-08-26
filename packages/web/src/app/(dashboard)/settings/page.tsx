@@ -30,27 +30,27 @@ import type { Practice, PracticeSettings, Provider, Chair, ProviderRole } from '
 // ═══════════════════ SCHEMAS ═══════════════════
 
 const practiceSchema = z.object({
-  name: z.string().min(1, 'Practice name is required'),
-  address: z.string().min(1, 'Address is required'),
-  phone: z.string().min(1, 'Phone number is required'),
+  name: z.string().min(1, 'O nome da clínica é obrigatório'),
+  address: z.string().min(1, 'O endereço é obrigatório'),
+  phone: z.string().min(1, 'O telefone é obrigatório'),
   email: z.string().email('Invalid email address'),
 });
 
 type PracticeFormData = z.infer<typeof practiceSchema>;
 
 const chairSchema = z.object({
-  name: z.string().min(1, 'Chair name is required'),
+  name: z.string().min(1, 'O nome da cadeira é obrigatório'),
 });
 
 type ChairFormData = z.infer<typeof chairSchema>;
 
 const preferencesSchema = z.object({
   appointmentDuration: z.coerce.number().min(5, 'Minimum 5 minutes').max(480, 'Maximum 8 hours'),
-  workingHoursStart: z.string().min(1, 'Start time is required'),
-  workingHoursEnd: z.string().min(1, 'End time is required'),
+  workingHoursStart: z.string().min(1, 'O horário de início é obrigatório'),
+  workingHoursEnd: z.string().min(1, 'O horário de término é obrigatório'),
   workingDays: z.array(z.number()).min(1, 'Select at least one working day'),
   reminderHoursBefore: z.coerce.number().min(1, 'Minimum 1 hour').max(168, 'Maximum 7 days'),
-  currency: z.string().min(1, 'Currency is required'),
+  currency: z.string().min(1, 'A moeda é obrigatória'),
 });
 
 type PreferencesFormData = z.infer<typeof preferencesSchema>;
@@ -304,7 +304,7 @@ function PracticeInfoTab({ addToast }: { addToast: (type: 'success' | 'error', m
                 )}
               >
                 <Save className="h-4 w-4" />
-                {mutation.isPending ? 'Saving...' : 'Save Changes'}
+                {mutation.isPending ? 'Salvando...' : 'Save Changes'}
               </button>
             </div>
           </form>
@@ -539,10 +539,10 @@ function TeamTab({ addToast }: { addToast: (type: 'success' | 'error', msg: stri
                     {...registerInvite('role')}
                     className="w-full rounded-lg border border-stone-300 px-3.5 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                   >
-                    <option value="DENTIST">Dentist</option>
-                    <option value="HYGIENIST">Hygienist</option>
-                    <option value="ASSISTANT">Assistant</option>
-                    <option value="FRONT_DESK">Front Desk</option>
+                    <option value="DENTIST">Dentista</option>
+                    <option value="HYGIENIST">Higienista</option>
+                    <option value="ASSISTANT">Auxiliar</option>
+                    <option value="FRONT_DESK">Recepção</option>
                   </select>
                 </div>
               </div>
@@ -992,7 +992,7 @@ function PreferencesTab({ addToast }: { addToast: (type: 'success' | 'error', ms
                   )}
                 >
                   <Save className="h-4 w-4" />
-                  {mutation.isPending ? 'Saving...' : 'Save Preferences'}
+                  {mutation.isPending ? 'Salvando...' : 'Save Preferences'}
                 </button>
               </div>
             </form>

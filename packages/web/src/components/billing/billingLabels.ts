@@ -81,6 +81,10 @@ export function formatBillingCurrency(amount: number): string {
   return formatCurrency(amount);
 }
 
+export function formatProcedureCount(value: number): string {
+  return value + " procedimentos";
+}
+
 export function getLedgerTypeLabel(type: string): string {
   return ledgerTypeLabels[type as keyof typeof ledgerTypeLabels] ?? type;
 }

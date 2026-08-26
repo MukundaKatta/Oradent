@@ -12,10 +12,10 @@ import { getPaymentMethodLabel } from './billingLabels';
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
 
 const paymentSchema = z.object({
-  amount: z.number().positive('Amount must be positive'),
-  method: z.string().min(1, 'Payment method is required'),
+  amount: z.number().positive('O valor deve ser positivo'),
+  method: z.string().min(1, 'A forma de pagamento é obrigatória'),
   referenceNumber: z.string().optional(),
-  date: z.string().min(1, 'Date is required'),
+  date: z.string().min(1, 'A data é obrigatória'),
   notes: z.string().optional(),
 });
 
@@ -153,7 +153,7 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
               <input
                 type="text"
                 {...register('referenceNumber')}
-                placeholder="Optional"
+                placeholder="Opcional"
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
@@ -163,7 +163,7 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
               <textarea
                 {...register('notes')}
                 rows={2}
-                placeholder="Optional notes..."
+                placeholder="Observações opcionais..."
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
@@ -181,7 +181,7 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
                 disabled={saving}
                 className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
               >
-                {saving ? 'Processing...' : 'Record Payment'}
+                {saving ? 'Processando...' : 'Registrar pagamento'}
               </button>
             </div>
           </form>

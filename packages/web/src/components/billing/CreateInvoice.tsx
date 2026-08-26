@@ -10,20 +10,20 @@ import { apiGet, apiPost } from '@/lib/api';
 import { formatCurrency } from '@/lib/formatters';
 
 const invoiceSchema = z.object({
-  patientId: z.string().min(1, 'Patient is required'),
-  date: z.string().min(1, 'Date is required'),
-  dueDate: z.string().min(1, 'Due date is required'),
+  patientId: z.string().min(1, 'Selecione um paciente'),
+  date: z.string().min(1, 'A data é obrigatória'),
+  dueDate: z.string().min(1, 'A data de vencimento é obrigatória'),
   items: z
     .array(
       z.object({
-        cdtCode: z.string().min(1, 'CDT code required'),
-        description: z.string().min(1, 'Description required'),
+        cdtCode: z.string().min(1, 'O código CDT é obrigatório'),
+        description: z.string().min(1, 'A descrição é obrigatória'),
         toothNumber: z.string().optional(),
         quantity: z.number().min(1),
         fee: z.number().min(0),
       })
     )
-    .min(1, 'At least one item is required'),
+    .min(1, 'Inclua pelo menos um item'),
   notes: z.string().optional(),
 });
 
@@ -169,7 +169,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                   <input
                     type="text"
-                    placeholder="Search patients..."
+                    placeholder="Busque pacientes..."
                     value={patientSearch}
                     onChange={(e) => {
                       setPatientSearch(e.target.value);
@@ -246,7 +246,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                       />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Description</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Descrição</span>}
                       <input
                         {...register(`items.${index}.description`)}
                         placeholder="Description"
@@ -314,7 +314,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
               <textarea
                 {...register('notes')}
                 rows={2}
-                placeholder="Optional notes..."
+                placeholder="Observações opcionais..."
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
@@ -333,7 +333,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
                 disabled={saving}
                 className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
               >
-                {saving ? 'Creating...' : 'Create Invoice'}
+                {saving ? 'Criando...' : 'Criar fatura'}
               </button>
             </div>
           </form>
