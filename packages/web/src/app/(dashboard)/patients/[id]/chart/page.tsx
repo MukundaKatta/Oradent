@@ -6,6 +6,7 @@ import { useDentalChart } from '@/hooks/useDentalChart';
 import DentalChart from '@/components/dental-chart/DentalChart';
 import { formatDate } from "@/lib/formatters";
 import { ptBR } from "@/i18n";
+import { formatUpdatedByLabel } from "@/lib/clinicalLabels";
 
 export default function DentalChartPage() {
   const params = useParams<{ id: string }>();
@@ -29,7 +30,7 @@ export default function DentalChartPage() {
           {chartData?.lastUpdated && (
             <p className="mt-1 text-sm text-stone-500">
               {ptBR.patientWorkflow.chart.lastUpdated}: {formatDate(chartData.lastUpdated)}
-              {chartData.updatedBy && `  `}
+              {chartData.updatedBy ? " " + formatUpdatedByLabel(chartData.updatedBy) : ""}
             </p>
           )}
         </div>

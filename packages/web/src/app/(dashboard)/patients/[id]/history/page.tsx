@@ -91,7 +91,7 @@ export default function TreatmentHistoryPage() {
         <div className="rounded-xl border border-stone-200 bg-white p-12 text-center shadow-sm">
           <FileText className="mx-auto h-12 w-12 text-stone-300" />
           <h3 className="mt-3 text-lg font-medium text-stone-700">
-            No Treatment History
+            {ptBR.patientWorkflow.history.empty}
           </h3>
           <p className="mt-1 text-sm text-stone-500">
             {ptBR.patientWorkflow.history.emptyDescription}

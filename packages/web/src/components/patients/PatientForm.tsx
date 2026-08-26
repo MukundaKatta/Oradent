@@ -12,12 +12,12 @@ import { ptBR } from "@/i18n";
 const copy = ptBR.patientWorkflow.form;
 
 const patientSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  dateOfBirth: z.string().min(1, 'Date of birth is required'),
-  gender: z.string().min(1, 'Gender is required'),
-  phone: z.string().min(1, 'Phone is required'),
-  email: z.string().email('Valid email is required'),
+  firstName: z.string().min(1, copy.firstNameRequired),
+  lastName: z.string().min(1, copy.lastNameRequired),
+  dateOfBirth: z.string().min(1, copy.dateOfBirthRequired),
+  gender: z.string().min(1, copy.genderRequired),
+  phone: z.string().min(1, copy.phoneRequired),
+  email: z.string().email(copy.emailRequired),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -87,7 +87,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
           <div className="mb-6 flex items-center justify-between">
             <Dialog.Title className="text-lg font-semibold text-stone-900">
-              New Patient
+              {copy.title}
             </Dialog.Title>
             <Dialog.Close asChild>
               <button aria-label={copy.closeDialog} className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
@@ -107,7 +107,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              Personal Info
+              {copy.personalInfo}
             </button>
             <button
               type="button"
@@ -118,7 +118,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              Insurance
+              {copy.insurance}
             </button>
           </div>
 
@@ -128,7 +128,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      First Name
+                      {copy.firstName}
                     </label>
                     <input
                       type="text"
@@ -141,7 +141,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Last Name
+                      {copy.lastName}
                     </label>
                     <input
                       type="text"
@@ -157,7 +157,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Date of Birth
+                      {copy.dateOfBirth}
                     </label>
                     <input
                       type="date"
@@ -170,7 +170,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Gender
+                      {copy.gender}
                     </label>
                     <select
                       {...register('gender')}
@@ -189,7 +189,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Phone
+                    {copy.phone}
                   </label>
                   <input
                     type="tel"
@@ -204,7 +204,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Email
+                    {copy.email}
                   </label>
                   <input
                     type="email"
@@ -219,7 +219,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Address
+                      {copy.address}
                     </label>
                     <input
                       type="text"
@@ -229,7 +229,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      City
+                      {copy.city}
                     </label>
                     <input
                       type="text"
@@ -242,7 +242,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      State
+                      {copy.state}
                     </label>
                     <input
                       type="text"
@@ -252,7 +252,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      ZIP
+                      {copy.zip}
                     </label>
                     <input
                       type="text"
@@ -268,7 +268,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
               <>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Insurance Company
+                    {copy.insuranceCompany}
                   </label>
                   <input
                     type="text"
@@ -279,7 +279,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Plan Name
+                    {copy.planName}
                   </label>
                   <input
                     type="text"
@@ -290,7 +290,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Group Number
+                      {copy.groupNumber}
                     </label>
                     <input
                       type="text"
@@ -300,7 +300,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Member ID
+                      {copy.memberId}
                     </label>
                     <input
                       type="text"
@@ -319,7 +319,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 onClick={onClose}
                 className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
-                Cancel
+                {ptBR.patientWorkflow.common.cancel}
               </button>
               {step === 'info' ? (
                 <button
@@ -327,7 +327,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   onClick={() => setStep('insurance')}
                   className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
                 >
-                  Next
+                  {copy.next}
                 </button>
               ) : (
                 <button
@@ -335,7 +335,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   disabled={createPatient.isPending}
                   className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
                 >
-                  {createPatient.isPending ? 'Creating...' : 'Create Patient'}
+                  {createPatient.isPending ? copy.creating : copy.create}
                 </button>
               )}
             </div>

@@ -52,7 +52,7 @@ export default function ImagingPage() {
           className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors"
         >
           <Upload className="h-4 w-4" />
-          Upload X-ray
+          {ptBR.patientWorkflow.imaging.uploadXray}
         </button>
       </div>
 
@@ -75,7 +75,7 @@ export default function ImagingPage() {
         <div className="rounded-xl border border-stone-200 bg-white p-12 text-center shadow-sm">
           <ImageIcon className="mx-auto h-12 w-12 text-stone-300" />
           <h3 className="mt-3 text-lg font-medium text-stone-700">
-            No Images Yet
+            {ptBR.patientWorkflow.imaging.noImages}
           </h3>
           <p className="mt-1 text-sm text-stone-500">
             {ptBR.patientWorkflow.imaging.noImagesDescription}

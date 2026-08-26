@@ -88,7 +88,7 @@ export function XrayUploader({
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
           <div className="mb-6 flex items-center justify-between">
             <Dialog.Title className="text-lg font-semibold text-stone-900">
-              Upload X-ray
+              {ptBR.patientWorkflow.imaging.uploaderTitle}
             </Dialog.Title>
             <Dialog.Close asChild>
               <button aria-label={ptBR.patientWorkflow.imaging.closeUploader} className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
@@ -112,11 +112,11 @@ export function XrayUploader({
             >
               <Upload className="h-8 w-8 text-stone-400" />
               <p className="mt-2 text-sm font-medium text-stone-700">
-                Drag and drop images here
+                {ptBR.patientWorkflow.imaging.dragDrop}
               </p>
               <p className="mt-1 text-xs text-stone-500">{ptBR.patientWorkflow.imaging.or}</p>
               <label className="mt-2 cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-medium text-teal-600 shadow-sm ring-1 ring-stone-200 hover:bg-stone-50">
-                Browse Files
+                {ptBR.patientWorkflow.imaging.browse}
                 <input
                   type="file"
                   accept="image/*"
@@ -160,7 +160,7 @@ export function XrayUploader({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                  Image Type
+                  {ptBR.patientWorkflow.imaging.imageType}
                 </label>
                 <select
                   value={imageType}
@@ -176,7 +176,7 @@ export function XrayUploader({
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                  Tooth # (optional)
+                  {ptBR.patientWorkflow.imaging.optionalTooth}
                 </label>
                 <input
                   type="number"
@@ -203,7 +203,7 @@ export function XrayUploader({
                 onClick={onClose}
                 className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
-                Cancel
+                {ptBR.patientWorkflow.common.cancel}
               </button>
               <button
                 onClick={handleUpload}
@@ -213,7 +213,7 @@ export function XrayUploader({
                 {uploading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Uploading...
+                    {ptBR.patientWorkflow.imaging.uploading}
                   </>
                 ) : (
                   <>

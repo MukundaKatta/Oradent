@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { UPPER_TEETH, LOWER_TEETH } from "@/lib/toothMap";
 import { ptBR } from "@/i18n";
+import { formatBleedingAriaLabel } from "@/lib/clinicalLabels";
 
 export interface PerioReading {
   MB: number | null;
@@ -222,7 +223,7 @@ export default function PerioChart({
                       className={`w-2 h-2 rounded-full mb-0.5 transition-colors
                         ${isBleeding ? 'bg-red-500' : 'bg-slate-200'}
                         ${readOnly ? 'cursor-default' : 'cursor-pointer hover:bg-red-300'}`}
-                      aria-label={ptBR.patientWorkflow.chart.bleeding}
+                      aria-label={formatBleedingAriaLabel(site, tooth)}
                       title={isBleeding ? ptBR.patientWorkflow.chart.bleedingOnProbing : ptBR.patientWorkflow.chart.noBleeding}
                     />
                     {/* Depth input */}
@@ -281,8 +282,8 @@ export default function PerioChart({
             </tr>
           </thead>
           <tbody>
-            {renderArchRow(teeth, BUCCAL_SITES, archLabel, ` (MB/B/DB)`)}
-            {renderArchRow(teeth, LINGUAL_SITES, archLabel, ` (ML/L/DL)`)}
+            {renderArchRow(teeth, BUCCAL_SITES, archLabel, ptBR.patientWorkflow.chart.buccal + " (MB/B/DB)")}
+            {renderArchRow(teeth, LINGUAL_SITES, archLabel, ptBR.patientWorkflow.chart.lingual + " (ML/L/DL)")}
           </tbody>
         </table>
       </div>
