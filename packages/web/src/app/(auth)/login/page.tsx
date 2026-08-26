@@ -7,10 +7,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { ptBR } from "@/i18n";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email(ptBR.auth.login.invalidEmail),
+  password: z.string().min(6, ptBR.auth.login.passwordMin),
   rememberMe: z.boolean().optional(),
 });
 
@@ -50,7 +51,7 @@ export default function LoginPage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(
-          errorData?.message || "Invalid email or password. Please try again."
+          errorData?.message || ptBR.auth.login.invalidCredentials
         );
       }
 
@@ -70,7 +71,7 @@ export default function LoginPage() {
       setServerError(
         error instanceof Error
           ? error.message
-          : "An unexpected error occurred. Please try again."
+          : ptBR.auth.login.unexpectedError
       );
     }
   };
@@ -94,9 +95,11 @@ export default function LoginPage() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-stone-900">Welcome back</h1>
+        <h1 className="text-2xl font-bold text-stone-900">
+          {ptBR.auth.login.title}
+        </h1>
         <p className="mt-1 text-sm text-stone-500">
-          Sign in to your Oradent account
+          {ptBR.auth.login.subtitle}
         </p>
       </div>
 
@@ -115,7 +118,7 @@ export default function LoginPage() {
             htmlFor="email"
             className="mb-1.5 block text-sm font-medium text-stone-700"
           >
-            Email address
+            {ptBR.auth.login.email}
           </label>
           <input
             id="email"
@@ -140,14 +143,14 @@ export default function LoginPage() {
             htmlFor="password"
             className="mb-1.5 block text-sm font-medium text-stone-700"
           >
-            Password
+            {ptBR.auth.login.password}
           </label>
           <div className="relative">
             <input
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              placeholder="Enter your password"
+              placeholder={ptBR.auth.login.passwordPlaceholder}
               className={`w-full rounded-lg border px-3 py-2.5 pr-10 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                 errors.password
                   ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
@@ -160,7 +163,11 @@ export default function LoginPage() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
               tabIndex={-1}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={
+                showPassword
+                  ? ptBR.auth.login.hidePassword
+                  : ptBR.auth.login.showPassword
+              }
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -184,13 +191,13 @@ export default function LoginPage() {
               className="h-4 w-4 rounded border-stone-300 text-teal-600 focus:ring-teal-500/20"
               {...register("rememberMe")}
             />
-            Remember me
+            {ptBR.auth.login.rememberMe}
           </label>
           <Link
             href="/forgot-password"
             className="text-sm font-medium text-teal-600 hover:text-teal-700"
           >
-            Forgot password?
+            {ptBR.auth.login.forgotPassword}
           </Link>
         </div>
 
@@ -203,22 +210,22 @@ export default function LoginPage() {
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Signing in...
+              {ptBR.auth.login.submitting}
             </>
           ) : (
-            "Sign in"
+            ptBR.auth.login.submit
           )}
         </button>
       </form>
 
       {/* Register link */}
       <p className="mt-6 text-center text-sm text-stone-500">
-        Don&apos;t have an account?{" "}
+        {ptBR.auth.login.noAccount}{" "}
         <Link
           href="/register"
           className="font-medium text-teal-600 hover:text-teal-700"
         >
-          Create one
+          {ptBR.auth.login.createAccount}
         </Link>
       </p>
     </div>

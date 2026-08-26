@@ -78,12 +78,6 @@ export default function ToothSVG({
   size = 60,
 }: ToothSVGProps) {
   const tooth = TOOTH_MAP[toothNumber];
-  if (!tooth) return null;
-
-  const isMissing = status === 'missing';
-  const isImplant = status === 'implant';
-  const centerLabel = getCenterSurfaceLabel(toothNumber);
-  const surfacePathMap = getSurfacePathMap(tooth.arch);
 
   /** Build a map of surface -> condition color */
   const surfaceColorMap = useMemo(() => {
@@ -105,6 +99,13 @@ export default function ToothSVG({
     },
     [onSurfaceClick, toothNumber]
   );
+
+  if (!tooth) return null;
+
+  const isMissing = status === 'missing';
+  const isImplant = status === 'implant';
+  const centerLabel = getCenterSurfaceLabel(toothNumber);
+  const surfacePathMap = getSurfacePathMap(tooth.arch);
 
   const healthyColor = '#e8f5e9';
   const missingColor = '#d1d5db';

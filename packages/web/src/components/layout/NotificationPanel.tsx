@@ -11,6 +11,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/formatters";
+import { ptBR } from "@/i18n";
 
 type NotificationType = "appointment" | "billing" | "ai" | "system";
 
@@ -53,41 +55,41 @@ const mockNotifications: Notification[] = [
   {
     id: "1",
     type: "appointment",
-    title: "Upcoming Appointment",
-    message: "John Doe has an appointment at 2:00 PM today.",
-    time: "10 min ago",
+    title: ptBR.shell.notifications.upcomingAppointment,
+    message: ptBR.shell.notifications.appointmentMessage,
+    time: ptBR.shell.notifications.tenMinutesAgo,
     read: false,
   },
   {
     id: "2",
     type: "billing",
-    title: "Payment Received",
-    message: "Jane Smith paid $250 for invoice #1042.",
-    time: "1 hour ago",
+    title: ptBR.shell.notifications.paymentReceived,
+    message: ptBR.shell.notifications.paymentMessage.replace("{amount}", formatCurrency(250)),
+    time: ptBR.shell.notifications.oneHourAgo,
     read: false,
   },
   {
     id: "3",
     type: "ai",
-    title: "AI Analysis Ready",
-    message: "X-ray analysis for Robert Johnson is complete.",
-    time: "2 hours ago",
+    title: ptBR.shell.notifications.aiAnalysisReady,
+    message: ptBR.shell.notifications.aiAnalysisMessage,
+    time: ptBR.shell.notifications.twoHoursAgo,
     read: false,
   },
   {
     id: "4",
     type: "system",
-    title: "System Update",
-    message: "Oradent v2.1 is now available with new features.",
-    time: "5 hours ago",
+    title: ptBR.shell.notifications.systemUpdate,
+    message: ptBR.shell.notifications.systemUpdateMessage,
+    time: ptBR.shell.notifications.fiveHoursAgo,
     read: true,
   },
   {
     id: "5",
     type: "appointment",
-    title: "Cancelled Appointment",
-    message: "Maria Garcia cancelled her 4:00 PM appointment.",
-    time: "Yesterday",
+    title: ptBR.shell.notifications.cancelledAppointment,
+    message: ptBR.shell.notifications.cancelledAppointmentMessage,
+    time: ptBR.shell.notifications.yesterday,
     read: true,
   },
 ];
@@ -134,7 +136,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
       <div className="flex items-center justify-between border-b border-stone-100 px-4 py-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-stone-900">
-            Notifications
+            {ptBR.shell.notifications.title}
           </h3>
           {unreadCount > 0 && (
             <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-teal-100 px-1.5 text-[10px] font-medium text-teal-700">
@@ -148,12 +150,12 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
             className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
           >
             <Trash2 className="h-3 w-3" />
-            Clear all
+            {ptBR.shell.notifications.clearAll}
           </button>
           <button
             onClick={onClose}
             className="flex h-6 w-6 items-center justify-center rounded-md text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
-            aria-label="Close notifications"
+            aria-label={ptBR.shell.notifications.close}
           >
             <X className="h-4 w-4" />
           </button>
@@ -165,7 +167,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-stone-400">
             <Check className="mb-2 h-8 w-8" />
-            <p className="text-sm">All caught up!</p>
+            <p className="text-sm">{ptBR.shell.notifications.empty}</p>
           </div>
         ) : (
           <div>
@@ -224,7 +226,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
       {notifications.length > 0 && (
         <div className="border-t border-stone-100 px-4 py-2">
           <button className="w-full rounded-md py-1.5 text-center text-xs font-medium text-teal-600 transition-colors hover:bg-teal-50">
-            View all notifications
+            {ptBR.shell.notifications.viewAll}
           </button>
         </div>
       )}

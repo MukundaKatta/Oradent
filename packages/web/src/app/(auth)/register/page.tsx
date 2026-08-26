@@ -7,21 +7,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { ptBR } from "@/i18n";
 
 const registerSchema = z.object({
-  practiceName: z.string().min(2, "Practice name is required"),
-  practiceAddress: z.string().min(5, "Address is required"),
-  practicePhone: z.string().min(7, "Phone number is required"),
-  practiceEmail: z.string().email("Please enter a valid email address"),
-  providerName: z.string().min(2, "Provider name is required"),
-  providerEmail: z.string().email("Please enter a valid email address"),
+  practiceName: z.string().min(2, ptBR.auth.register.practiceNameRequired),
+  practiceAddress: z.string().min(5, ptBR.auth.register.addressRequired),
+  practicePhone: z.string().min(7, ptBR.auth.register.phoneRequired),
+  practiceEmail: z.string().email(ptBR.auth.register.validEmail),
+  providerName: z.string().min(2, ptBR.auth.register.providerNameRequired),
+  providerEmail: z.string().email(ptBR.auth.register.validEmail),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+    .min(8, ptBR.auth.register.passwordMin)
+    .regex(/[A-Z]/, ptBR.auth.register.passwordUppercase)
+    .regex(/[0-9]/, ptBR.auth.register.passwordNumber),
   title: z.enum(["DDS", "DMD"], {
-    required_error: "Please select a title",
+    required_error: ptBR.auth.register.titleRequired,
   }),
 });
 
@@ -63,7 +64,7 @@ export default function RegisterPage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(
-          errorData?.message || "Registration failed. Please try again."
+          errorData?.message || ptBR.auth.register.registrationFailed
         );
       }
 
@@ -79,7 +80,7 @@ export default function RegisterPage() {
       setServerError(
         error instanceof Error
           ? error.message
-          : "An unexpected error occurred. Please try again."
+          : ptBR.auth.register.unexpectedError
       );
     }
   };
@@ -104,10 +105,10 @@ export default function RegisterPage() {
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-stone-900">
-          Create your account
+          {ptBR.auth.register.title}
         </h1>
         <p className="mt-1 text-sm text-stone-500">
-          Set up your dental practice on Oradent
+          {ptBR.auth.register.subtitle}
         </p>
       </div>
 
@@ -123,7 +124,7 @@ export default function RegisterPage() {
         {/* Practice Information */}
         <div>
           <h2 className="mb-3 text-sm font-semibold text-stone-800">
-            Practice Information
+            {ptBR.auth.register.practiceInformation}
           </h2>
           <div className="space-y-4">
             <div>
@@ -131,7 +132,7 @@ export default function RegisterPage() {
                 htmlFor="practiceName"
                 className="mb-1.5 block text-sm font-medium text-stone-700"
               >
-                Practice name
+                {ptBR.auth.register.practiceName}
               </label>
               <input
                 id="practiceName"
@@ -156,12 +157,12 @@ export default function RegisterPage() {
                 htmlFor="practiceAddress"
                 className="mb-1.5 block text-sm font-medium text-stone-700"
               >
-                Address
+                {ptBR.auth.register.practiceAddress}
               </label>
               <input
                 id="practiceAddress"
                 type="text"
-                placeholder="123 Main St, Suite 100, City, ST 12345"
+                placeholder="Rua das Flores, 123, Centro, São Paulo - SP"
                 className={`w-full rounded-lg border px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                   errors.practiceAddress
                     ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
@@ -182,12 +183,12 @@ export default function RegisterPage() {
                   htmlFor="practicePhone"
                   className="mb-1.5 block text-sm font-medium text-stone-700"
                 >
-                  Phone
+                  {ptBR.auth.register.phone}
                 </label>
                 <input
                   id="practicePhone"
                   type="tel"
-                  placeholder="(555) 123-4567"
+                  placeholder="(11) 99999-9999"
                   className={`w-full rounded-lg border px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                     errors.practicePhone
                       ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
@@ -207,12 +208,12 @@ export default function RegisterPage() {
                   htmlFor="practiceEmail"
                   className="mb-1.5 block text-sm font-medium text-stone-700"
                 >
-                  Practice email
+                  {ptBR.auth.register.practiceEmail}
                 </label>
                 <input
                   id="practiceEmail"
                   type="email"
-                  placeholder="info@practice.com"
+                  placeholder="contato@clinica.com.br"
                   className={`w-full rounded-lg border px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                     errors.practiceEmail
                       ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
@@ -235,7 +236,7 @@ export default function RegisterPage() {
         {/* Provider Information */}
         <div>
           <h2 className="mb-3 text-sm font-semibold text-stone-800">
-            Provider Information
+            {ptBR.auth.register.providerInformation}
           </h2>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
@@ -244,12 +245,12 @@ export default function RegisterPage() {
                   htmlFor="providerName"
                   className="mb-1.5 block text-sm font-medium text-stone-700"
                 >
-                  Full name
+                  {ptBR.auth.register.fullName}
                 </label>
                 <input
                   id="providerName"
                   type="text"
-                  placeholder="Dr. John Smith"
+                  placeholder="Dra. Ana Souza"
                   className={`w-full rounded-lg border px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                     errors.providerName
                       ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
@@ -269,7 +270,7 @@ export default function RegisterPage() {
                   htmlFor="title"
                   className="mb-1.5 block text-sm font-medium text-stone-700"
                 >
-                  Title
+                  {ptBR.auth.register.professionalTitle}
                 </label>
                 <select
                   id="title"
@@ -280,7 +281,7 @@ export default function RegisterPage() {
                   }`}
                   {...register("title")}
                 >
-                  <option value="">Select</option>
+                  <option value="">{ptBR.auth.register.select}</option>
                   <option value="DDS">DDS</option>
                   <option value="DMD">DMD</option>
                 </select>
@@ -297,13 +298,13 @@ export default function RegisterPage() {
                 htmlFor="providerEmail"
                 className="mb-1.5 block text-sm font-medium text-stone-700"
               >
-                Email address
+                {ptBR.auth.register.email}
               </label>
               <input
                 id="providerEmail"
                 type="email"
                 autoComplete="email"
-                placeholder="dr.smith@practice.com"
+                placeholder="ana.souza@clinica.com.br"
                 className={`w-full rounded-lg border px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                   errors.providerEmail
                     ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
@@ -323,14 +324,14 @@ export default function RegisterPage() {
                 htmlFor="password"
                 className="mb-1.5 block text-sm font-medium text-stone-700"
               >
-                Password
+                {ptBR.auth.register.password}
               </label>
               <div className="relative">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
-                  placeholder="Min 8 chars, 1 uppercase, 1 number"
+                  placeholder={ptBR.auth.register.passwordPlaceholder}
                   className={`w-full rounded-lg border px-3 py-2.5 pr-10 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                     errors.password
                       ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
@@ -343,7 +344,11 @@ export default function RegisterPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                   tabIndex={-1}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showPassword
+                      ? ptBR.auth.register.hidePassword
+                      : ptBR.auth.register.showPassword
+                  }
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -370,22 +375,22 @@ export default function RegisterPage() {
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Creating account...
+              {ptBR.auth.register.submitting}
             </>
           ) : (
-            "Create account"
+            ptBR.auth.register.submit
           )}
         </button>
       </form>
 
       {/* Login link */}
       <p className="mt-6 text-center text-sm text-stone-500">
-        Already have an account?{" "}
+        {ptBR.auth.register.hasAccount}{" "}
         <Link
           href="/login"
           className="font-medium text-teal-600 hover:text-teal-700"
         >
-          Sign in
+          {ptBR.auth.register.signIn}
         </Link>
       </p>
     </div>

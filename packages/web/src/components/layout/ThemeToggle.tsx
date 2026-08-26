@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { ptBR } from '@/i18n';
 
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
@@ -25,7 +26,8 @@ export function ThemeToggle() {
     <button
       onClick={toggle}
       className="rounded-lg p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-700 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-200 transition-colors"
-      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={isDark ? ptBR.shell.theme.switchToLight : ptBR.shell.theme.switchToDark}
+      aria-label={isDark ? ptBR.shell.theme.switchToLight : ptBR.shell.theme.switchToDark}
     >
       {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
     </button>

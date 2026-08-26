@@ -41,6 +41,15 @@ export default function SurfaceSelector({
 }: SurfaceSelectorProps) {
   const { TOOTH_MAP } = require('@/lib/toothMap');
   const tooth = TOOTH_MAP[toothNumber];
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent, surface: string) => {
+      e.stopPropagation();
+      onToggle(surface);
+    },
+    [onToggle]
+  );
+
   if (!tooth) return null;
 
   const arch = tooth.arch as 'upper' | 'lower';
@@ -53,14 +62,6 @@ export default function SurfaceSelector({
   ];
 
   const isSelected = (s: string) => selectedSurfaces.includes(s);
-
-  const handleClick = useCallback(
-    (e: React.MouseEvent, surface: string) => {
-      e.stopPropagation();
-      onToggle(surface);
-    },
-    [onToggle]
-  );
 
   return (
     <div className="flex flex-col items-center gap-1">
