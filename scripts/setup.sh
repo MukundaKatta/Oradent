@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+# Refuse to run as root: this script runs `prisma migrate dev` on the host,
+# which writes packages/server/prisma/migrations/. Running it as root leaves
+# those files root-owned, and a later `git pull` cannot replace them.
+if [ "$(id -u)" -eq 0 ]; then
+  echo "Do not run setup.sh as root — it would create root-owned migration"
+  echo "files in your working tree. Re-run it as your normal user."
+  exit 1
+fi
+
 echo "🦷 Setting up Oradent Dental Practice Management System..."
 
 # Check prerequisites
