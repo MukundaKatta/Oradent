@@ -46,7 +46,7 @@ const STATUS_CONFIG: Record<
     line: 'bg-blue-300',
   },
   planned: {
-    label: clinicalPtBR.treatmentPlanStatus.PROPOSED,
+    label: ptBR.patientWorkflow.history.planned,
     icon: Clock,
     color: 'text-amber-600',
     bg: 'bg-amber-100',

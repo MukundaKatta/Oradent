@@ -111,14 +111,14 @@ export default function TreatmentHistoryPage() {
               disabled={page <= 1}
               className="rounded-lg border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              {ptBR.patientWorkflow.common.previous}
             </button>
             <button
               onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
               disabled={page >= data.totalPages}
               className="rounded-lg border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              {ptBR.patientWorkflow.common.next}
             </button>
           </div>
         </div>

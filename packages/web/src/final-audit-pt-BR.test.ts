@@ -12,14 +12,28 @@ describe("auditoria final de textos visíveis pt-BR", () => {
 
     expect(timeline).toContain("clinicalPtBR.treatmentPlanStatus.COMPLETED");
     expect(timeline).toContain("clinicalPtBR.treatmentPlanStatus.IN_PROGRESS");
-    expect(timeline).toContain("clinicalPtBR.treatmentPlanStatus.PROPOSED");
+    expect(timeline).toContain("ptBR.patientWorkflow.history.planned");
     expect(timeline).not.toContain("label: 'Completed'");
     expect(timeline).not.toContain("label: 'In Progress'");
     expect(timeline).not.toContain("label: 'Planned'");
+    expect(timeline).not.toContain("treatmentPlanStatus.PROPOSED");
     expect(timeline).not.toContain('procedure{');
     expect(timeline).not.toContain('<span>Tooth #');
     expect(timeline).not.toContain('<span>Surface:');
     expect(timeline).not.toContain('<span>Provider:');
+  });
+
+
+  it("localiza os controles de paginação dos pacientes e do histórico", () => {
+    const patients = source("./app/(dashboard)/patients/page.tsx");
+    const history = source("./app/(dashboard)/patients/[id]/history/page.tsx");
+
+    for (const page of [patients, history]) {
+      expect(page).toContain("ptBR.patientWorkflow.common.previous");
+      expect(page).toContain("ptBR.patientWorkflow.common.next");
+      expect(page).not.toMatch(/>\s*Previous\s*</);
+      expect(page).not.toMatch(/>\s*Next\s*</);
+    }
   });
 
   it("cobre abas, formulários e metadados com textos pt-BR", () => {
