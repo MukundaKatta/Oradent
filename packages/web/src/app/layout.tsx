@@ -10,7 +10,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Oradent | Dental Practice Management",
+  title: "Oradent | Gestão de clínicas odontológicas",
   description:
     "Modern dental practice management software. Manage patients, appointments, billing, treatment plans, and more with AI-powered assistance.",
 };

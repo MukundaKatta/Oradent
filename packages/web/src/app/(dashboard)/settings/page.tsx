@@ -58,10 +58,10 @@ type PreferencesFormData = z.infer<typeof preferencesSchema>;
 // ═══════════════════ CONSTANTS ═══════════════════
 
 const TABS = [
-  { id: 'practice', label: 'Practice Info', icon: Building2 },
-  { id: 'team', label: 'Team', icon: Users },
-  { id: 'chairs', label: 'Chairs', icon: Armchair },
-  { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
+  { id: 'practice', label: ptBR.settings.tabs.practice, icon: Building2 },
+  { id: 'team', label: ptBR.settings.tabs.team, icon: Users },
+  { id: 'chairs', label: ptBR.settings.tabs.chairs, icon: Armchair },
+  { id: 'preferences', label: ptBR.settings.tabs.preferences, icon: SlidersHorizontal },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];

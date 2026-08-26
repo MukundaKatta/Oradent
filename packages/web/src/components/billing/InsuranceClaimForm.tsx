@@ -185,7 +185,7 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
                 <label className="mb-1.5 block text-sm font-medium text-stone-700">Operadora do convênio</label>
                 <input
                   {...register('insuranceProvider')}
-                  placeholder="e.g. Delta Dental"
+                  placeholder="Ex.: OdontoPrev"
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
                 {errors.insuranceProvider && <p className="mt-1 text-xs text-red-500">{errors.insuranceProvider.message}</p>}
@@ -223,7 +223,7 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
               <label className="mb-1.5 block text-sm font-medium text-stone-700">Códigos de diagnóstico (CID-10)</label>
               <input
                 {...register('diagnosisCodes')}
-                placeholder="e.g. K02.9, K05.1"
+                placeholder="Ex.: K02.9, K05.1"
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
               {errors.diagnosisCodes && <p className="mt-1 text-xs text-red-500">{errors.diagnosisCodes.message}</p>}

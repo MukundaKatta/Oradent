@@ -6,6 +6,7 @@ import {
   PlayCircle,
   FileText,
 } from 'lucide-react';
+import { clinicalPtBR, ptBR } from '@/i18n';
 import { formatDate, formatCurrency } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
@@ -31,21 +32,21 @@ const STATUS_CONFIG: Record<
   { label: string; icon: typeof CheckCircle2; color: string; bg: string; line: string }
 > = {
   completed: {
-    label: 'Completed',
+    label: clinicalPtBR.treatmentPlanStatus.COMPLETED,
     icon: CheckCircle2,
     color: 'text-green-600',
     bg: 'bg-green-100',
     line: 'bg-green-300',
   },
   in_progress: {
-    label: 'In Progress',
+    label: clinicalPtBR.treatmentPlanStatus.IN_PROGRESS,
     icon: PlayCircle,
     color: 'text-blue-600',
     bg: 'bg-blue-100',
     line: 'bg-blue-300',
   },
   planned: {
-    label: 'Planned',
+    label: clinicalPtBR.treatmentPlanStatus.PROPOSED,
     icon: Clock,
     color: 'text-amber-600',
     bg: 'bg-amber-100',
@@ -82,7 +83,7 @@ export function TreatmentTimeline({ treatments }: TreatmentTimelineProps) {
               {formatDate(dateKey)}
             </h3>
             <span className="text-xs text-stone-400">
-              {grouped[dateKey].length} procedure{grouped[dateKey].length !== 1 ? 's' : ''}
+              {grouped[dateKey].length} {ptBR.patientWorkflow.treatment.procedures}
             </span>
           </div>
 
@@ -118,12 +119,12 @@ export function TreatmentTimeline({ treatments }: TreatmentTimelineProps) {
 
                       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-500">
                         {treatment.toothNumber && (
-                          <span>Tooth #{treatment.toothNumber}</span>
+                          <span>{ptBR.patientWorkflow.common.tooth} nº {treatment.toothNumber}</span>
                         )}
                         {treatment.surface && (
-                          <span>Surface: {treatment.surface}</span>
+                          <span>{ptBR.treatmentTimeline.surface}: {clinicalPtBR.toothSurface[treatment.surface as keyof typeof clinicalPtBR.toothSurface] ?? treatment.surface}</span>
                         )}
-                        <span>Provider: {treatment.provider}</span>
+                        <span>{ptBR.treatmentTimeline.provider}: {treatment.provider}</span>
                       </div>
 
                       {treatment.notes && (

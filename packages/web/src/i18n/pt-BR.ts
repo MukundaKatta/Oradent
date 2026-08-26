@@ -163,6 +163,14 @@ export const ptBR = {
       switchToDark: "Mudar para o tema escuro",
     },
   },
+  settings: {
+    tabs: {
+      practice: "Dados da clínica",
+      team: "Equipe",
+      chairs: "Cadeiras",
+      preferences: "Preferências",
+    },
+  },
   navigation,
   usState,
   patient: {
@@ -261,6 +269,10 @@ export const ptBR = {
       FAILED: "Falhou",
       REFUNDED: "Reembolsado",
     },
+  },
+  treatmentTimeline: {
+    surface: "Superfície",
+    provider: "Profissional",
   },
   patientWorkflow: {
     common: { all: "Todos", active: "Ativos", inactive: "Inativos", archived: "Arquivados", previous: "Anterior", next: "Próxima", cancel: "Cancelar", close: "Fechar", save: "Salvar", refresh: "Atualizar", loading: "Carregando...", select: "Selecione", actions: "Ações", notes: "Observações", date: "Data", status: "Status", tooth: "Dente", patient: "Paciente", noInformation: "Não informado" },

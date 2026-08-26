@@ -295,7 +295,7 @@ export function CreateInvoice({ open, onClose, onSave, defaultPatientId }: Creat
               </div>
               {errors.items && (
                 <p className="mt-1 text-xs text-red-500">
-                  {typeof errors.items.message === 'string' ? errors.items.message : 'Fix item errors'}
+                  {typeof errors.items.message === 'string' ? errors.items.message : 'Corrija os erros dos itens'}
                 </p>
               )}
             </div>
