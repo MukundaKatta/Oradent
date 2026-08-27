@@ -2,40 +2,21 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
 import { Upload, Image as ImageIcon } from "lucide-react";
-import { apiGet } from '@/lib/api';
+import { useImages, type DentalImage } from '@/hooks/useImaging';
 import { XrayGallery } from '@/components/imaging/XrayGallery';
 import { XrayUploader } from '@/components/imaging/XrayUploader';
 import { XrayViewer } from '@/components/imaging/XrayViewer';
 import { AIAnalysisPanel } from "@/components/imaging/AIAnalysisPanel";
 import { ptBR } from "@/i18n";
 
-interface XrayImage {
-  id: string;
-  patientId: string;
-  filename: string;
-  url: string;
-  thumbnailUrl: string;
-  type: string;
-  toothNumber?: number;
-  uploadedAt: string;
-  uploadedBy: string;
-  aiAnalyzed: boolean;
-  analysisId?: string;
-}
-
 export default function ImagingPage() {
   const params = useParams<{ id: string }>();
   const [showUploader, setShowUploader] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<XrayImage | null>(null);
+  const [selectedImage, setSelectedImage] = useState<DentalImage | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
 
-  const { data: images, isLoading, refetch } = useQuery<XrayImage[]>({
-    queryKey: ['xrays', params.id],
-    queryFn: () => apiGet<XrayImage[]>(`/api/imaging/${params.id}`),
-    enabled: !!params.id,
-  });
+  const { data: images, isLoading, refetch } = useImages(params.id);
 
   return (
     <div className="space-y-6">
@@ -85,7 +66,7 @@ export default function ImagingPage() {
             className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors"
           >
             <Upload className="h-4 w-4" />
-            Upload First Image
+            {ptBR.patientWorkflow.imaging.firstImage}
           </button>
         </div>
       )}

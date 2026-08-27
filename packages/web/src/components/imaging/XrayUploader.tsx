@@ -3,10 +3,11 @@
 import { useState, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Upload, FileImage, Loader2 } from 'lucide-react';
-import { apiUpload } from "@/lib/api";
 import { localizeErrorMessage } from "@/lib/errorMessages";
 import { ptBR } from "@/i18n";
-import { formatUploadButtonLabel } from "@/lib/imagingLabels";
+import { formatUploadButtonLabel, IMAGE_TYPE_OPTIONS } from "@/lib/imagingLabels";
+import { useUploadImage } from "@/hooks/useImaging";
+import type { ImageType } from "@/hooks/useImaging";
 
 interface XrayUploaderProps {
   patientId: string;
@@ -15,8 +16,6 @@ interface XrayUploaderProps {
   onUploaded: () => void;
 }
 
-const IMAGE_TYPES = Object.entries(ptBR.patientWorkflow.imaging.types).map(([value, label]) => ({ value, label }));
-
 export function XrayUploader({
   patientId,
   open,
@@ -24,11 +23,12 @@ export function XrayUploader({
   onUploaded,
 }: XrayUploaderProps) {
   const [files, setFiles] = useState<File[]>([]);
-  const [imageType, setImageType] = useState('periapical');
+  const [imageType, setImageType] = useState<ImageType>('PERIAPICAL');
   const [toothNumber, setToothNumber] = useState('');
-  const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const uploadImage = useUploadImage();
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -62,23 +62,17 @@ export function XrayUploader({
 
   const handleUpload = async () => {
     if (files.length === 0) return;
-    setUploading(true);
     setError(null);
+
+    const toothNumbers = toothNumber ? [Number(toothNumber)] : undefined;
 
     try {
       for (const file of files) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', imageType);
-        if (toothNumber) formData.append('toothNumber', toothNumber);
-
-        await apiUpload(`/api/imaging/${patientId}`, formData);
+        await uploadImage.mutateAsync({ patientId, file, type: imageType, toothNumbers });
       }
       onUploaded();
     } catch (err) {
       setError(localizeErrorMessage(err instanceof Error ? err.message : undefined, ptBR.patientWorkflow.imaging.uploadFailed));
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -165,10 +159,10 @@ export function XrayUploader({
                 </label>
                 <select
                   value={imageType}
-                  onChange={(e) => setImageType(e.target.value)}
+                  onChange={(e) => setImageType(e.target.value as ImageType)}
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 >
-                  {IMAGE_TYPES.map((t) => (
+                  {IMAGE_TYPE_OPTIONS.map((t) => (
                     <option key={t.value} value={t.value}>
                       {t.label}
                     </option>
@@ -208,10 +202,10 @@ export function XrayUploader({
               </button>
               <button
                 onClick={handleUpload}
-                disabled={files.length === 0 || uploading}
+                disabled={files.length === 0 || uploadImage.isPending}
                 className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
               >
-                {uploading ? (
+                {uploadImage.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     {ptBR.patientWorkflow.imaging.uploading}
