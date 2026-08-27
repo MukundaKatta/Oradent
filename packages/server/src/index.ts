@@ -31,6 +31,7 @@ import imagingRoutes, { imagingFileRouter } from './routes/imaging';
 import aiRoutes from './routes/ai';
 import reportRoutes from './routes/reports';
 import settingsRoutes from './routes/settings';
+import orthodonticsRoutes from './routes/orthodontics';
 
 const app = express();
 const httpServer = createServer(app);
@@ -191,6 +192,7 @@ app.use('/api/imaging', imagingRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/orthodontics', orthodonticsRoutes);
 
 // Error handler
 app.use(errorHandler);

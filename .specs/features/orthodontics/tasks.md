@@ -302,6 +302,8 @@ T13 → T14 → T15 → T16
 **Gate**: full
 **Commit**: `feat(orthodontics): mount router in app`
 
+**Status**: ✅ Done
+
 ---
 
 ### Phase 4: Audit + Reminder Job
