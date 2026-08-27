@@ -26,6 +26,22 @@ describe('legacyAdapter', () => {
     expect(map[14].notes).toBe('Dor ao mastigar');
   });
 
+  it('does not crash on a condition entry with no surfaces key (real seed data)', () => {
+    // Regression test: a real production record for a crown had no `surfaces`
+    // field at all (not even an empty array) — {"type": "crown", "material": "PFM"}.
+    // conditionSchema defaults surfaces to [] on write, but rows inserted
+    // outside that Zod path can omit it entirely, and GET returns the raw
+    // stored JSON without re-validating.
+    const records = [
+      {
+        id: '1', patientId: 'p1', toothNumber: 19, status: 'PRESENT' as const, isDeciduous: false, updatedAt: '2026-01-01',
+        conditions: [{ type: 'crown' } as ToothConditionRecord['conditions'][number]],
+      },
+    ];
+    expect(() => toTeethDataMap(records)).not.toThrow();
+    expect(toTeethDataMap(records)[19].conditions).toEqual([{ surface: '', condition: 'crown' }]);
+  });
+
   it('maps MISSING/IMPLANT status to the UI vocabulary', () => {
     const records: ToothConditionRecord[] = [
       { id: '1', patientId: 'p1', toothNumber: 1, conditions: [], status: 'MISSING', isDeciduous: false, updatedAt: '2026-01-01' },

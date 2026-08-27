@@ -20,12 +20,14 @@ const UI_TO_BACKEND_STATUS: Record<ToothRecord['status'], ToothStatus> = {
 export function toTeethDataMap(records: ToothConditionRecord[]): Record<number, ToothRecord> {
   const map: Record<number, ToothRecord> = {};
   for (const record of records) {
-    const conditions: SvgToothCondition[] = record.conditions.flatMap((entry) =>
-      (entry.surfaces.length ? entry.surfaces : ['']).map((surface) => ({
-        surface,
-        condition: entry.type,
-      }))
-    );
+    // Real stored rows aren't guaranteed to match conditionSchema exactly —
+    // e.g. older/seeded data can have a condition entry with no `surfaces`
+    // key at all (a crown with no specific surface). Treat that the same as
+    // an empty array rather than crashing on `.length` of undefined.
+    const conditions: SvgToothCondition[] = record.conditions.flatMap((entry) => {
+      const surfaces = entry.surfaces?.length ? entry.surfaces : [''];
+      return surfaces.map((surface) => ({ surface, condition: entry.type }));
+    });
     map[record.toothNumber] = {
       conditions,
       status: BACKEND_TO_UI_STATUS[record.status] ?? 'healthy',
