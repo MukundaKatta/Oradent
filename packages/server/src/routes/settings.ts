@@ -103,6 +103,14 @@ router.put('/chairs/:id', authorize('OWNER'), async (req: Request, res: Response
     isActive: z.boolean().optional(),
   }).parse(req.body);
 
+  const existing = await prisma.chair.findFirst({
+    where: { id: req.params.id, practiceId: req.auth!.practiceId },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Chair not found' });
+    return;
+  }
+
   const chair = await prisma.chair.update({
     where: { id: req.params.id },
     data: { ...(name && { name }), ...(isActive !== undefined && { isActive }) },

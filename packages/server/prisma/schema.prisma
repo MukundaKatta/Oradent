@@ -55,6 +55,7 @@ model Provider {
   appointments  Appointment[]
   treatments    Treatment[]
   notes         ClinicalNote[]
+  signedNotes   ClinicalNote[] @relation("SignedNotes")
   auditLogs     AuditLog[]
   advancedCharts AdvancedOdontogramChart[]
   createdAt     DateTime      @default(now())
@@ -368,6 +369,8 @@ model ClinicalNote {
   vitals     Json?
   aiAssisted Boolean  @default(false)
   signedAt   DateTime?
+  signedById String?
+  signedBy   Provider? @relation("SignedNotes", fields: [signedById], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

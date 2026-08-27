@@ -124,8 +124,8 @@ router.post('/pre-auth-letter', async (req: Request, res: Response) => {
       where: { id: patientId, practiceId: req.auth!.practiceId },
       include: { insurancePrimary: true, dentalChart: true },
     }),
-    prisma.treatmentPlan.findUnique({
-      where: { id: treatmentPlanId },
+    prisma.treatmentPlan.findFirst({
+      where: { id: treatmentPlanId, patientId, patient: { practiceId: req.auth!.practiceId } },
       include: { items: true },
     }),
     prisma.practice.findUnique({ where: { id: req.auth!.practiceId } }),
@@ -192,6 +192,14 @@ router.get('/history/:patientId', async (req: Request, res: Response) => {
 // Accept/reject AI finding
 router.patch('/analysis/:id/review', async (req: Request, res: Response) => {
   const { accepted } = z.object({ accepted: z.boolean() }).parse(req.body);
+
+  const existing = await prisma.aIAnalysis.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
 
   const analysis = await prisma.aIAnalysis.update({
     where: { id: req.params.id },

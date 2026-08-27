@@ -89,6 +89,14 @@ router.post('/invoices', async (req: Request, res: Response) => {
 
   const dueDate = data.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+  const patient = await prisma.patient.findFirst({
+    where: { id: data.patientId, practiceId: req.auth!.practiceId },
+  });
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
+
   // Validate that treatments belong to the same patient and practice
   if (data.treatmentIds && data.treatmentIds.length > 0) {
     const validTreatments = await prisma.treatment.count({

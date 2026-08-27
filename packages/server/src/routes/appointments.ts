@@ -182,6 +182,18 @@ router.post('/', async (req: Request, res: Response) => {
   const data = createAppointmentSchema.parse(req.body);
   const endTime = new Date(data.startTime.getTime() + data.duration * 60 * 1000);
 
+  const [patient, provider, chair] = await Promise.all([
+    prisma.patient.findFirst({ where: { id: data.patientId, practiceId: req.auth!.practiceId } }),
+    prisma.provider.findFirst({ where: { id: data.providerId, practiceId: req.auth!.practiceId } }),
+    data.chairId
+      ? prisma.chair.findFirst({ where: { id: data.chairId, practiceId: req.auth!.practiceId } })
+      : Promise.resolve(true),
+  ]);
+  if (!patient || !provider || !chair) {
+    res.status(404).json({ error: 'Patient, provider, or chair not found' });
+    return;
+  }
+
   try {
     const appointment = await prisma.$transaction(async (tx) => {
       const conflict = await tx.appointment.findFirst({

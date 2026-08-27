@@ -84,6 +84,14 @@ router.put('/:imageId/annotations', async (req: Request, res: Response) => {
     annotations: z.any(),
   }).parse(req.body);
 
+  const existing = await prisma.dentalImage.findFirst({
+    where: { id: req.params.imageId, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Image not found' });
+    return;
+  }
+
   const image = await prisma.dentalImage.update({
     where: { id: req.params.imageId },
     data: { annotations },

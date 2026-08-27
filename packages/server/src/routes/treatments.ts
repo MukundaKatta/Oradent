@@ -94,6 +94,14 @@ router.patch('/plans/:id/status', async (req: Request, res: Response) => {
     status: z.enum(['PROPOSED', 'PRESENTED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'DECLINED']),
   }).parse(req.body);
 
+  const existing = await prisma.treatmentPlan.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Treatment plan not found' });
+    return;
+  }
+
   const updateData: Record<string, unknown> = { status };
   if (status === 'PRESENTED') updateData.presentedAt = new Date();
   if (status === 'ACCEPTED') updateData.acceptedAt = new Date();
@@ -271,9 +279,21 @@ router.post('/notes', async (req: Request, res: Response) => {
 
 // Sign clinical note
 router.patch('/notes/:id/sign', async (req: Request, res: Response) => {
+  const existing = await prisma.clinicalNote.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Clinical note not found' });
+    return;
+  }
+  if (existing.signedAt) {
+    res.status(409).json({ error: 'Note has already been signed' });
+    return;
+  }
+
   const note = await prisma.clinicalNote.update({
     where: { id: req.params.id },
-    data: { signedAt: new Date() },
+    data: { signedAt: new Date(), signedById: req.auth!.providerId },
   });
 
   res.json(note);
