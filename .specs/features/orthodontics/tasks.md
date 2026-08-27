@@ -349,6 +349,8 @@ T13 → T14 → T15 → T16
 **Gate**: full (registers in `index.ts`, phase-completing)
 **Commit**: `feat(orthodontics): add reminder job for upcoming visits`
 
+**Status**: ✅ Done
+
 ---
 
 ### Phase 5: Frontend

@@ -20,6 +20,7 @@ import { initializeWebSocket } from './websocket/liveUpdates';
 import { startAppointmentReminders } from './jobs/appointmentReminder';
 import { startClaimFollowUp } from './jobs/claimFollowUp';
 import { startDailyDigest } from './jobs/dailyDigest';
+import { startOrthodonticReminders } from './jobs/orthodonticReminder';
 
 import authRoutes from './routes/auth';
 import patientRoutes from './routes/patients';
@@ -209,6 +210,7 @@ httpServer.listen(env.PORT, () => {
   startAppointmentReminders();
   startClaimFollowUp();
   startDailyDigest();
+  startOrthodonticReminders();
 });
 
 // Graceful shutdown
