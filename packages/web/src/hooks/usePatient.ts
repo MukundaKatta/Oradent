@@ -48,11 +48,13 @@ export interface PatientListParams {
 }
 
 export interface PatientListResponse {
-  data: Patient[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  patients: Patient[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 export type CreatePatientInput = Omit<Patient, 'id' | 'createdAt' | 'updatedAt' | 'lastVisit' | 'accountBalance' | 'avatarUrl'>;
