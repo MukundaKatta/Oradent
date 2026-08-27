@@ -381,6 +381,47 @@ describe('POST /cases/:caseId/visits', () => {
     expect(orthodonticVisitCreate).not.toHaveBeenCalled();
   });
 
+  // spec.md Edge Cases: alignerStepNumber must be a positive integer.
+  // Use an ALIGNER case here so these hit the Zod int().positive() check
+  // itself, not the appliance-type guard covered by the test above.
+  const alignerCase = { ...activeCase, applianceType: 'ALIGNER' };
+
+  it('returns 400 when alignerStepNumber is negative', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(alignerCase);
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', alignerStepNumber: -1 }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when alignerStepNumber is zero', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(alignerCase);
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', alignerStepNumber: 0 }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when alignerStepNumber is fractional', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(alignerCase);
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', alignerStepNumber: 2.5 }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
+  });
+
   // ORTHO-04 AC6: nextVisitDate in the past -> 400
   it('returns 400 when nextVisitDate is before the current date', async () => {
     orthodonticCaseFindFirst.mockResolvedValue(activeCase);
