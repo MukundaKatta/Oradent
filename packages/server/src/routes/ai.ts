@@ -20,7 +20,7 @@ router.post('/analyze-xray', async (req: Request, res: Response) => {
   }).parse(req.body);
 
   const image = await prisma.dentalImage.findFirst({
-    where: { id: imageId, patient: { practiceId: req.auth!.practiceId } },
+    where: { id: imageId, patientId, patient: { practiceId: req.auth!.practiceId } },
   });
   if (!image) {
     res.status(404).json({ error: 'Image not found' });
@@ -96,6 +96,14 @@ router.post('/generate-note', async (req: Request, res: Response) => {
     briefNote: z.string().min(5),
     noteType: z.string().default('progress'),
   }).parse(req.body);
+
+  const patient = await prisma.patient.findFirst({
+    where: { id: patientId, practiceId: req.auth!.practiceId },
+  });
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
 
   const result = await generateSmartNote(briefNote, noteType);
 

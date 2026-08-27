@@ -291,6 +291,22 @@ router.put('/:id', async (req: Request, res: Response) => {
     return;
   }
 
+  const [patient, provider, chair] = await Promise.all([
+    data.patientId
+      ? prisma.patient.findFirst({ where: { id: data.patientId, practiceId: req.auth!.practiceId } })
+      : Promise.resolve(true),
+    data.providerId
+      ? prisma.provider.findFirst({ where: { id: data.providerId, practiceId: req.auth!.practiceId } })
+      : Promise.resolve(true),
+    data.chairId
+      ? prisma.chair.findFirst({ where: { id: data.chairId, practiceId: req.auth!.practiceId } })
+      : Promise.resolve(true),
+  ]);
+  if (!patient || !provider || !chair) {
+    res.status(404).json({ error: 'Patient, provider, or chair not found' });
+    return;
+  }
+
   const updateData: Record<string, unknown> = { ...data };
 
   const effectiveStart = data.startTime ?? existing.startTime;

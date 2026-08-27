@@ -51,6 +51,14 @@ router.get('/:patientId/tooth/:toothNumber', async (req: Request, res: Response)
     return;
   }
 
+  const patient = await prisma.patient.findFirst({
+    where: { id: req.params.patientId, practiceId: req.auth!.practiceId },
+  });
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
+
   const tooth = await prisma.toothCondition.findUnique({
     where: {
       patientId_toothNumber: {

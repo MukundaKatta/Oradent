@@ -12,7 +12,11 @@ router.use(authenticate);
 router.get('/practice', async (req: Request, res: Response) => {
   const practice = await prisma.practice.findUnique({
     where: { id: req.auth!.practiceId },
-    include: { settings: true, chairs: true, providers: { select: { id: true, name: true, email: true, role: true, title: true, color: true, isActive: true } } },
+    include: {
+      settings: { omit: { anthropicKey: true } },
+      chairs: true,
+      providers: { select: { id: true, name: true, email: true, role: true, title: true, color: true, isActive: true } },
+    },
   });
 
   if (!practice) {
@@ -188,6 +192,10 @@ router.put('/providers/:id', authorize('OWNER'), async (req: Request, res: Respo
     data,
     select: { id: true, name: true, email: true, role: true, title: true, color: true, isActive: true, npi: true, licenseNumber: true },
   });
+
+  if (data.role !== undefined || data.isActive !== undefined) {
+    await invalidateSessions(req.params.id);
+  }
 
   res.json(provider);
 });

@@ -216,7 +216,7 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
 router.get('/me', authenticate, async (req: Request, res: Response) => {
   const provider = await prisma.provider.findUnique({
     where: { id: req.auth!.providerId },
-    include: { practice: { include: { settings: true, chairs: true } } },
+    include: { practice: { include: { settings: { omit: { anthropicKey: true } }, chairs: true } } },
   });
 
   if (!provider) {

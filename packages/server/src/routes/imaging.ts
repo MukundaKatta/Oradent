@@ -4,6 +4,7 @@ import fs from 'fs';
 import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
+import { uploadLimiter } from '../middleware/rateLimiter';
 import { uploadImage } from '../middleware/upload';
 import { deleteFile, resolveUploadPath } from '../config/storage';
 import { generateFileAccessToken, verifyFileAccessToken } from '../services/fileAccessToken';
@@ -43,7 +44,7 @@ router.get('/:patientId', async (req: Request, res: Response) => {
 });
 
 // Upload image
-router.post('/:patientId', uploadImage.single('image'), async (req: Request, res: Response) => {
+router.post('/:patientId', uploadLimiter, uploadImage.single('image'), async (req: Request, res: Response) => {
   if (!req.file) {
     res.status(400).json({ error: 'No image file provided' });
     return;
