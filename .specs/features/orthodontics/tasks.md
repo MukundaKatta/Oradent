@@ -137,6 +137,8 @@ T13 → T14 → T15 → T16
 **Gate**: `npx prisma generate && npm run type-check -w packages/server`
 **Commit**: `feat(schema): add orthodontics migration`
 
+**Status**: ✅ Done
+
 ---
 
 ### Phase 2: Backend - Cases API
