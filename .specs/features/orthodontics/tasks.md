@@ -373,6 +373,8 @@ T13 → T14 → T15 → T16
 **Gate**: build
 **Commit**: `feat(web): add useOrthodontics hook`
 
+**Status**: ✅ Done
+
 ---
 
 ### T14: Orthodontics patient tab - case list + open-case form
