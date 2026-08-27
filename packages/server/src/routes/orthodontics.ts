@@ -118,4 +118,82 @@ router.patch('/cases/:caseId', async (req: Request, res: Response) => {
   res.json(updated);
 });
 
+const createVisitSchema = z
+  .object({
+    date: z.string().transform((s) => new Date(s)),
+    appointmentId: z.string().optional(),
+    wireChanged: z.boolean().optional(),
+    wireStrength: z.string().optional(),
+    elasticsUsed: z.string().optional(),
+    alignerStepNumber: z.number().int().positive().optional(),
+    notes: z.string().optional(),
+    nextVisitDate: z.string().transform((s) => new Date(s)).optional(),
+  })
+  .refine(
+    (data) =>
+      data.wireChanged !== undefined ||
+      data.elasticsUsed !== undefined ||
+      data.alignerStepNumber !== undefined ||
+      data.notes !== undefined,
+    { message: 'At least one progress field (wireChanged, elasticsUsed, alignerStepNumber, or notes) is required' }
+  );
+
+// Create a maintenance visit for a case (ORTHO-04, ORTHO-05)
+router.post('/cases/:caseId/visits', async (req: Request, res: Response) => {
+  const data = createVisitSchema.parse(req.body);
+
+  const orthoCase = await prisma.orthodonticCase.findFirst({
+    where: { id: req.params.caseId, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!orthoCase) {
+    res.status(404).json({ error: 'Orthodontic case not found' });
+    return;
+  }
+
+  if (orthoCase.status !== 'ACTIVE') {
+    res.status(409).json({ error: 'Orthodontic case is not active' });
+    return;
+  }
+
+  if (data.appointmentId) {
+    const appointment = await prisma.appointment.findFirst({
+      where: {
+        id: data.appointmentId,
+        patientId: orthoCase.patientId,
+        provider: { practiceId: req.auth!.practiceId },
+      },
+    });
+    if (!appointment) {
+      res.status(404).json({ error: 'Appointment not found' });
+      return;
+    }
+  }
+
+  if (data.alignerStepNumber !== undefined && orthoCase.applianceType !== 'ALIGNER') {
+    res.status(400).json({ error: 'alignerStepNumber is only valid for ALIGNER cases' });
+    return;
+  }
+
+  if (data.nextVisitDate && data.nextVisitDate < new Date()) {
+    res.status(400).json({ error: 'nextVisitDate must not be in the past' });
+    return;
+  }
+
+  const visit = await prisma.orthodonticVisit.create({
+    data: {
+      caseId: orthoCase.id,
+      appointmentId: data.appointmentId,
+      date: data.date,
+      wireChanged: data.wireChanged ?? false,
+      wireStrength: data.wireStrength,
+      elasticsUsed: data.elasticsUsed,
+      alignerStepNumber: data.alignerStepNumber,
+      notes: data.notes,
+      nextVisitDate: data.nextVisitDate,
+    },
+  });
+
+  res.status(201).json(visit);
+});
+
 export default router;

@@ -11,6 +11,9 @@ const orthodonticCaseFindFirst = vi.fn();
 const orthodonticCaseFindMany = vi.fn();
 const orthodonticCaseCreate = vi.fn();
 const orthodonticCaseUpdate = vi.fn();
+const appointmentFindFirst = vi.fn();
+const orthodonticVisitCreate = vi.fn();
+const orthodonticVisitFindMany = vi.fn();
 
 vi.mock('../src/config/database', () => ({
   prisma: {
@@ -20,6 +23,13 @@ vi.mock('../src/config/database', () => ({
       findMany: (...args: unknown[]) => orthodonticCaseFindMany(...args),
       create: (...args: unknown[]) => orthodonticCaseCreate(...args),
       update: (...args: unknown[]) => orthodonticCaseUpdate(...args),
+    },
+    appointment: {
+      findFirst: (...args: unknown[]) => appointmentFindFirst(...args),
+    },
+    orthodonticVisit: {
+      create: (...args: unknown[]) => orthodonticVisitCreate(...args),
+      findMany: (...args: unknown[]) => orthodonticVisitFindMany(...args),
     },
   },
 }));
@@ -261,5 +271,104 @@ describe('PATCH /cases/:caseId', () => {
 
     expect(res.status).toBe(404);
     expect(orthodonticCaseUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /cases/:caseId/visits', () => {
+  const activeCase = {
+    id: 'case-1',
+    patientId: 'patient-1',
+    status: 'ACTIVE',
+    applianceType: 'FIXED_METAL',
+  };
+
+  // ORTHO-04 AC1: valid visit for an ACTIVE case -> 201
+  it('creates an OrthodonticVisit and returns 201', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(activeCase);
+    const created = { id: 'visit-1', caseId: 'case-1', date: '2026-01-05T00:00:00.000Z', wireChanged: true };
+    orthodonticVisitCreate.mockResolvedValue(created);
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', wireChanged: true }),
+    });
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.id).toBe('visit-1');
+    expect(orthodonticVisitCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ caseId: 'case-1' }) })
+    );
+  });
+
+  // ORTHO-04 AC2: caseId not found / cross-tenant -> 404
+  it('returns 404 when the case does not exist or is outside the provider practice', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(null);
+
+    const res = await json(baseUrl, '/cases/other-practice-case/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', wireChanged: true }),
+    });
+
+    expect(res.status).toBe(404);
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
+  });
+
+  // ORTHO-04 AC3: case not ACTIVE -> 409, visit not created
+  it('returns 409 when the referenced case is not ACTIVE', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue({ ...activeCase, status: 'RETENTION' });
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', wireChanged: true }),
+    });
+
+    expect(res.status).toBe(409);
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
+  });
+
+  // ORTHO-04 AC4: appointmentId not belonging to the case's patient/practice -> 404
+  it('returns 404 when appointmentId does not belong to the same patient/practice', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(activeCase);
+    appointmentFindFirst.mockResolvedValue(null);
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', wireChanged: true, appointmentId: 'other-appointment' }),
+    });
+
+    expect(res.status).toBe(404);
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
+    expect(appointmentFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 'other-appointment', patientId: 'patient-1' }),
+      })
+    );
+  });
+
+  // ORTHO-05: alignerStepNumber on a non-ALIGNER case -> 400
+  it('returns 400 when alignerStepNumber is set but the case is not ALIGNER', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(activeCase); // FIXED_METAL
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', alignerStepNumber: 3 }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
+  });
+
+  // ORTHO-04 AC6: nextVisitDate in the past -> 400
+  it('returns 400 when nextVisitDate is before the current date', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(activeCase);
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', wireChanged: true, nextVisitDate: '2020-01-01' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
   });
 });

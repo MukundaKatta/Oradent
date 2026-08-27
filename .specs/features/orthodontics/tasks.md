@@ -234,6 +234,8 @@ T13 → T14 → T15 → T16
 **Gate**: quick
 **Commit**: `feat(orthodontics): add POST visits endpoint with guards`
 
+**Status**: ✅ Done
+
 ---
 
 ### T8: Optional `Treatment` creation on visit (billing integration)
