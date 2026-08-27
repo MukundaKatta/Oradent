@@ -57,22 +57,21 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
 
   const onSubmit = async (data: PatientFormData) => {
     try {
+      // The create endpoint (createPatientSchema in packages/server/src/routes/patients.ts)
+      // doesn't accept insurance fields at all yet — insurancePrimary is a separate related
+      // record, not columns on Patient. Sending them here would silently do nothing (Zod
+      // strips unknown keys), so we don't pretend they're saved.
       await createPatient.mutateAsync({
-        ...data,
-        secondaryPhone: undefined,
-        subscriberName: undefined,
-        subscriberDob: undefined,
-        coveragePercent: undefined,
-        emergencyContactName: undefined,
-        emergencyContactPhone: undefined,
-        emergencyContactRelationship: undefined,
-        allergies: [],
-        medications: [],
-        conditions: [],
-        smoking: false,
-        alcohol: false,
-        pregnancy: false,
-        status: 'active',
+        firstName: data.firstName,
+        lastName: data.lastName,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zip,
       });
       onClose();
     } catch (error) {

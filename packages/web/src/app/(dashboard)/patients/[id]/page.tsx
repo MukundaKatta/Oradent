@@ -14,7 +14,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { usePatient } from '@/hooks/usePatient';
-import { formatDate, formatAge, formatPhone, formatCurrency, getInitials } from "@/lib/formatters";
+import { formatDate, formatAge, formatPhone, getInitials } from "@/lib/formatters";
 import { ptBR } from "@/i18n";
 
 const copy = ptBR.patientWorkflow.profile;
@@ -62,14 +62,14 @@ export default function PatientProfilePage() {
               <h1 className="text-2xl font-bold text-stone-900">{fullName}</h1>
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  patient.status === 'active'
+                  patient.status === 'ACTIVE'
                     ? 'bg-green-100 text-green-700'
-                    : patient.status === 'inactive'
+                    : patient.status === 'INACTIVE'
                     ? 'bg-amber-100 text-amber-700'
                     : 'bg-stone-100 text-stone-600'
                 }`}
               >
-                {ptBR.patient.status[patient.status.toUpperCase() as keyof typeof ptBR.patient.status] ?? patient.status}
+                {ptBR.patient.status[patient.status] ?? patient.status}
               </span>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-stone-500">
@@ -81,15 +81,17 @@ export default function PatientProfilePage() {
                 <Phone className="h-4 w-4" />
                 {formatPhone(patient.phone)}
               </span>
-              <span className="flex items-center gap-1.5">
-                <Mail className="h-4 w-4" />
-                {patient.email}
-              </span>
-              {patient.insuranceCompany && (
+              {patient.email && (
+                <span className="flex items-center gap-1.5">
+                  <Mail className="h-4 w-4" />
+                  {patient.email}
+                </span>
+              )}
+              {patient.insurancePrimary?.company && (
                 <span className="flex items-center gap-1.5">
                   <Shield className="h-4 w-4" />
                   <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-                    {patient.insuranceCompany}
+                    {patient.insurancePrimary.company}
                   </span>
                 </span>
               )}
@@ -136,11 +138,11 @@ export default function PatientProfilePage() {
         <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
           <h3 className="text-sm font-semibold text-stone-900">{copy.medicalAlerts}</h3>
           <div className="mt-4 space-y-2">
-            {patient.allergies.length > 0 ? (
+            {(patient.medicalHistory?.allergies?.length ?? 0) > 0 ? (
               <div>
                 <p className="text-xs font-medium text-stone-500">{copy.allergies}</p>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {patient.allergies.map((a) => (
+                  {patient.medicalHistory!.allergies.map((a) => (
                     <span
                       key={a}
                       className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700"
@@ -153,11 +155,11 @@ export default function PatientProfilePage() {
             ) : (
               <p className="text-sm text-stone-400">{copy.noAllergies}</p>
             )}
-            {patient.medications.length > 0 && (
+            {(patient.medicalHistory?.medications?.length ?? 0) > 0 && (
               <div>
                 <p className="text-xs font-medium text-stone-500">{copy.medications}</p>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {patient.medications.map((m) => (
+                  {patient.medicalHistory!.medications.map((m) => (
                     <span
                       key={m}
                       className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700"
@@ -176,9 +178,6 @@ export default function PatientProfilePage() {
           <h3 className="text-sm font-semibold text-stone-900">{copy.accountSummary}</h3>
           <div className="mt-4">
             <p className="text-xs text-stone-500">{copy.balance}</p>
-            <p className="text-2xl font-bold text-stone-900">
-              {formatCurrency(patient.accountBalance ?? 0)}
-            </p>
           </div>
           <Link
             href={`/patients/${params.id}/billing`}

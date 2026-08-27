@@ -1,41 +1,83 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPut } from '@/lib/api';
 
-export interface Patient {
+// Mirrors packages/server/prisma/schema.prisma's MedicalHistory model.
+export interface MedicalHistory {
   id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: string;
-  phone: string;
-  secondaryPhone?: string;
-  email: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  insuranceCompany?: string;
-  insurancePlan?: string;
-  groupNumber?: string;
-  memberId?: string;
-  subscriberName?: string;
-  subscriberDob?: string;
-  coveragePercent?: number;
-  emergencyContactName?: string;
-  emergencyContactPhone?: string;
-  emergencyContactRelationship?: string;
   allergies: string[];
   medications: string[];
   conditions: string[];
-  smoking: boolean;
-  alcohol: boolean;
-  pregnancy: boolean;
-  status: 'active' | 'inactive' | 'archived';
-  lastVisit?: string;
-  avatarUrl?: string;
-  accountBalance?: number;
+  bloodType?: string | null;
+  isPregnant: boolean;
+  smokingStatus?: string | null;
+  alcoholUse?: string | null;
+  previousSurgeries: string[];
+  familyHistory: string[];
+  lastPhysical?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+}
+
+// Mirrors InsuranceInfo. The list endpoint only selects {company, memberId};
+// the detail endpoint includes the full row — everything else is optional
+// so both shapes satisfy this type.
+export interface PatientInsuranceInfo {
+  id?: string;
+  company: string;
+  planName?: string | null;
+  groupNumber?: string | null;
+  memberId: string;
+  subscriberName?: string;
+  subscriberDob?: string | null;
+  relationship?: string;
+  effectiveDate?: string | null;
+  expirationDate?: string | null;
+  annualMax?: number | null;
+  remainingBenefit?: number | null;
+  deductible?: number | null;
+  deductibleMet?: number;
+  coveragePercent?: Record<string, number>;
+  verifiedAt?: string | null;
+  notes?: string | null;
+}
+
+export interface PatientCounts {
+  appointments: number;
+  treatments: number;
+  images?: number;
+  invoices?: number;
+}
+
+// Mirrors GET /api/patients (list, lighter include) and GET /api/patients/:id
+// (detail, fuller include) in packages/server/src/routes/patients.ts. Fields
+// only present on the detail response are optional.
+export interface Patient {
+  id: string;
+  practiceId: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender?: string | null;
+  email?: string | null;
+  phone: string;
+  phoneSecondary?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  emergencyName?: string | null;
+  emergencyPhone?: string | null;
+  emergencyRelation?: string | null;
+  status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
+  lastVisit?: string | null;
+  nextAppointment?: string | null;
+  notes?: string | null;
   createdAt: string;
   updatedAt: string;
+  medicalHistory?: MedicalHistory | null;
+  insurancePrimary?: PatientInsuranceInfo | null;
+  insuranceSecondary?: PatientInsuranceInfo | null;
+  _count?: PatientCounts;
 }
 
 export interface PatientListParams {
@@ -57,7 +99,28 @@ export interface PatientListResponse {
   };
 }
 
-export type CreatePatientInput = Omit<Patient, 'id' | 'createdAt' | 'updatedAt' | 'lastVisit' | 'accountBalance' | 'avatarUrl'>;
+// Mirrors createPatientSchema in packages/server/src/routes/patients.ts —
+// intentionally its own type rather than derived from Patient, since the
+// create endpoint accepts a materially smaller set of fields (no insurance,
+// no medical history, no status).
+export interface CreatePatientInput {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender?: string;
+  email?: string;
+  phone: string;
+  phoneSecondary?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  emergencyName?: string;
+  emergencyPhone?: string;
+  emergencyRelation?: string;
+  notes?: string;
+}
+
 export type UpdatePatientInput = Partial<CreatePatientInput>;
 
 export function usePatients(params: PatientListParams = {}) {
