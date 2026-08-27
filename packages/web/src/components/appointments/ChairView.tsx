@@ -1,13 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import {
-  APPOINTMENT_TYPE_LABELS,
-  APPOINTMENT_TYPE_COLORS,
-  APPOINTMENT_STATUS_LABELS,
-} from '@/lib/constants';
+import { formatTime } from '@/lib/formatters';
+import { t } from '@/i18n';
+import { APPOINTMENT_TYPE_COLORS } from '@/lib/constants';
+import { appointmentTypeLabel } from './appointmentLabels';
 
 interface Appointment {
   id: string;
@@ -37,13 +34,25 @@ const HOURS = Array.from({ length: 10 }, (_, i) => i + 8); // 8am - 5pm
 const SLOT_HEIGHT = 60; // px per 30 min
 const CHAIRS = ['Chair 1', 'Chair 2', 'Chair 3'];
 
+function chairLabel(chair: string): string {
+  const labels: Record<string, string> = {
+    'Chair 1': t('appointments.chairOne', 'Cadeira 1'),
+    'Chair 2': t('appointments.chairTwo', 'Cadeira 2'),
+    'Chair 3': t('appointments.chairThree', 'Cadeira 3'),
+  };
+  return labels[chair] ?? chair;
+}
+
 export function ChairView({
   appointments,
   currentDate,
   onEventClick,
   onSlotClick,
 }: ChairViewProps) {
-  const dateStr = format(currentDate, 'yyyy-MM-dd');
+  const dateKey = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+  const dateStr = dateKey(currentDate);
 
   const chairGroups = useMemo(() => {
     const groups: Record<string, Appointment[]> = {};
@@ -76,7 +85,7 @@ export function ChairView({
 
   const getCurrentTimePosition = () => {
     const now = new Date();
-    const nowDateStr = format(now, 'yyyy-MM-dd');
+    const nowDateStr = dateKey(now);
     if (nowDateStr !== dateStr) return null;
     const hours = now.getHours() + now.getMinutes() / 60;
     if (hours < 8 || hours > 17) return null;
@@ -89,18 +98,18 @@ export function ChairView({
     <div className="overflow-x-auto">
       <div className="min-w-[800px]">
         {/* Header */}
-        <div className="grid grid-cols-[80px_1fr_1fr_1fr] border-b border-stone-200">
-          <div className="border-r border-stone-200 bg-stone-50 p-3">
-            <span className="text-xs font-medium text-stone-500">Time</span>
+        <div className="grid grid-cols-[80px_1fr_1fr_1fr] border-b border-stone-200 dark:border-white/10">
+          <div className="border-r border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-3">
+            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">{t('appointments.time', 'Horário')}</span>
           </div>
           {CHAIRS.map((chair) => (
             <div
               key={chair}
-              className="border-r border-stone-200 bg-stone-50 p-3 text-center last:border-r-0"
+              className="border-r border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-3 text-center last:border-r-0"
             >
-              <span className="text-sm font-semibold text-stone-700">{chair}</span>
-              <span className="ml-2 text-xs text-stone-400">
-                {chairGroups[chair]?.length || 0} appts
+              <span className="text-sm font-semibold text-stone-700 dark:text-stone-200">{chairLabel(chair)}</span>
+              <span className="ml-2 text-xs text-stone-400 dark:text-stone-500">
+                {chairGroups[chair]?.length || 0} {t('appointments.appointmentsAbbreviation', 'consultas')}
               </span>
             </div>
           ))}
@@ -109,17 +118,17 @@ export function ChairView({
         {/* Time grid */}
         <div className="relative grid grid-cols-[80px_1fr_1fr_1fr]">
           {/* Time labels */}
-          <div className="border-r border-stone-200">
+          <div className="border-r border-stone-200 dark:border-white/10">
             {HOURS.map((hour) => (
               <div key={hour} className="relative" style={{ height: `${SLOT_HEIGHT * 2}px` }}>
-                <span className="absolute -top-2 right-3 text-xs text-stone-400">
-                  {hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
+                <span className="absolute -top-2 right-3 text-xs text-stone-400 dark:text-stone-500">
+                  {`${hour.toString().padStart(2, '0')}:00`}
                 </span>
                 <div
-                  className="absolute right-0 top-0 w-3 border-t border-stone-200"
+                  className="absolute right-0 top-0 w-3 border-t border-stone-200 dark:border-white/10"
                 />
                 <div
-                  className="absolute right-0 top-1/2 w-2 border-t border-stone-100"
+                  className="absolute right-0 top-1/2 w-2 border-t border-stone-100 dark:border-white/5"
                 />
               </div>
             ))}
@@ -129,19 +138,19 @@ export function ChairView({
           {CHAIRS.map((chair) => (
             <div
               key={chair}
-              className="relative border-r border-stone-200 last:border-r-0"
+              className="relative border-r border-stone-200 dark:border-white/10 last:border-r-0"
             >
               {/* Grid lines */}
               {HOURS.map((hour) => (
                 <div key={hour} style={{ height: `${SLOT_HEIGHT * 2}px` }}>
                   <div
-                    className="h-1/2 border-b border-stone-100 cursor-pointer hover:bg-teal-50/50 transition-colors"
+                    className="h-1/2 border-b border-stone-100 dark:border-white/5 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-teal-500/10 transition-colors"
                     onClick={() =>
                       onSlotClick(dateStr, `${hour.toString().padStart(2, '0')}:00`)
                     }
                   />
                   <div
-                    className="h-1/2 border-b border-stone-200 cursor-pointer hover:bg-teal-50/50 transition-colors"
+                    className="h-1/2 border-b border-stone-200 dark:border-white/10 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-teal-500/10 transition-colors"
                     onClick={() =>
                       onSlotClick(dateStr, `${hour.toString().padStart(2, '0')}:30`)
                     }
@@ -167,11 +176,10 @@ export function ChairView({
                       {apt.patientName}
                     </div>
                     <div className="mt-0.5 truncate text-[10px] text-white/80">
-                      {APPOINTMENT_TYPE_LABELS[apt.type] || apt.type}
+                      {appointmentTypeLabel(apt.type)}
                     </div>
                     <div className="mt-0.5 truncate text-[10px] text-white/70">
-                      {format(new Date(apt.startTime), 'h:mm a')} -{' '}
-                      {format(new Date(apt.endTime), 'h:mm a')}
+                      {formatTime(apt.startTime)} - {formatTime(apt.endTime)}
                     </div>
                   </button>
                 );

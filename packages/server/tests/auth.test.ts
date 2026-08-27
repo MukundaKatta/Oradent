@@ -11,10 +11,23 @@ vi.mock('../src/config/env', () => ({
 }));
 
 // Mock redis
+const redisGet = vi.fn().mockResolvedValue(null);
 vi.mock('../src/config/redis', () => ({
   redis: {
-    get: vi.fn().mockResolvedValue(null),
+    get: (...args: unknown[]) => redisGet(...args),
     set: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+  },
+}));
+
+// Mock prisma — only the provider lookup verifyAccessToken needs to check
+// the current sessionVersion.
+const findUniqueProvider = vi.fn();
+vi.mock('../src/config/database', () => ({
+  prisma: {
+    provider: {
+      findUnique: (...args: unknown[]) => findUniqueProvider(...args),
+    },
   },
 }));
 
@@ -22,6 +35,8 @@ import {
   generateToken,
   generateRefreshToken,
   verifyRefreshToken,
+  verifyAccessToken,
+  TokenRejectedError,
   authorize,
   type AuthPayload,
 } from '../src/middleware/auth';
@@ -33,6 +48,7 @@ const mockPayload: Omit<AuthPayload, 'type'> = {
   practiceId: 'practice-456',
   role: 'DENTIST',
   email: 'dr.smith@example.com',
+  sessionVersion: 1,
 };
 
 describe('generateToken', () => {
@@ -73,6 +89,36 @@ describe('verifyRefreshToken', () => {
 
   it('rejects invalid tokens', () => {
     expect(() => verifyRefreshToken('invalid-token')).toThrow();
+  });
+});
+
+describe('verifyAccessToken', () => {
+  beforeEach(() => {
+    redisGet.mockReset().mockResolvedValue(null);
+    findUniqueProvider.mockReset().mockResolvedValue({ sessionVersion: 1 });
+  });
+
+  it('accepts a token whose sessionVersion matches the provider row', async () => {
+    const token = generateToken(mockPayload);
+    const payload = await verifyAccessToken(token);
+    expect(payload.providerId).toBe(mockPayload.providerId);
+  });
+
+  it('rejects a token issued before a logout/password-change bumped sessionVersion', async () => {
+    findUniqueProvider.mockResolvedValue({ sessionVersion: 2 });
+    const token = generateToken(mockPayload); // sessionVersion: 1
+    await expect(verifyAccessToken(token)).rejects.toBeInstanceOf(TokenRejectedError);
+  });
+
+  it('rejects a blacklisted token', async () => {
+    redisGet.mockResolvedValue('1');
+    const token = generateToken(mockPayload);
+    await expect(verifyAccessToken(token)).rejects.toBeInstanceOf(TokenRejectedError);
+  });
+
+  it('rejects a refresh token presented as an access token', async () => {
+    const token = generateRefreshToken(mockPayload);
+    await expect(verifyAccessToken(token)).rejects.toBeInstanceOf(TokenRejectedError);
   });
 });
 

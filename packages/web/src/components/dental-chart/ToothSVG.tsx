@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { TOOTH_MAP, isAnterior, getCenterSurfaceLabel } from '@/lib/toothMap';
-import { getConditionColor } from '@/lib/conditionColors';
+import { TOOTH_MAP, getCenterSurfaceLabel } from "@/lib/toothMap";
+import { ptBR } from "@/i18n";
+import { getConditionColor } from "@/lib/conditionColors";
+import { formatToothAriaLabel } from "@/lib/clinicalLabels";
 
 export interface ToothCondition {
   surface: string;
@@ -78,12 +80,6 @@ export default function ToothSVG({
   size = 60,
 }: ToothSVGProps) {
   const tooth = TOOTH_MAP[toothNumber];
-  if (!tooth) return null;
-
-  const isMissing = status === 'missing';
-  const isImplant = status === 'implant';
-  const centerLabel = getCenterSurfaceLabel(toothNumber);
-  const surfacePathMap = getSurfacePathMap(tooth.arch);
 
   /** Build a map of surface -> condition color */
   const surfaceColorMap = useMemo(() => {
@@ -106,6 +102,13 @@ export default function ToothSVG({
     [onSurfaceClick, toothNumber]
   );
 
+  if (!tooth) return null;
+
+  const isMissing = status === 'missing';
+  const isImplant = status === 'implant';
+  const centerLabel = getCenterSurfaceLabel(toothNumber);
+  const surfacePathMap = getSurfacePathMap(tooth.arch);
+
   const healthyColor = '#e8f5e9';
   const missingColor = '#d1d5db';
 
@@ -126,7 +129,7 @@ export default function ToothSVG({
         height={size}
         className="block"
         role="img"
-        aria-label={`Tooth ${toothNumber} - ${tooth.name}`}
+        aria-label={formatToothAriaLabel(toothNumber, ptBR.toothNames[toothNumber as keyof typeof ptBR.toothNames] ?? tooth.name)}
       >
         {/* Selected ring */}
         {isSelected && (

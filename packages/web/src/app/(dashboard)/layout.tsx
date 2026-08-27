@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { useAppStore } from "@/stores/appStore";
+import { ptBR } from "@/i18n";
 import { apiGet } from "@/lib/api";
 
 export default function DashboardLayout({
@@ -45,17 +46,17 @@ export default function DashboardLayout({
 
   if (isAuthed === null) {
     return (
-      <div className="flex h-screen items-center justify-center bg-stone-50">
+      <div className="app-shell-bg flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-          <p className="text-sm text-stone-500">Loading...</p>
+          <p className="text-sm text-stone-500 dark:text-stone-400">{ptBR.patientWorkflow.common.loading}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-stone-50">
+    <div className="app-shell-bg flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar />

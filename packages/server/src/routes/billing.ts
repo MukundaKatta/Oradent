@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
-import { generateInvoiceNumber } from '../utils/formatters';
+import { generateInvoiceNumber } from '../services/invoiceNumbering';
+import { AppError } from '../middleware/errorHandler';
 
 const router = Router();
 router.use(authenticate);
@@ -89,6 +90,14 @@ router.post('/invoices', async (req: Request, res: Response) => {
 
   const dueDate = data.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+  const patient = await prisma.patient.findFirst({
+    where: { id: data.patientId, practiceId: req.auth!.practiceId },
+  });
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
+
   // Validate that treatments belong to the same patient and practice
   if (data.treatmentIds && data.treatmentIds.length > 0) {
     const validTreatments = await prisma.treatment.count({
@@ -104,10 +113,12 @@ router.post('/invoices', async (req: Request, res: Response) => {
     }
   }
 
+  const invoiceNumber = await generateInvoiceNumber(prisma);
+
   const invoice = await prisma.invoice.create({
     data: {
       patientId: data.patientId,
-      invoiceNumber: generateInvoiceNumber(),
+      invoiceNumber,
       dueDate,
       subtotal: data.subtotal,
       taxAmount,
@@ -133,20 +144,31 @@ router.post('/invoices', async (req: Request, res: Response) => {
 router.post('/payments', async (req: Request, res: Response) => {
   const data = paymentSchema.parse(req.body);
 
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: data.invoiceId, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!invoice) {
+    throw new AppError(404, 'Invoice not found');
+  }
+
   const payment = await prisma.$transaction(async (tx) => {
-    const invoice = await tx.invoice.findFirst({
-      where: { id: data.invoiceId, patient: { practiceId: req.auth!.practiceId } },
-      include: { payments: true },
-    });
-
-    if (!invoice) {
-      throw new Error('Invoice not found');
-    }
-
-    const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0) + data.amount;
-    const newStatus = totalPaid >= invoice.total ? 'PAID' : 'PARTIALLY_PAID';
+    // Lock the invoice row for the duration of this transaction so two
+    // concurrent payments against the same invoice serialize instead of
+    // both computing totalPaid from the same pre-payment snapshot — without
+    // this, two simultaneous partial payments that together cover the
+    // total can each independently conclude "not fully paid yet" and leave
+    // the invoice PARTIALLY_PAID with a zero balance.
+    await tx.$queryRaw`SELECT id FROM "Invoice" WHERE id = ${data.invoiceId} FOR UPDATE`;
 
     const newPayment = await tx.payment.create({ data });
+
+    const paidAgg = await tx.payment.aggregate({
+      where: { invoiceId: data.invoiceId },
+      _sum: { amount: true },
+    });
+    const totalPaid = paidAgg._sum.amount || 0;
+    const newStatus = totalPaid >= invoice.total ? 'PAID' : 'PARTIALLY_PAID';
+
     await tx.invoice.update({
       where: { id: data.invoiceId },
       data: { status: newStatus },

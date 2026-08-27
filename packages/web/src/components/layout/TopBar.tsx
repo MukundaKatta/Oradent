@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
-import { Search, Bell, ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { ptBR as ptBRDate } from "date-fns/locale";
+import { Search, Bell, ChevronDown, Settings, LogOut } from "lucide-react";
 import { useAppStore } from "@/stores/appStore";
+import { ptBR, t } from "@/i18n";
 import { NotificationPanel } from "./NotificationPanel";
 import { CommandPalette } from "./CommandPalette";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -16,7 +18,9 @@ export function TopBar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const router = useRouter();
   const { provider, practice, logout } = useAppStore();
-  const today = format(new Date(), "EEEE, MMMM d, yyyy");
+  const today = format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", {
+    locale: ptBRDate,
+  });
 
   const initials = provider?.name
     ? provider.name
@@ -36,10 +40,10 @@ export function TopBar() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-stone-200 bg-white px-6">
+      <header className="glass relative z-30 flex h-16 shrink-0 items-center justify-between border-x-0 border-t-0 px-6 shadow-apple-sm">
         {/* Left: Practice name */}
         <div>
-          <h1 className="text-lg font-semibold text-stone-900">
+          <h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
             {practice?.name || "Oradent"}
           </h1>
         </div>
@@ -47,10 +51,10 @@ export function TopBar() {
         {/* Center: Search trigger */}
         <button
           onClick={() => setCommandOpen(true)}
-          className="flex h-9 w-80 items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm text-stone-400 transition-colors hover:border-stone-300 hover:bg-stone-100"
+          className="flex h-9 w-80 items-center gap-2 rounded-full border border-stone-200/70 bg-white/70 px-3.5 text-sm text-stone-400 shadow-apple-sm backdrop-blur-sm transition-colors hover:border-stone-300 hover:bg-white"
         >
           <Search className="h-4 w-4" />
-          <span className="flex-1 text-left">Search patients, actions...</span>
+          <span className="flex-1 text-left">{ptBR.shell.search.placeholder}</span>
           <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-stone-200 bg-white px-1.5 font-mono text-[10px] font-medium text-stone-500 sm:flex">
             <span className="text-xs">&#x2318;</span>K
           </kbd>
@@ -58,7 +62,7 @@ export function TopBar() {
 
         {/* Right: Date, notifications, profile */}
         <div className="flex items-center gap-4">
-          <span className="hidden text-sm text-stone-500 lg:block">{today}</span>
+          <span className="hidden text-sm text-stone-500 dark:text-stone-400 lg:block">{today}</span>
 
           <ThemeToggle />
 
@@ -66,8 +70,8 @@ export function TopBar() {
           <div className="relative">
             <button
               onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
-              aria-label="Notifications"
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-200"
+              aria-label={ptBR.shell.notifications.title}
             >
               <Bell className="h-5 w-5" />
             </button>
@@ -82,14 +86,17 @@ export function TopBar() {
           {/* Provider dropdown */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-stone-100">
+              <button
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-stone-100 dark:hover:bg-stone-800"
+                aria-label={ptBR.shell.profile.openMenu}
+              >
                 <div
                   className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium text-white"
                   style={{ backgroundColor: provider?.color || "#0d9488" }}
                 >
                   {initials}
                 </div>
-                <ChevronDown className="h-4 w-4 text-stone-400" />
+                <ChevronDown className="h-4 w-4 text-stone-400 dark:text-stone-500" />
               </button>
             </DropdownMenu.Trigger>
 
@@ -97,38 +104,39 @@ export function TopBar() {
               <DropdownMenu.Content
                 align="end"
                 sideOffset={8}
-                className="z-50 min-w-[200px] overflow-hidden rounded-lg border border-stone-200 bg-white p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
+                className="glass-card z-50 min-w-[200px] overflow-hidden p-1 shadow-apple-lg animate-in fade-in-0 zoom-in-95"
               >
-                <div className="px-3 py-2 border-b border-stone-100 mb-1">
-                  <p className="text-sm font-medium text-stone-900">
-                    {provider?.name || "Provider"}
+                <div className="px-3 py-2 border-b border-stone-100 dark:border-white/10 mb-1">
+                  <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                    {provider?.name || ptBR.shell.profile.provider}
                   </p>
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
                     {provider?.email || ""}
                   </p>
-                  <p className="text-xs text-stone-400 mt-0.5">
-                    {provider?.role} {provider?.title ? `- ${provider.title}` : ""}
+                  <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+                    {provider?.role ? t(`provider.role.${provider.role}`, provider.role) : ""}{" "}
+                    {provider?.title ? `- ${provider.title}` : ""}
                   </p>
                 </div>
 
                 <DropdownMenu.Item asChild>
                   <Link
                     href="/settings"
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100"
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-stone-700 dark:text-stone-200 outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100 dark:hover:bg-stone-800 dark:focus:bg-stone-800"
                   >
                     <Settings className="h-4 w-4" />
-                    Settings
+                    {ptBR.shell.profile.settings}
                   </Link>
                 </DropdownMenu.Item>
 
-                <DropdownMenu.Separator className="my-1 h-px bg-stone-100" />
+                <DropdownMenu.Separator className="my-1 h-px bg-stone-100 dark:bg-white/10" />
 
                 <DropdownMenu.Item
                   onClick={handleLogout}
                   className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-600 outline-none transition-colors hover:bg-red-50 focus:bg-red-50"
                 >
                   <LogOut className="h-4 w-4" />
-                  Sign out
+                  {ptBR.shell.profile.signOut}
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>

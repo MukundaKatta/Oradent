@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
 import { formatCurrency } from '@/lib/formatters';
+import { formatProcedureCount } from '@/components/billing/billingLabels';
 import {
   PieChart as PieChartIcon,
   Clock,
@@ -59,9 +60,9 @@ interface ProviderProductivity {
 // ---------- Constants ----------
 
 const PERIOD_OPTIONS = [
-  { label: 'Monthly', value: 'month' },
-  { label: 'Weekly', value: 'week' },
-  { label: 'Daily', value: 'day' },
+  { label: 'Mensal', value: 'month' },
+  { label: 'Semanal', value: 'week' },
+  { label: 'Diário', value: 'day' },
 ] as const;
 
 const PIE_COLORS = [
@@ -196,7 +197,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900">Reports</h1>
+          <h1 className="text-2xl font-bold text-stone-900">Relatórios</h1>
           <p className="text-sm text-stone-500">
             Practice analytics and performance metrics
           </p>
@@ -247,8 +248,8 @@ export default function ReportsPage() {
               <TrendingUp className="h-5 w-5 text-teal-600" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-stone-900">Revenue Overview</h2>
-              <p className="text-xs text-stone-500">Revenue and collections over time</p>
+              <h2 className="text-base font-semibold text-stone-900">Visão geral da receita</h2>
+              <p className="text-xs text-stone-500">Receita e recebimentos ao longo do tempo</p>
             </div>
           </div>
         </div>
@@ -278,13 +279,13 @@ export default function ReportsPage() {
                 />
                 <Bar
                   dataKey="revenue"
-                  name="Revenue"
+                  name="Receita"
                   fill="#0d9488"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
                   dataKey="collections"
-                  name="Collections"
+                  name="Recebimentos"
                   fill="#5eead4"
                   radius={[4, 4, 0, 0]}
                 />
@@ -307,8 +308,8 @@ export default function ReportsPage() {
               <PieChartIcon className="h-5 w-5 text-violet-500" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-stone-900">Procedure Mix</h2>
-              <p className="text-xs text-stone-500">Procedures by count</p>
+              <h2 className="text-base font-semibold text-stone-900">Distribuição de procedimentos</h2>
+              <p className="text-xs text-stone-500">Procedimentos por quantidade</p>
             </div>
           </div>
           <div className="p-4">
@@ -340,7 +341,7 @@ export default function ReportsPage() {
                   </Pie>
                   <Tooltip
                     formatter={(value: number, name: string) => [
-                      `${value} procedures`,
+                      formatProcedureCount(value),
                       name,
                     ]}
                     contentStyle={{
@@ -366,7 +367,7 @@ export default function ReportsPage() {
               <Clock className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-stone-900">Aging Report</h2>
+              <h2 className="text-base font-semibold text-stone-900">Relatório de contas a receber</h2>
               <p className="text-xs text-stone-500">
                 Outstanding balances by age &middot;{' '}
                 <span className="font-medium text-stone-700">
@@ -411,11 +412,11 @@ export default function ReportsPage() {
                           <div>
                             <p className="text-sm font-medium text-stone-700">
                               {bucket.bucket === 'Current'
-                                ? 'Current'
-                                : `${bucket.bucket} days`}
+                                ? 'Atual'
+                                : `${bucket.bucket} dias`}
                             </p>
                             <p className="text-xs text-stone-400">
-                              {bucket.count} account{bucket.count !== 1 ? 's' : ''}
+                              {bucket.count} conta{bucket.count !== 1 ? 's' : ''}
                             </p>
                           </div>
                         </div>
@@ -448,10 +449,10 @@ export default function ReportsPage() {
             </div>
             <div>
               <h2 className="text-base font-semibold text-stone-900">
-                Provider Productivity
+                Produtividade por profissional
               </h2>
               <p className="text-xs text-stone-500">
-                Performance metrics by provider
+                Indicadores de desempenho por profissional
               </p>
             </div>
           </div>
@@ -465,22 +466,22 @@ export default function ReportsPage() {
               <thead>
                 <tr className="border-b border-stone-200 bg-stone-50">
                   <th className="px-6 py-3 text-left font-medium text-stone-500">
-                    Provider
+                    Profissional
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Appointments
+                    Consultas
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Procedures
+                    Procedimentos
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Revenue
+                    Receita
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Avg / Visit
+                    Média por consulta
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-stone-500">
-                    Cancel Rate
+                    Taxa de cancelamento
                   </th>
                 </tr>
               </thead>

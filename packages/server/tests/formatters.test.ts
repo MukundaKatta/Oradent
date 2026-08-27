@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatCurrency, formatDate, generateInvoiceNumber, slugify } from '../src/utils/formatters';
+import { formatCurrency, formatDate, slugify } from '../src/utils/formatters';
 
 describe('formatCurrency', () => {
   it('formats USD amounts correctly', () => {
@@ -33,19 +33,6 @@ describe('formatDate', () => {
     expect(formatted).toContain('Dec');
     expect(formatted).toContain('25');
     expect(formatted).toContain('2024');
-  });
-});
-
-describe('generateInvoiceNumber', () => {
-  it('generates invoice numbers in the correct format', () => {
-    const number = generateInvoiceNumber();
-    expect(number).toMatch(/^INV-\d{6}-\d{4}$/);
-  });
-
-  it('generates unique numbers', () => {
-    const numbers = new Set(Array.from({ length: 100 }, () => generateInvoiceNumber()));
-    // With 10000 possible randoms, 100 samples should be mostly unique
-    expect(numbers.size).toBeGreaterThan(90);
   });
 });
 

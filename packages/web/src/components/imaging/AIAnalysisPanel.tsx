@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
 import * as Dialog from '@radix-ui/react-dialog';
 import {
   X,
@@ -10,9 +8,12 @@ import {
   AlertTriangle,
   CheckCircle2,
   Info,
+  Check,
 } from 'lucide-react';
-import { apiGet, apiPost } from '@/lib/api';
+import { ptBR } from "@/i18n";
 import { cn } from '@/lib/utils';
+import { useReviewAnalysis, useRunXrayAnalysis, useXrayAnalysis, type XrayFinding } from '@/hooks/useAIAnalysis';
+import { localizeErrorMessage } from '@/lib/errorMessages';
 
 interface AIAnalysisPanelProps {
   imageId: string;
@@ -20,28 +21,10 @@ interface AIAnalysisPanelProps {
   onClose: () => void;
 }
 
-interface Finding {
-  id: string;
-  type: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  toothNumber?: number;
-  confidence: number;
-}
-
-interface AnalysisResult {
-  id: string;
-  imageId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  findings: Finding[];
-  summary: string;
-  analyzedAt: string;
-}
-
-const SEVERITY_STYLES: Record<string, { bg: string; icon: typeof CheckCircle2 }> = {
-  low: { bg: 'bg-green-50 border-green-200 text-green-800', icon: CheckCircle2 },
-  medium: { bg: 'bg-amber-50 border-amber-200 text-amber-800', icon: Info },
-  high: { bg: 'bg-red-50 border-red-200 text-red-800', icon: AlertTriangle },
+const SEVERITY_STYLES: Record<XrayFinding['severity'], { bg: string; icon: typeof CheckCircle2 }> = {
+  mild: { bg: 'bg-green-50 border-green-200 text-green-800', icon: CheckCircle2 },
+  moderate: { bg: 'bg-amber-50 border-amber-200 text-amber-800', icon: Info },
+  severe: { bg: 'bg-red-50 border-red-200 text-red-800', icon: AlertTriangle },
 };
 
 export function AIAnalysisPanel({
@@ -49,32 +32,14 @@ export function AIAnalysisPanel({
   patientId,
   onClose,
 }: AIAnalysisPanelProps) {
-  const [isRunning, setIsRunning] = useState(false);
+  const copy = ptBR.patientWorkflow.imaging;
+  const { data: analysis, isLoading } = useXrayAnalysis(imageId);
+  const runAnalysis = useRunXrayAnalysis();
+  const reviewAnalysis = useReviewAnalysis();
 
-  const { data: analysis, isLoading, refetch } = useQuery<AnalysisResult>({
-    queryKey: ['ai-analysis', imageId],
-    queryFn: () =>
-      apiGet<AnalysisResult>(
-        `/api/ai/xray-analysis/${imageId}`
-      ),
-  });
-
-  const runAnalysis = useMutation({
-    mutationFn: () =>
-      apiPost<AnalysisResult>(
-        `/api/ai/analyze-xray`,
-        { imageId, patientId }
-      ),
-    onMutate: () => setIsRunning(true),
-    onSuccess: () => {
-      setIsRunning(false);
-      refetch();
-    },
-    onError: () => setIsRunning(false),
-  });
-
-  const hasResults =
-    analysis && analysis.status === 'completed' && analysis.findings.length > 0;
+  const findings = analysis?.output.findings ?? analysis?.findings ?? [];
+  const hasResults = !!analysis && findings.length > 0;
+  const isRunning = runAnalysis.isPending;
 
   return (
     <Dialog.Root open onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -86,7 +51,7 @@ export function AIAnalysisPanel({
             <div className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-teal-600" />
               <Dialog.Title className="text-lg font-semibold text-stone-900">
-                AI Analysis
+                {copy.analysisPanelTitle}
               </Dialog.Title>
             </div>
             <Dialog.Close asChild>
@@ -101,20 +66,19 @@ export function AIAnalysisPanel({
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
-                <p className="mt-3 text-sm text-stone-500">Loading analysis...</p>
+                <p className="mt-3 text-sm text-stone-500">{copy.loadingAnalysis}</p>
               </div>
-            ) : isRunning || analysis?.status === 'processing' ? (
+            ) : isRunning ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="relative">
                   <Brain className="h-12 w-12 text-teal-600" />
                   <Loader2 className="absolute -right-1 -top-1 h-5 w-5 animate-spin text-teal-600" />
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-stone-700">
-                  Analyzing Image
+                  {copy.analyzingTitle}
                 </h3>
                 <p className="mt-1 text-center text-sm text-stone-500">
-                  Our AI is examining the X-ray for potential findings. This
-                  typically takes 15-30 seconds.
+                  {copy.analyzingDescription}
                 </p>
               </div>
             ) : hasResults ? (
@@ -122,25 +86,51 @@ export function AIAnalysisPanel({
                 {/* Summary */}
                 <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
                   <h3 className="text-sm font-semibold text-stone-700">
-                    Summary
+                    {copy.summary}
                   </h3>
                   <p className="mt-1 text-sm text-stone-600">
-                    {analysis.summary}
+                    {analysis.output.summary}
                   </p>
+                </div>
+
+                {/* Review status */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => reviewAnalysis.mutate({ analysisId: analysis.id, accepted: true })}
+                    disabled={reviewAnalysis.isPending}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50',
+                      analysis.accepted
+                        ? 'bg-green-600 text-white'
+                        : 'border border-stone-200 text-stone-600 hover:bg-stone-50'
+                    )}
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    {analysis.accepted ? copy.accepted : copy.accept}
+                  </button>
+                  {!analysis.accepted && (
+                    <button
+                      onClick={() => reviewAnalysis.mutate({ analysisId: analysis.id, accepted: false })}
+                      disabled={reviewAnalysis.isPending}
+                      className="rounded-lg border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50 disabled:opacity-50"
+                    >
+                      {copy.reject}
+                    </button>
+                  )}
                 </div>
 
                 {/* Findings */}
                 <div>
                   <h3 className="mb-3 text-sm font-semibold text-stone-700">
-                    Findings ({analysis.findings.length})
+                    {copy.findingsCount.replace('{{count}}', String(findings.length))}
                   </h3>
                   <div className="space-y-3">
-                    {analysis.findings.map((finding) => {
-                      const style = SEVERITY_STYLES[finding.severity] || SEVERITY_STYLES.low;
+                    {findings.map((finding, i) => {
+                      const style = SEVERITY_STYLES[finding.severity] || SEVERITY_STYLES.mild;
                       const Icon = style.icon;
                       return (
                         <div
-                          key={finding.id}
+                          key={i}
                           className={cn(
                             'rounded-lg border p-4',
                             style.bg
@@ -151,18 +141,21 @@ export function AIAnalysisPanel({
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
                                 <p className="text-sm font-medium">
-                                  {finding.type}
-                                  {finding.toothNumber &&
-                                    ` - Tooth #${finding.toothNumber}`}
+                                  {finding.finding_type}
+                                  {finding.tooth_number ? ` - ${copy.toothPrefix} #${finding.tooth_number}` : ''}
                                 </p>
                                 <span className="text-xs font-medium opacity-75">
-                                  {Math.round(finding.confidence * 100)}%
-                                  confidence
+                                  {copy.confidencePercent.replace('{{percent}}', String(Math.round(finding.confidence * 100)))}
                                 </span>
                               </div>
                               <p className="mt-1 text-sm opacity-90">
                                 {finding.description}
                               </p>
+                              {finding.recommendation && (
+                                <p className="mt-1 text-xs opacity-75">
+                                  {copy.recommendation}: {finding.recommendation}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -175,19 +168,23 @@ export function AIAnalysisPanel({
               <div className="flex flex-col items-center justify-center py-12">
                 <Brain className="h-12 w-12 text-stone-300" />
                 <h3 className="mt-4 text-lg font-medium text-stone-700">
-                  No Analysis Yet
+                  {copy.noAnalysis}
                 </h3>
                 <p className="mt-1 text-center text-sm text-stone-500">
-                  Run AI analysis to detect potential findings in this X-ray
-                  image.
+                  {copy.noAnalysisDescription}
                 </p>
+                {runAnalysis.isError && (
+                  <p className="mt-2 text-center text-sm text-red-600">
+                    {localizeErrorMessage(runAnalysis.error instanceof Error ? runAnalysis.error.message : undefined, copy.analysisFailed)}
+                  </p>
+                )}
                 <button
-                  onClick={() => runAnalysis.mutate()}
+                  onClick={() => runAnalysis.mutate({ imageId, patientId })}
                   disabled={runAnalysis.isPending}
                   className="mt-4 flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
                 >
                   <Brain className="h-4 w-4" />
-                  Run AI Analysis
+                  {copy.runAnalysis}
                 </button>
               </div>
             )}
@@ -197,8 +194,7 @@ export function AIAnalysisPanel({
           {hasResults && (
             <div className="border-t border-stone-200 px-6 py-4">
               <p className="text-xs text-stone-400">
-                AI analysis is provided as a clinical decision support tool. All
-                findings should be verified by a licensed dental professional.
+                {copy.analysisDisclaimer}
               </p>
             </div>
           )}

@@ -2,16 +2,21 @@
 
 import { useTodaySchedule, type TodayScheduleItem } from '@/hooks/useAppointments';
 import { useRouter } from 'next/navigation';
-import { Clock } from 'lucide-react';
+import Link from 'next/link';
+import { Clock, CalendarPlus } from 'lucide-react';
+import { t } from '@/i18n';
+import { appointmentStatusLabel, appointmentTypeLabel } from '@/components/appointments/appointmentLabels';
+import { formatTime } from '@/lib/formatters';
 
 const statusColors: Record<string, string> = {
-  scheduled: 'bg-stone-100 text-stone-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  'checked-in': 'bg-teal-100 text-teal-700',
-  'in-progress': 'bg-amber-100 text-amber-700',
-  completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
-  'no-show': 'bg-rose-100 text-rose-700',
+  SCHEDULED: 'bg-stone-100 text-stone-700',
+  CONFIRMED: 'bg-blue-100 text-blue-700',
+  CHECKED_IN: 'bg-teal-100 text-teal-700',
+  IN_CHAIR: 'bg-amber-100 text-amber-700',
+  COMPLETED: 'bg-green-100 text-green-700',
+  CANCELLED: 'bg-red-100 text-red-700',
+  NO_SHOW: 'bg-rose-100 text-rose-700',
+  RESCHEDULED: 'bg-stone-100 text-stone-700',
 };
 
 function ScheduleSkeleton() {
@@ -38,67 +43,81 @@ function ScheduleRow({ item }: { item: TodayScheduleItem }) {
       onClick={() => router.push(`/patients/${item.patientId}`)}
       className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-stone-50 transition-colors text-left"
     >
-      <span className="text-sm font-medium text-stone-900 w-16 shrink-0 flex items-center gap-1.5">
-        <Clock className="w-3.5 h-3.5 text-stone-400" />
-        {item.time}
+      <span className="text-sm font-medium text-stone-900 dark:text-stone-100 w-16 shrink-0 flex items-center gap-1.5">
+        <Clock className="w-3.5 h-3.5 text-stone-400 dark:text-stone-500" />
+        {formatTime(item.startTime)}
       </span>
-      <span className="text-sm font-medium text-stone-900 flex-1 min-w-0 truncate">
-        {item.patientName}
+      <span className="text-sm font-medium text-stone-900 dark:text-stone-100 flex-1 min-w-0 truncate">
+        {item.patient ? `${item.patient.firstName} ${item.patient.lastName}` : ''}
       </span>
-      <span className="text-sm text-stone-500 w-28 shrink-0 truncate hidden sm:block">
-        {item.type}
+      <span className="text-sm text-stone-500 dark:text-stone-400 w-28 shrink-0 truncate hidden sm:block">
+        {appointmentTypeLabel(item.type)}
       </span>
-      <span className="text-sm text-stone-500 w-16 shrink-0 hidden md:block">
-        {item.chair}
+      <span className="text-sm text-stone-500 dark:text-stone-400 w-16 shrink-0 hidden md:block">
+        {item.chair?.name ?? '-'}
       </span>
       <span
         className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${
           statusColors[item.status] || 'bg-stone-100 text-stone-700'
         }`}
       >
-        {item.status.replace('-', ' ')}
+        {appointmentStatusLabel(item.status)}
       </span>
     </button>
   );
 }
 
 export default function TodaySchedule() {
-  const { data: schedule, isLoading } = useTodaySchedule();
+  const { data: schedule, isLoading, isError } = useTodaySchedule();
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-stone-200">
+    <div className="glass-card">
       <div className="flex items-center justify-between p-6 pb-4">
-        <h2 className="text-lg font-semibold text-stone-900">
-          Today&apos;s Schedule
+        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+          {t('dashboard.todaySchedule', 'Agenda de hoje')}
         </h2>
-        <span className="text-sm text-stone-500">
-          {schedule?.length ?? 0} appointments
+        <span className="text-sm text-stone-500 dark:text-stone-400">
+          {schedule?.length ?? 0} {(schedule?.length ?? 0) === 1 ? t('dashboard.appointment', 'consulta') : t('dashboard.appointments', 'consultas')}
         </span>
       </div>
 
       {isLoading ? (
         <ScheduleSkeleton />
+      ) : isError ? (
+        <div className="py-12 text-center text-stone-500 dark:text-stone-400 text-sm px-6 pb-6">{t('dashboard.scheduleLoadError', 'Não foi possível carregar a agenda de hoje.')}</div>
       ) : !schedule || schedule.length === 0 ? (
-        <div className="py-12 text-center text-stone-500 text-sm px-6 pb-6">
-          No appointments scheduled for today
+        <div className="flex flex-col items-center gap-3 py-12 px-6 pb-6 text-center">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100 dark:bg-white/5">
+            <CalendarPlus className="h-5 w-5 text-stone-400 dark:text-stone-500" strokeWidth={1.75} />
+          </div>
+          <p className="text-sm text-stone-500 dark:text-stone-400">
+            {t('dashboard.scheduleEmpty', 'Não há consultas agendadas para hoje.')}
+          </p>
+          <Link
+            href="/appointments?new=true"
+            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-teal-600 px-3.5 py-1.5 text-xs font-medium text-white shadow-apple-sm transition-all hover:bg-teal-700 active:scale-[0.97]"
+          >
+            <CalendarPlus className="h-3.5 w-3.5" />
+            {t('dashboard.newAppointment', 'Nova consulta')}
+          </Link>
         </div>
       ) : (
         <div className="px-6 pb-6 space-y-1">
-          <div className="flex items-center gap-4 px-3 pb-2 border-b border-stone-100">
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider w-16 shrink-0">
-              Time
+          <div className="flex items-center gap-4 px-3 pb-2 border-b border-stone-100 dark:border-white/10">
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider w-16 shrink-0">
+              {t('appointments.time', 'Horário')}
             </span>
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider flex-1">
-              Patient
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider flex-1">
+              {t('appointments.patient', 'Paciente')}
             </span>
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider w-28 shrink-0 hidden sm:block">
-              Type
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider w-28 shrink-0 hidden sm:block">
+              {t('appointments.type', 'Tipo')}
             </span>
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider w-16 shrink-0 hidden md:block">
-              Chair
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider w-16 shrink-0 hidden md:block">
+              {t('appointments.chair', 'Cadeira')}
             </span>
-            <span className="text-xs font-medium text-stone-400 uppercase tracking-wider w-20 shrink-0">
-              Status
+            <span className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider w-20 shrink-0">
+              {t('appointments.status', 'Status')}
             </span>
           </div>
           {schedule.map((item) => (

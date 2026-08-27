@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { getCenterSurfaceLabel } from '@/lib/toothMap';
+import { getCenterSurfaceLabel } from "@/lib/toothMap";
+import { ptBR } from "@/i18n";
 
 export interface SurfaceSelectorProps {
   toothNumber: number;
@@ -41,6 +42,15 @@ export default function SurfaceSelector({
 }: SurfaceSelectorProps) {
   const { TOOTH_MAP } = require('@/lib/toothMap');
   const tooth = TOOTH_MAP[toothNumber];
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent, surface: string) => {
+      e.stopPropagation();
+      onToggle(surface);
+    },
+    [onToggle]
+  );
+
   if (!tooth) return null;
 
   const arch = tooth.arch as 'upper' | 'lower';
@@ -53,14 +63,6 @@ export default function SurfaceSelector({
   ];
 
   const isSelected = (s: string) => selectedSurfaces.includes(s);
-
-  const handleClick = useCallback(
-    (e: React.MouseEvent, surface: string) => {
-      e.stopPropagation();
-      onToggle(surface);
-    },
-    [onToggle]
-  );
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -98,7 +100,7 @@ export default function SurfaceSelector({
           );
         })}
       </svg>
-      <p className="text-xs text-slate-500">Click surfaces to select</p>
+      <p className="text-xs text-slate-500">{ptBR.patientWorkflow.chart.clickSurfaces}</p>
     </div>
   );
 }

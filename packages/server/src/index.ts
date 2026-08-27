@@ -11,7 +11,7 @@ import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
 import { prisma } from './config/database';
 import { redis } from './config/redis';
-import { ensureUploadDir, uploadDir } from './config/storage';
+import { ensureUploadDir } from './config/storage';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { apiLimiter } from './middleware/rateLimiter';
@@ -20,6 +20,7 @@ import { initializeWebSocket } from './websocket/liveUpdates';
 import { startAppointmentReminders } from './jobs/appointmentReminder';
 import { startClaimFollowUp } from './jobs/claimFollowUp';
 import { startDailyDigest } from './jobs/dailyDigest';
+import { startOrthodonticReminders } from './jobs/orthodonticReminder';
 
 import authRoutes from './routes/auth';
 import patientRoutes from './routes/patients';
@@ -27,10 +28,11 @@ import dentalChartRoutes from './routes/dentalChart';
 import appointmentRoutes from './routes/appointments';
 import treatmentRoutes from './routes/treatments';
 import billingRoutes from './routes/billing';
-import imagingRoutes from './routes/imaging';
+import imagingRoutes, { imagingFileRouter } from './routes/imaging';
 import aiRoutes from './routes/ai';
 import reportRoutes from './routes/reports';
 import settingsRoutes from './routes/settings';
+import orthodonticsRoutes from './routes/orthodontics';
 
 const app = express();
 const httpServer = createServer(app);
@@ -52,9 +54,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(apiLimiter);
 app.use(auditMiddleware);
 
-// Static files for uploads
+// Uploaded files (X-rays, intraoral photos) are no longer served as a
+// public static mount — dental images are PHI. They're served through
+// imagingFileRouter instead, gated by a short-lived signed token (see
+// services/fileAccessToken.ts and routes/imaging.ts), mounted below
+// alongside the other routes.
 ensureUploadDir();
-app.use('/uploads', express.static(uploadDir));
 
 // API Documentation
 const swaggerSpec = swaggerJsdoc({
@@ -180,10 +185,15 @@ app.use('/api/dental-chart', dentalChartRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/treatments', treatmentRoutes);
 app.use('/api/billing', billingRoutes);
+// Mounted before imagingRoutes: that router's GET /:patientId would
+// otherwise swallow /api/imaging/file/... requests first (Express matches
+// in registration order), treating "file" as a patientId.
+app.use('/api/imaging/file', imagingFileRouter);
 app.use('/api/imaging', imagingRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/orthodontics', orthodonticsRoutes);
 
 // Error handler
 app.use(errorHandler);
@@ -200,6 +210,7 @@ httpServer.listen(env.PORT, () => {
   startAppointmentReminders();
   startClaimFollowUp();
   startDailyDigest();
+  startOrthodonticReminders();
 });
 
 // Graceful shutdown

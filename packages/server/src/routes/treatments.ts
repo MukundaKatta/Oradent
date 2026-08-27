@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { generateTreatmentPlanPDF } from '../services/pdfGenerator';
+import { calculateTreatmentPlanEstimate } from '../services/billingCalc';
 import path from 'path';
 import { uploadDir } from '../config/storage';
 
@@ -53,15 +54,22 @@ router.post('/plans', async (req: Request, res: Response) => {
 
   const patient = await prisma.patient.findFirst({
     where: { id: data.patientId, practiceId: req.auth!.practiceId },
+    include: { insurancePrimary: true },
   });
   if (!patient) {
     res.status(404).json({ error: 'Patient not found' });
     return;
   }
 
-  const totalFee = data.items.reduce((sum, item) => sum + item.fee, 0);
-  const insuranceEst = data.items.reduce((sum, item) => sum + (item.insurancePays || 0), 0);
-  const patientEst = totalFee - insuranceEst;
+  // insurancePays/patientPays are computed server-side from the patient's
+  // actual coverage (CDT category, deductible, remaining benefit) instead
+  // of trusting whatever the client sent for those fields — a treatment
+  // plan is a billing estimate shown to the patient, so it needs to reflect
+  // real coverage rules, not client-supplied numbers.
+  const estimate = calculateTreatmentPlanEstimate(
+    data.items.map((item) => ({ cdtCode: item.cdtCode, fee: item.fee })),
+    patient.insurancePrimary
+  );
 
   const plan = await prisma.treatmentPlan.create({
     data: {
@@ -69,15 +77,15 @@ router.post('/plans', async (req: Request, res: Response) => {
       name: data.name,
       notes: data.notes,
       aiGenerated: data.aiGenerated || false,
-      totalFee,
-      insuranceEst,
-      patientEst,
+      totalFee: estimate.totalFee,
+      insuranceEst: estimate.insuranceEst,
+      patientEst: estimate.patientEst,
       items: {
         create: data.items.map((item, idx) => ({
           ...item,
           surfaces: item.surfaces || [],
-          insurancePays: item.insurancePays || 0,
-          patientPays: item.patientPays || item.fee - (item.insurancePays || 0),
+          insurancePays: estimate.breakdown[idx].insurancePays,
+          patientPays: estimate.breakdown[idx].patientPays,
           sortOrder: item.sortOrder ?? idx,
         })),
       },
@@ -93,6 +101,14 @@ router.patch('/plans/:id/status', async (req: Request, res: Response) => {
   const { status } = z.object({
     status: z.enum(['PROPOSED', 'PRESENTED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'DECLINED']),
   }).parse(req.body);
+
+  const existing = await prisma.treatmentPlan.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Treatment plan not found' });
+    return;
+  }
 
   const updateData: Record<string, unknown> = { status };
   if (status === 'PRESENTED') updateData.presentedAt = new Date();
@@ -271,9 +287,21 @@ router.post('/notes', async (req: Request, res: Response) => {
 
 // Sign clinical note
 router.patch('/notes/:id/sign', async (req: Request, res: Response) => {
+  const existing = await prisma.clinicalNote.findFirst({
+    where: { id: req.params.id, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Clinical note not found' });
+    return;
+  }
+  if (existing.signedAt) {
+    res.status(409).json({ error: 'Note has already been signed' });
+    return;
+  }
+
   const note = await prisma.clinicalNote.update({
     where: { id: req.params.id },
-    data: { signedAt: new Date() },
+    data: { signedAt: new Date(), signedById: req.auth!.providerId },
   });
 
   res.json(note);

@@ -6,13 +6,15 @@ import { Plus } from 'lucide-react';
 import { usePatients } from '@/hooks/usePatient';
 import { PatientList } from '@/components/patients/PatientList';
 import { PatientSearch } from '@/components/patients/PatientSearch';
-import { PatientForm } from '@/components/patients/PatientForm';
+import { PatientForm } from "@/components/patients/PatientForm";
+import { ptBR } from "@/i18n";
 
+const copy = ptBR.patientWorkflow.list;
 const STATUS_TABS = [
-  { label: 'All', value: '' },
-  { label: 'Active', value: 'active' },
-  { label: 'Inactive', value: 'inactive' },
-  { label: 'Archived', value: 'archived' },
+  { label: ptBR.patientWorkflow.common.all, value: "" },
+  { label: ptBR.patientWorkflow.common.active, value: "ACTIVE" },
+  { label: ptBR.patientWorkflow.common.inactive, value: "INACTIVE" },
+  { label: ptBR.patientWorkflow.common.archived, value: "ARCHIVED" },
 ];
 
 export default function PatientsPage() {
@@ -37,17 +39,17 @@ export default function PatientsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900">Patients</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            {data?.total ?? 0} patients total
+          <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">{copy.title}</h1>
+          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+            {data?.pagination.total ?? 0} {copy.total}
           </p>
         </div>
         <button
           onClick={() => setShowNewPatient(true)}
-          className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors"
+          className="flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-apple-sm transition-all hover:bg-teal-700 active:scale-[0.97]"
         >
           <Plus className="h-4 w-4" />
-          New Patient
+          {ptBR.patientWorkflow.list.newPatient}
         </button>
       </div>
 
@@ -55,7 +57,7 @@ export default function PatientsPage() {
       <PatientSearch value={search} onChange={setSearch} />
 
       {/* Status Tabs */}
-      <div className="flex gap-1 rounded-lg border border-stone-200 bg-white p-1 w-fit">
+      <div className="glass flex w-fit gap-1 rounded-full p-1">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -63,10 +65,10 @@ export default function PatientsPage() {
               setStatus(tab.value);
               setPage(1);
             }}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
               status === tab.value
-                ? 'bg-teal-600 text-white'
-                : 'text-stone-600 hover:bg-stone-100'
+                ? 'bg-teal-600 text-white shadow-apple-sm'
+                : 'text-stone-600 hover:bg-stone-900/5 dark:text-stone-400 dark:hover:bg-white/5'
             }`}
           >
             {tab.label}
@@ -76,44 +78,45 @@ export default function PatientsPage() {
 
       {/* Patient Table */}
       {isLoading ? (
-        <div className="space-y-3">
+        <div className="glass-card divide-y divide-stone-100 dark:divide-white/5 overflow-hidden">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-lg bg-stone-200" />
+            <div key={i} className="h-16 animate-pulse bg-stone-200/40 dark:bg-white/5" />
           ))}
         </div>
       ) : (
         <PatientList
-          patients={data?.data ?? []}
+          patients={data?.patients ?? []}
           onSelect={(id) => router.push(`/patients/${id}`)}
+          onNewPatient={() => setShowNewPatient(true)}
         />
       )}
 
       {/* Pagination */}
-      {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between rounded-xl border border-stone-200 bg-white px-6 py-3 shadow-sm">
-          <p className="text-sm text-stone-500">
-            Page {data.page} of {data.totalPages}
+      {data && data.pagination.pages > 1 && (
+        <div className="glass-card flex items-center justify-between px-6 py-3">
+          <p className="text-sm text-stone-500 dark:text-stone-400">
+            {copy.page} {data.pagination.page} {copy.of} {data.pagination.pages}
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="rounded-lg border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-full border border-stone-200/70 dark:border-white/10 px-3 py-1.5 text-sm font-medium text-stone-600 dark:text-stone-300 transition-colors hover:bg-stone-900/5 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              {ptBR.patientWorkflow.common.previous}
             </button>
             <button
-              onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-              disabled={page >= data.totalPages}
-              className="rounded-lg border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setPage((p) => Math.min(data.pagination.pages, p + 1))}
+              disabled={page >= data.pagination.pages}
+              className="rounded-full border border-stone-200/70 dark:border-white/10 px-3 py-1.5 text-sm font-medium text-stone-600 dark:text-stone-300 transition-colors hover:bg-stone-900/5 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              {ptBR.patientWorkflow.common.next}
             </button>
           </div>
         </div>
       )}
 
-      {/* New Patient Modal */}
+      {/* {ptBR.patientWorkflow.list.newPatient} Modal */}
       {showNewPatient && (
         <PatientForm
           open={showNewPatient}

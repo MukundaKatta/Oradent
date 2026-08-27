@@ -2,22 +2,19 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
-import { formatCurrency } from '@/lib/formatters';
 import {
   Calendar,
-  DollarSign,
   Users,
-  FileWarning,
   Plus,
   Brain,
-  ArrowUpRight,
-  ArrowDownRight,
+  ArrowRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { format } from 'date-fns';
+import { ptBR as dateFnsPtBR } from 'date-fns/locale';
+import { t } from '@/i18n';
 import TodaySchedule from '@/components/dashboard/TodaySchedule';
-import RevenueCard from '@/components/dashboard/RevenueCard';
-import PatientStatsCard from '@/components/dashboard/PatientStatsCard';
-import PendingClaimsCard from '@/components/dashboard/PendingClaimsCard';
+import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
 import AIInsightsCard from '@/components/dashboard/AIInsightsCard';
 
 interface DashboardStats {
@@ -38,20 +35,8 @@ interface DashboardStats {
   }[];
 }
 
-function StatCardSkeleton() {
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-10 h-10 bg-stone-200 animate-pulse rounded-lg" />
-      </div>
-      <div className="h-8 w-24 bg-stone-200 animate-pulse rounded" />
-      <div className="h-4 w-32 bg-stone-200 animate-pulse rounded mt-2" />
-    </div>
-  );
-}
-
 export default function DashboardPage() {
-  const { data: stats, isLoading } = useQuery<DashboardStats>({
+  const { data: stats, isLoading, isError } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
     queryFn: () => apiGet('/api/reports/dashboard'),
   });
@@ -61,117 +46,81 @@ export default function DashboardPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900">Dashboard</h1>
-          <p className="text-stone-500 text-sm mt-1">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
+          <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">{t('dashboard.title', 'Visão geral')}</h1>
+          <p className="text-stone-500 dark:text-stone-400 text-sm mt-1">
+            {format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: dateFnsPtBR })}
           </p>
         </div>
         <div className="flex gap-3">
           <Link
             href="/patients?new=true"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-stone-300 rounded-lg text-stone-700 hover:bg-stone-50 text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/70 border border-stone-200/70 rounded-full text-stone-700 shadow-apple-sm backdrop-blur-sm hover:bg-white text-sm font-medium transition-all active:scale-[0.97]"
           >
             <Plus className="w-4 h-4" />
-            New Patient
+            {t('dashboard.newPatient', 'Novo paciente')}
           </Link>
           <Link
             href="/appointments?new=true"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-full hover:bg-teal-700 text-sm font-medium shadow-apple-sm transition-all active:scale-[0.97]"
           >
             <Calendar className="w-4 h-4" />
-            New Appointment
+            {t('dashboard.newAppointment', 'Nova consulta')}
           </Link>
         </div>
       </div>
 
-      {/* Stat cards row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Today's Appointments */}
-        {isLoading ? (
-          <StatCardSkeleton />
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2.5 rounded-lg bg-teal-100">
-                <Calendar className="w-5 h-5 text-teal-600" />
-              </div>
-              {stats?.todayAppointments !== undefined && stats.todayAppointments > 0 && (
-                <span className="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
-                  Today
-                </span>
-              )}
-            </div>
-            <p className="text-2xl font-semibold text-stone-900">
-              {stats?.todayAppointments ?? 0}
-            </p>
-            <p className="text-sm text-stone-500 mt-1">Today&apos;s Appointments</p>
-          </div>
-        )}
+      {isError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {t('dashboard.loadError', 'Não foi possível carregar os indicadores. Tente novamente.')}
+        </div>
+      )}
 
-        {/* Month Revenue */}
-        <RevenueCard
-          revenue={stats?.monthRevenue}
-          trend={stats?.revenueTrend}
-          isLoading={isLoading}
-        />
-
-        {/* Active Patients */}
-        <PatientStatsCard
-          activePatients={stats?.activePatients}
-          trend={stats?.patientsTrend}
-          isLoading={isLoading}
-        />
-
-        {/* Pending Claims */}
-        <PendingClaimsCard
-          pendingClaims={stats?.pendingClaims}
-          totalAmount={stats?.pendingClaimsAmount}
-          isLoading={isLoading}
-        />
-      </div>
+      {/* Metrics */}
+      <DashboardMetrics
+        todayAppointments={stats?.todayAppointments}
+        monthRevenue={stats?.monthRevenue}
+        revenueTrend={stats?.revenueTrend}
+        activePatients={stats?.activePatients}
+        patientsTrend={stats?.patientsTrend}
+        pendingClaims={stats?.pendingClaims}
+        pendingClaimsAmount={stats?.pendingClaimsAmount}
+        isLoading={isLoading}
+      />
 
       {/* Today's Schedule */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="lg:col-span-2">
           <TodaySchedule />
         </div>
 
         {/* Quick Actions & AI sidebar */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-stone-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-stone-900 mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-1 gap-2">
+          <div className="glass-card p-6">
+            <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">{t('dashboard.quickActions', 'Ações rápidas')}</h3>
+            <div className="grid grid-cols-1 gap-1">
               <Link
                 href="/patients?new=true"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-stone-900/5 dark:hover:bg-white/5"
               >
-                <div className="p-2 bg-teal-100 rounded-lg group-hover:bg-teal-200 transition-colors">
-                  <Users className="w-4 h-4 text-teal-600" />
-                </div>
-                <span className="text-sm font-medium text-stone-700">New Patient</span>
+                <Users className="w-4 h-4 shrink-0 text-stone-500 transition-colors group-hover:text-teal-600 dark:text-stone-400 dark:group-hover:text-teal-400" strokeWidth={1.75} />
+                <span className="flex-1 text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.newPatient', 'Novo paciente')}</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0 text-stone-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-stone-600" />
               </Link>
               <Link
                 href="/appointments?new=true"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-stone-900/5 dark:hover:bg-white/5"
               >
-                <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                  <Calendar className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-sm font-medium text-stone-700">New Appointment</span>
+                <Calendar className="w-4 h-4 shrink-0 text-stone-500 transition-colors group-hover:text-teal-600 dark:text-stone-400 dark:group-hover:text-teal-400" strokeWidth={1.75} />
+                <span className="flex-1 text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.newAppointment', 'Nova consulta')}</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0 text-stone-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-stone-600" />
               </Link>
               <Link
                 href="/ai-assistant"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors group"
+                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-stone-900/5 dark:hover:bg-white/5"
               >
-                <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                  <Brain className="w-4 h-4 text-purple-600" />
-                </div>
-                <span className="text-sm font-medium text-stone-700">AI Analysis</span>
+                <Brain className="w-4 h-4 shrink-0 text-stone-500 transition-colors group-hover:text-teal-600 dark:text-stone-400 dark:group-hover:text-teal-400" strokeWidth={1.75} />
+                <span className="flex-1 text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.aiAnalysis', 'Análise com IA')}</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0 text-stone-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-stone-600" />
               </Link>
             </div>
           </div>

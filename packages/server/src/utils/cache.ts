@@ -38,15 +38,3 @@ export async function invalidateCache(key: string): Promise<void> {
     // Non-critical
   }
 }
-
-/** Invalidate all cache keys matching a pattern */
-export async function invalidateCachePattern(pattern: string): Promise<void> {
-  try {
-    const keys = await redis.keys(pattern);
-    if (keys.length > 0) {
-      await redis.del(...keys);
-    }
-  } catch {
-    // Non-critical
-  }
-}

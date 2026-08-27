@@ -29,6 +29,11 @@ export async function createAuditEntry(
 
 export async function getAuditLogs(
   options: {
+    // Required, not optional: without it every OWNER in every practice
+    // would read every other practice's audit trail through this one
+    // function — the same class of leak fixed elsewhere in this codebase
+    // for patient/appointment/billing data.
+    practiceId: string;
     providerId?: string;
     resource?: string;
     resourceId?: string;
@@ -37,8 +42,10 @@ export async function getAuditLogs(
     limit?: number;
     offset?: number;
   }
-): Promise<unknown[]> {
-  const where: Record<string, unknown> = {};
+): Promise<{ logs: unknown[]; total: number }> {
+  const where: Record<string, unknown> = {
+    provider: { practiceId: options.practiceId },
+  };
   if (options.providerId) where.providerId = options.providerId;
   if (options.resource) where.resource = options.resource;
   if (options.resourceId) where.resourceId = options.resourceId;
@@ -48,11 +55,16 @@ export async function getAuditLogs(
     if (options.endDate) (where.timestamp as Record<string, unknown>).lte = options.endDate;
   }
 
-  return prisma.auditLog.findMany({
-    where: where as any,
-    include: { provider: { select: { name: true, email: true } } },
-    orderBy: { timestamp: 'desc' },
-    take: options.limit || 50,
-    skip: options.offset || 0,
-  });
+  const [logs, total] = await Promise.all([
+    prisma.auditLog.findMany({
+      where: where as any,
+      include: { provider: { select: { name: true, email: true } } },
+      orderBy: { timestamp: 'desc' },
+      take: options.limit || 50,
+      skip: options.offset || 0,
+    }),
+    prisma.auditLog.count({ where: where as any }),
+  ]);
+
+  return { logs, total };
 }

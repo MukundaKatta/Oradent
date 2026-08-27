@@ -10,7 +10,7 @@ datasource db {
 // ═══════════════════ PRACTICE & AUTH ═══════════════════
 
 model Practice {
-  id          String              @id @default(cuid())
+  id          String            @id @default(cuid())
   name        String
   address     String
   phone       String
@@ -22,8 +22,8 @@ model Practice {
   chairs      Chair[]
   feeSchedule FeeScheduleItem[]
   settings    PracticeSettings?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
 
 model PracticeSettings {
@@ -40,24 +40,28 @@ model PracticeSettings {
 }
 
 model Provider {
-  id            String        @id @default(cuid())
-  practiceId    String
-  practice      Practice      @relation(fields: [practiceId], references: [id])
-  email         String        @unique
-  passwordHash  String
-  name          String
-  title         String        @default("DDS")
-  role          ProviderRole  @default(DENTIST)
-  npi           String?
-  licenseNumber String?
-  color         String        @default("#6366f1")
-  isActive      Boolean       @default(true)
-  appointments  Appointment[]
-  treatments    Treatment[]
-  notes         ClinicalNote[]
-  auditLogs     AuditLog[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id               String                    @id @default(cuid())
+  practiceId       String
+  practice         Practice                  @relation(fields: [practiceId], references: [id])
+  email            String                    @unique
+  passwordHash     String
+  name             String
+  title            String                    @default("DDS")
+  role             ProviderRole              @default(DENTIST)
+  npi              String?
+  licenseNumber    String?
+  color            String                    @default("#6366f1")
+  isActive         Boolean                   @default(true)
+  sessionVersion   Int                       @default(1)
+  appointments     Appointment[]
+  treatments       Treatment[]
+  orthodonticCases OrthodonticCase[]
+  notes            ClinicalNote[]
+  signedNotes      ClinicalNote[]            @relation("SignedNotes")
+  auditLogs        AuditLog[]
+  advancedCharts   AdvancedOdontogramChart[]
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
 }
 
 enum ProviderRole {
@@ -80,7 +84,7 @@ model Chair {
 // ═══════════════════ PATIENTS ═══════════════════
 
 model Patient {
-  id                 String           @id @default(cuid())
+  id                 String                   @id @default(cuid())
   practiceId         String
   firstName          String
   lastName           String
@@ -97,10 +101,11 @@ model Patient {
   emergencyPhone     String?
   emergencyRelation  String?
   medicalHistory     MedicalHistory?
-  insurancePrimary   InsuranceInfo?   @relation("PrimaryInsurance")
-  insuranceSecondary InsuranceInfo?   @relation("SecondaryInsurance")
+  insurancePrimary   InsuranceInfo?           @relation("PrimaryInsurance")
+  insuranceSecondary InsuranceInfo?           @relation("SecondaryInsurance")
   dentalChart        ToothCondition[]
   perioChart         PerioReading[]
+  advancedChart      AdvancedOdontogramChart?
   appointments       Appointment[]
   treatments         Treatment[]
   treatmentPlans     TreatmentPlan[]
@@ -108,12 +113,13 @@ model Patient {
   invoices           Invoice[]
   clinicalNotes      ClinicalNote[]
   aiAnalyses         AIAnalysis[]
-  status             PatientStatus    @default(ACTIVE)
+  orthodonticCases   OrthodonticCase[]
+  status             PatientStatus            @default(ACTIVE)
   lastVisit          DateTime?
   nextAppointment    DateTime?
   notes              String?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
   @@index([practiceId, lastName, firstName])
   @@index([phone])
@@ -126,43 +132,43 @@ enum PatientStatus {
 }
 
 model MedicalHistory {
-  id                String   @id @default(cuid())
-  patientId         String   @unique
-  patient           Patient  @relation(fields: [patientId], references: [id])
-  allergies         Json     @default("[]")
-  medications       Json     @default("[]")
-  conditions        Json     @default("[]")
+  id                String    @id @default(cuid())
+  patientId         String    @unique
+  patient           Patient   @relation(fields: [patientId], references: [id])
+  allergies         Json      @default("[]")
+  medications       Json      @default("[]")
+  conditions        Json      @default("[]")
   bloodType         String?
-  isPregnant        Boolean  @default(false)
+  isPregnant        Boolean   @default(false)
   smokingStatus     String?
   alcoholUse        String?
-  previousSurgeries Json     @default("[]")
-  familyHistory     Json     @default("[]")
+  previousSurgeries Json      @default("[]")
+  familyHistory     Json      @default("[]")
   lastPhysical      DateTime?
   notes             String?
-  updatedAt         DateTime @updatedAt
+  updatedAt         DateTime  @updatedAt
 }
 
 model InsuranceInfo {
-  id                 String   @id @default(cuid())
-  patientPrimaryId   String?  @unique
-  patientPrimary     Patient? @relation("PrimaryInsurance", fields: [patientPrimaryId], references: [id])
-  patientSecondaryId String?  @unique
-  patientSecondary   Patient? @relation("SecondaryInsurance", fields: [patientSecondaryId], references: [id])
+  id                 String    @id @default(cuid())
+  patientPrimaryId   String?   @unique
+  patientPrimary     Patient?  @relation("PrimaryInsurance", fields: [patientPrimaryId], references: [id])
+  patientSecondaryId String?   @unique
+  patientSecondary   Patient?  @relation("SecondaryInsurance", fields: [patientSecondaryId], references: [id])
   company            String
   planName           String?
   groupNumber        String?
   memberId           String
   subscriberName     String
   subscriberDob      DateTime?
-  relationship       String   @default("self")
+  relationship       String    @default("self")
   effectiveDate      DateTime?
   expirationDate     DateTime?
   annualMax          Float?
   remainingBenefit   Float?
   deductible         Float?
-  deductibleMet      Float?   @default(0)
-  coveragePercent    Json     @default("{\"preventive\": 100, \"basic\": 80, \"major\": 50, \"orthodontic\": 50}")
+  deductibleMet      Float?    @default(0)
+  coveragePercent    Json      @default("{\"preventive\": 100, \"basic\": 80, \"major\": 50, \"orthodontic\": 50}")
   verifiedAt         DateTime?
   notes              String?
 }
@@ -180,6 +186,25 @@ model ToothCondition {
   updatedAt   DateTime    @updatedAt
 
   @@unique([patientId, toothNumber])
+  @@index([patientId])
+}
+
+// Opaque JSON payload from react-advanced-odontogram's engine (getStatusChart()/
+// importStatus()). The package does not document a per-tooth field shape, so this
+// is stored and round-tripped as a blob rather than decomposed — see
+// ODONTOGRAM_DATA_MAPPING.md. Additive to, and independent from, ToothCondition
+// (the legacy chart), which stays untouched for rollback via feature flag.
+model AdvancedOdontogramChart {
+  id          String    @id @default(cuid())
+  patientId   String    @unique
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  statusChart Json
+  version     Int       @default(1)
+  updatedById String?
+  updatedBy   Provider? @relation(fields: [updatedById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@index([patientId])
 }
 
@@ -208,30 +233,31 @@ model PerioReading {
 // ═══════════════════ APPOINTMENTS ═══════════════════
 
 model Appointment {
-  id            String            @id @default(cuid())
-  patientId     String
-  patient       Patient           @relation(fields: [patientId], references: [id])
-  providerId    String
-  provider      Provider          @relation(fields: [providerId], references: [id])
-  chairId       String?
-  chair         Chair?            @relation(fields: [chairId], references: [id])
-  startTime     DateTime
-  endTime       DateTime
-  duration      Int
-  type          AppointmentType
-  status        AppointmentStatus @default(SCHEDULED)
-  reason        String?
-  procedures    String[]
-  notes         String?
-  confirmedAt   DateTime?
-  checkedInAt   DateTime?
-  seatedAt      DateTime?
-  completedAt   DateTime?
-  reminderSent  Boolean           @default(false)
-  isRecurring   Boolean           @default(false)
-  recurringRule String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  id                String             @id @default(cuid())
+  patientId         String
+  patient           Patient            @relation(fields: [patientId], references: [id])
+  providerId        String
+  provider          Provider           @relation(fields: [providerId], references: [id])
+  chairId           String?
+  chair             Chair?             @relation(fields: [chairId], references: [id])
+  startTime         DateTime
+  endTime           DateTime
+  duration          Int
+  type              AppointmentType
+  status            AppointmentStatus  @default(SCHEDULED)
+  reason            String?
+  procedures        String[]
+  notes             String?
+  confirmedAt       DateTime?
+  checkedInAt       DateTime?
+  seatedAt          DateTime?
+  completedAt       DateTime?
+  reminderSent      Boolean            @default(false)
+  isRecurring       Boolean            @default(false)
+  recurringRule     String?
+  orthodonticVisits OrthodonticVisit[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
   @@index([providerId, startTime])
   @@index([patientId, startTime])
@@ -311,44 +337,47 @@ model TreatmentPlanItem {
 }
 
 model Treatment {
-  id             String   @id @default(cuid())
-  patientId      String
-  patient        Patient  @relation(fields: [patientId], references: [id])
-  providerId     String
-  provider       Provider @relation(fields: [providerId], references: [id])
-  date           DateTime @default(now())
-  toothNumber    Int?
-  surfaces       String[]
-  cdtCode        String
-  description    String
-  diagnosisCodes String[]
-  fee            Float
-  notes          String?
-  status         String   @default("completed")
-  invoiceId      String?
-  invoice        Invoice? @relation(fields: [invoiceId], references: [id])
-  createdAt      DateTime @default(now())
+  id               String            @id @default(cuid())
+  patientId        String
+  patient          Patient           @relation(fields: [patientId], references: [id])
+  providerId       String
+  provider         Provider          @relation(fields: [providerId], references: [id])
+  date             DateTime          @default(now())
+  toothNumber      Int?
+  surfaces         String[]
+  cdtCode          String
+  description      String
+  diagnosisCodes   String[]
+  fee              Float
+  notes            String?
+  status           String            @default("completed")
+  invoiceId        String?
+  invoice          Invoice?          @relation(fields: [invoiceId], references: [id])
+  orthodonticVisit OrthodonticVisit?
+  createdAt        DateTime          @default(now())
 
   @@index([patientId, date])
 }
 
 model ClinicalNote {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   patientId  String
-  patient    Patient  @relation(fields: [patientId], references: [id])
+  patient    Patient   @relation(fields: [patientId], references: [id])
   providerId String
-  provider   Provider @relation(fields: [providerId], references: [id])
-  date       DateTime @default(now())
-  type       String   @default("progress")
+  provider   Provider  @relation(fields: [providerId], references: [id])
+  date       DateTime  @default(now())
+  type       String    @default("progress")
   subjective String?
   objective  String?
   assessment String?
   plan       String?
   vitals     Json?
-  aiAssisted Boolean  @default(false)
+  aiAssisted Boolean   @default(false)
   signedAt   DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  signedById String?
+  signedBy   Provider? @relation("SignedNotes", fields: [signedById], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@index([patientId, date])
 }
@@ -517,6 +546,62 @@ enum ClaimStatus {
   APPEALED
   PAID
   WRITE_OFF
+}
+
+// ═══════════════════ ORTHODONTICS ═══════════════════
+
+enum OrthodonticApplianceType {
+  FIXED_METAL
+  FIXED_CERAMIC
+  LINGUAL
+  ALIGNER
+  RETAINER
+}
+
+enum OrthodonticCaseStatus {
+  ACTIVE
+  RETENTION
+  COMPLETED
+  DISCONTINUED
+}
+
+model OrthodonticCase {
+  id                String                   @id @default(cuid())
+  patientId         String
+  patient           Patient                  @relation(fields: [patientId], references: [id])
+  providerId        String
+  provider          Provider                 @relation(fields: [providerId], references: [id])
+  applianceType     OrthodonticApplianceType
+  status            OrthodonticCaseStatus    @default(ACTIVE)
+  startDate         DateTime
+  estimatedEndDate  DateTime?
+  totalAlignerSteps Int?
+  notes             String?
+  visits            OrthodonticVisit[]
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  @@index([patientId])
+}
+
+model OrthodonticVisit {
+  id                String          @id @default(cuid())
+  caseId            String
+  case              OrthodonticCase @relation(fields: [caseId], references: [id])
+  appointmentId     String?
+  appointment       Appointment?    @relation(fields: [appointmentId], references: [id])
+  date              DateTime
+  wireChanged       Boolean         @default(false)
+  wireStrength      String?
+  elasticsUsed      String?
+  alignerStepNumber Int?
+  notes             String?
+  nextVisitDate     DateTime?
+  treatmentId       String?         @unique
+  treatment         Treatment?      @relation(fields: [treatmentId], references: [id])
+  createdAt         DateTime        @default(now())
+
+  @@index([caseId])
 }
 
 // ═══════════════════ AUDIT & SYSTEM ═══════════════════

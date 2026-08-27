@@ -3,24 +3,14 @@
 import { useState } from 'react';
 import { X, ZoomIn, ZoomOut, RotateCw, Brain, Download } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { formatDate } from '@/lib/formatters';
-
-interface XrayImage {
-  id: string;
-  patientId: string;
-  filename: string;
-  url: string;
-  thumbnailUrl: string;
-  type: string;
-  toothNumber?: number;
-  uploadedAt: string;
-  uploadedBy: string;
-  aiAnalyzed: boolean;
-  analysisId?: string;
-}
+import { formatDate } from "@/lib/formatters";
+import { imageTypeLabel } from "@/lib/imagingLabels";
+import { ptBR } from "@/i18n";
+import { apiUrl } from "@/lib/api";
+import type { DentalImage } from "@/hooks/useImaging";
 
 interface XrayViewerProps {
-  image: XrayImage;
+  image: DentalImage;
   onClose: () => void;
   onAnalyze: () => void;
 }
@@ -33,6 +23,9 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
   const handleZoomOut = () => setZoom((z) => Math.max(z - 0.25, 0.5));
   const handleRotate = () => setRotation((r) => (r + 90) % 360);
 
+  const aiAnalyzed = image.aiAnalyses.length > 0;
+  const toothSuffix = image.toothNumbers.length > 0 ? ` - #${image.toothNumbers.join(', #')}` : '';
+
   return (
     <Dialog.Root open onOpenChange={(isOpen) => !isOpen && onClose()}>
       <Dialog.Portal>
@@ -42,10 +35,10 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
           <div className="flex items-center justify-between border-b border-stone-700 px-6 py-4">
             <div>
               <Dialog.Title className="text-lg font-semibold text-white">
-                {image.filename}
+                {image.fileName}
               </Dialog.Title>
               <p className="mt-0.5 text-sm text-stone-400">
-                {image.type}{image.toothNumber ? ` - Tooth #${image.toothNumber}` : ''} | Uploaded {formatDate(image.uploadedAt)} by {image.uploadedBy}
+                {imageTypeLabel(image.type)}{toothSuffix} · {ptBR.patientWorkflow.imaging.uploaded} {formatDate(image.dateTaken)}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -54,10 +47,10 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
                 className="flex items-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors"
               >
                 <Brain className="h-4 w-4" />
-                {image.aiAnalyzed ? 'View Analysis' : 'AI Analysis'}
+                {aiAnalyzed ? ptBR.patientWorkflow.imaging.viewAnalysis : ptBR.patientWorkflow.imaging.aiAnalysis}
               </button>
               <Dialog.Close asChild>
-                <button className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white">
+                <button aria-label={ptBR.patientWorkflow.imaging.closeViewer} className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white">
                   <X className="h-5 w-5" />
                 </button>
               </Dialog.Close>
@@ -69,7 +62,7 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
             <button
               onClick={handleZoomOut}
               className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white"
-              title="Zoom out"
+              title={ptBR.patientWorkflow.imaging.zoomOut} aria-label={ptBR.patientWorkflow.imaging.zoomOut}
             >
               <ZoomOut className="h-4 w-4" />
             </button>
@@ -79,7 +72,7 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
             <button
               onClick={handleZoomIn}
               className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white"
-              title="Zoom in"
+              title={ptBR.patientWorkflow.imaging.zoomIn} aria-label={ptBR.patientWorkflow.imaging.zoomIn}
             >
               <ZoomIn className="h-4 w-4" />
             </button>
@@ -87,16 +80,16 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
             <button
               onClick={handleRotate}
               className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white"
-              title="Rotate"
+              title={ptBR.patientWorkflow.imaging.rotate} aria-label={ptBR.patientWorkflow.imaging.rotate}
             >
               <RotateCw className="h-4 w-4" />
             </button>
             <div className="mx-2 h-5 w-px bg-stone-700" />
             <a
-              href={image.url}
-              download={image.filename}
+              href={apiUrl(image.url)}
+              download={image.fileName}
               className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white"
-              title="Download"
+              title={ptBR.patientWorkflow.imaging.download} aria-label={ptBR.patientWorkflow.imaging.download}
             >
               <Download className="h-4 w-4" />
             </a>
@@ -105,8 +98,8 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
           {/* Image area */}
           <div className="flex flex-1 items-center justify-center overflow-hidden">
             <img
-              src={image.url}
-              alt={image.filename}
+              src={apiUrl(image.url)}
+              alt={image.fileName}
               className="max-h-full max-w-full object-contain transition-transform duration-200"
               style={{
                 transform: `scale(${zoom}) rotate(${rotation}deg)`,

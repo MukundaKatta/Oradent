@@ -7,13 +7,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, DollarSign } from 'lucide-react';
 import { apiPost } from '@/lib/api';
+import { formatCurrency } from '@/lib/formatters';
+import { billingText, getPaymentMethodLabel } from './billingLabels';
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
 
 const paymentSchema = z.object({
-  amount: z.number().positive('Amount must be positive'),
-  method: z.string().min(1, 'Payment method is required'),
+  amount: z.number().positive('O valor deve ser positivo'),
+  method: z.string().min(1, 'A forma de pagamento é obrigatória'),
   referenceNumber: z.string().optional(),
-  date: z.string().min(1, 'Date is required'),
+  date: z.string().min(1, 'A data é obrigatória'),
   notes: z.string().optional(),
 });
 
@@ -38,9 +40,6 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
   const [saving, setSaving] = useState(false);
   const balance = invoice.total - invoice.amountPaid;
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-
   const {
     register,
     handleSubmit,
@@ -59,7 +58,13 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
   const onSubmit = async (data: PaymentFormData) => {
     setSaving(true);
     try {
-      await apiPost(`/api/billing/invoices/${invoice.id}/payments`, data);
+      await apiPost('/api/billing/payments', {
+        invoiceId: invoice.id,
+        amount: data.amount,
+        method: data.method,
+        reference: data.referenceNumber,
+        notes: data.notes,
+      });
       onSave();
     } catch (error) {
       console.error('Failed to record payment:', error);
@@ -87,11 +92,11 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
           {/* Invoice Summary */}
           <div className="mb-5 rounded-lg bg-stone-50 p-4">
             <div className="flex justify-between text-sm">
-              <span className="text-stone-500">Invoice</span>
+              <span className="text-stone-500">Fatura</span>
               <span className="font-mono font-medium text-stone-700">{invoice.invoiceNumber}</span>
             </div>
             <div className="mt-1 flex justify-between text-sm">
-              <span className="text-stone-500">Patient</span>
+              <span className="text-stone-500">Paciente</span>
               <span className="font-medium text-stone-700">{invoice.patientName}</span>
             </div>
             <div className="mt-1 flex justify-between text-sm">
@@ -99,18 +104,18 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
               <span className="font-medium text-stone-700">{formatCurrency(invoice.total)}</span>
             </div>
             <div className="mt-1 flex justify-between text-sm">
-              <span className="text-stone-500">Paid</span>
+              <span className="text-stone-500">Pago</span>
               <span className="font-medium text-green-600">{formatCurrency(invoice.amountPaid)}</span>
             </div>
             <div className="mt-2 flex justify-between border-t border-stone-200 pt-2 text-sm">
-              <span className="font-medium text-stone-700">Balance Due</span>
+              <span className="font-medium text-stone-700">Saldo a pagar</span>
               <span className="font-bold text-red-600">{formatCurrency(balance)}</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-stone-700">Amount</label>
+              <label className="mb-1.5 block text-sm font-medium text-stone-700">Valor</label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                 <input
@@ -127,18 +132,18 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Method</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Forma de pagamento</label>
                 <select
                   {...register('method')}
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 >
                   {Object.entries(PAYMENT_METHOD_LABELS).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
+                    <option key={key} value={key}>{getPaymentMethodLabel(key)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Date</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Data</label>
                 <input
                   type="date"
                   {...register('date')}
@@ -154,17 +159,17 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
               <input
                 type="text"
                 {...register('referenceNumber')}
-                placeholder="Optional"
+                placeholder="Opcional"
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-stone-700">Notes</label>
+              <label className="mb-1.5 block text-sm font-medium text-stone-700">Observações</label>
               <textarea
                 {...register('notes')}
                 rows={2}
-                placeholder="Optional notes..."
+                placeholder="Observações opcionais..."
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
@@ -175,14 +180,14 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
                 onClick={onClose}
                 className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
-                Cancel
+                {billingText.cancel}
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
               >
-                {saving ? 'Processing...' : 'Record Payment'}
+                {saving ? 'Processando...' : 'Registrar pagamento'}
               </button>
             </div>
           </form>

@@ -6,15 +6,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
-import { useCreatePatient } from '@/hooks/usePatient';
+import { useCreatePatient } from "@/hooks/usePatient";
+import { ptBR } from "@/i18n";
+
+const copy = ptBR.patientWorkflow.form;
 
 const patientSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  dateOfBirth: z.string().min(1, 'Date of birth is required'),
-  gender: z.string().min(1, 'Gender is required'),
-  phone: z.string().min(1, 'Phone is required'),
-  email: z.string().email('Valid email is required'),
+  firstName: z.string().min(1, copy.firstNameRequired),
+  lastName: z.string().min(1, copy.lastNameRequired),
+  dateOfBirth: z.string().min(1, copy.dateOfBirthRequired),
+  gender: z.string().min(1, copy.genderRequired),
+  phone: z.string().min(1, copy.phoneRequired),
+  email: z.string().email(copy.emailRequired),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -54,22 +57,21 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
 
   const onSubmit = async (data: PatientFormData) => {
     try {
+      // The create endpoint (createPatientSchema in packages/server/src/routes/patients.ts)
+      // doesn't accept insurance fields at all yet — insurancePrimary is a separate related
+      // record, not columns on Patient. Sending them here would silently do nothing (Zod
+      // strips unknown keys), so we don't pretend they're saved.
       await createPatient.mutateAsync({
-        ...data,
-        secondaryPhone: undefined,
-        subscriberName: undefined,
-        subscriberDob: undefined,
-        coveragePercent: undefined,
-        emergencyContactName: undefined,
-        emergencyContactPhone: undefined,
-        emergencyContactRelationship: undefined,
-        allergies: [],
-        medications: [],
-        conditions: [],
-        smoking: false,
-        alcohol: false,
-        pregnancy: false,
-        status: 'active',
+        firstName: data.firstName,
+        lastName: data.lastName,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zip,
       });
       onClose();
     } catch (error) {
@@ -84,10 +86,10 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
           <div className="mb-6 flex items-center justify-between">
             <Dialog.Title className="text-lg font-semibold text-stone-900">
-              New Patient
+              {copy.title}
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
+              <button aria-label={copy.closeDialog} className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600">
                 <X className="h-5 w-5" />
               </button>
             </Dialog.Close>
@@ -104,7 +106,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              Personal Info
+              {copy.personalInfo}
             </button>
             <button
               type="button"
@@ -115,7 +117,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              Insurance
+              {copy.insurance}
             </button>
           </div>
 
@@ -125,7 +127,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      First Name
+                      {copy.firstName}
                     </label>
                     <input
                       type="text"
@@ -138,7 +140,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Last Name
+                      {copy.lastName}
                     </label>
                     <input
                       type="text"
@@ -154,7 +156,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Date of Birth
+                      {copy.dateOfBirth}
                     </label>
                     <input
                       type="date"
@@ -167,16 +169,16 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Gender
+                      {copy.gender}
                     </label>
                     <select
                       {...register('gender')}
                       className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                     >
-                      <option value="">Select</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
+                      <option value="">{ptBR.auth.register.select}</option>
+                      <option value="male">{ptBR.patient.gender.male}</option>
+                      <option value="female">{ptBR.patient.gender.female}</option>
+                      <option value="other">{ptBR.patient.gender.other}</option>
                     </select>
                     {errors.gender && (
                       <p className="mt-1 text-xs text-red-500">{errors.gender.message}</p>
@@ -186,12 +188,12 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Phone
+                    {copy.phone}
                   </label>
                   <input
                     type="tel"
                     {...register('phone')}
-                    placeholder="(555) 123-4567"
+                    placeholder={copy.phonePlaceholder}
                     className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                   />
                   {errors.phone && (
@@ -201,7 +203,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Email
+                    {copy.email}
                   </label>
                   <input
                     type="email"
@@ -216,7 +218,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Address
+                      {copy.address}
                     </label>
                     <input
                       type="text"
@@ -226,7 +228,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      City
+                      {copy.city}
                     </label>
                     <input
                       type="text"
@@ -239,7 +241,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      State
+                      {copy.state}
                     </label>
                     <input
                       type="text"
@@ -249,7 +251,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      ZIP
+                      {copy.zip}
                     </label>
                     <input
                       type="text"
@@ -265,18 +267,18 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
               <>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Insurance Company
+                    {copy.insuranceCompany}
                   </label>
                   <input
                     type="text"
                     {...register('insuranceCompany')}
-                    placeholder="e.g., Delta Dental"
+                    placeholder={copy.insurancePlaceholder}
                     className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                   />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                    Plan Name
+                    {copy.planName}
                   </label>
                   <input
                     type="text"
@@ -287,7 +289,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Group Number
+                      {copy.groupNumber}
                     </label>
                     <input
                       type="text"
@@ -297,7 +299,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-stone-700">
-                      Member ID
+                      {copy.memberId}
                     </label>
                     <input
                       type="text"
@@ -316,7 +318,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                 onClick={onClose}
                 className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
-                Cancel
+                {ptBR.patientWorkflow.common.cancel}
               </button>
               {step === 'info' ? (
                 <button
@@ -324,7 +326,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   onClick={() => setStep('insurance')}
                   className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
                 >
-                  Next
+                  {copy.next}
                 </button>
               ) : (
                 <button
@@ -332,7 +334,7 @@ export function PatientForm({ open, onClose }: PatientFormProps) {
                   disabled={createPatient.isPending}
                   className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
                 >
-                  {createPatient.isPending ? 'Creating...' : 'Create Patient'}
+                  {createPatient.isPending ? copy.creating : copy.create}
                 </button>
               )}
             </div>

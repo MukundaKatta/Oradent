@@ -2,36 +2,16 @@
 
 import { useState } from 'react';
 import { Brain, Calendar } from 'lucide-react';
-import { formatDate } from '@/lib/formatters';
-
-interface XrayImage {
-  id: string;
-  patientId: string;
-  filename: string;
-  url: string;
-  thumbnailUrl: string;
-  type: string;
-  toothNumber?: number;
-  uploadedAt: string;
-  uploadedBy: string;
-  aiAnalyzed: boolean;
-  analysisId?: string;
-}
+import { formatDate } from "@/lib/formatters";
+import { apiUrl } from "@/lib/api";
+import { imageTypeLabel } from "@/lib/imagingLabels";
+import { ptBR } from "@/i18n";
+import type { DentalImage } from "@/hooks/useImaging";
 
 interface XrayGalleryProps {
-  images: XrayImage[];
-  onSelect: (image: XrayImage) => void;
+  images: DentalImage[];
+  onSelect: (image: DentalImage) => void;
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  periapical: 'Periapical',
-  bitewing: 'Bitewing',
-  panoramic: 'Panoramic',
-  cephalometric: 'Cephalometric',
-  cbct: 'CBCT',
-  intraoral: 'Intraoral',
-  other: 'Other',
-};
 
 export function XrayGallery({ images, onSelect }: XrayGalleryProps) {
   const [filter, setFilter] = useState<string>('');
@@ -52,7 +32,7 @@ export function XrayGallery({ images, onSelect }: XrayGalleryProps) {
                 : 'text-stone-600 hover:bg-stone-100'
             }`}
           >
-            All
+            {ptBR.patientWorkflow.imaging.all}
           </button>
           {types.map((type) => (
             <button
@@ -64,7 +44,7 @@ export function XrayGallery({ images, onSelect }: XrayGalleryProps) {
                   : 'text-stone-600 hover:bg-stone-100'
               }`}
             >
-              {TYPE_LABELS[type] || type}
+              {imageTypeLabel(type)}
             </button>
           ))}
         </div>
@@ -80,22 +60,23 @@ export function XrayGallery({ images, onSelect }: XrayGalleryProps) {
           >
             <div className="aspect-square bg-stone-100">
               <img
-                src={image.thumbnailUrl}
-                alt={image.filename}
+                src={apiUrl(image.url)}
+                alt={image.fileName}
+                loading="lazy"
                 className="h-full w-full object-cover"
               />
             </div>
             <div className="p-3">
               <p className="truncate text-sm font-medium text-stone-900">
-                {TYPE_LABELS[image.type] || image.type}
-                {image.toothNumber && ` - #${image.toothNumber}`}
+                {imageTypeLabel(image.type)}
+                {image.toothNumbers.length > 0 && ` - #${image.toothNumbers.join(', #')}`}
               </p>
               <div className="mt-1 flex items-center gap-1 text-xs text-stone-500">
                 <Calendar className="h-3 w-3" />
-                {formatDate(image.uploadedAt)}
+                {formatDate(image.dateTaken)}
               </div>
             </div>
-            {image.aiAnalyzed && (
+            {image.aiAnalyses.length > 0 && (
               <div className="absolute right-2 top-2 rounded-full bg-teal-600 p-1.5 shadow-sm">
                 <Brain className="h-3.5 w-3.5 text-white" />
               </div>
@@ -106,7 +87,7 @@ export function XrayGallery({ images, onSelect }: XrayGalleryProps) {
 
       {filtered.length === 0 && (
         <div className="py-8 text-center text-sm text-stone-400">
-          No images match the selected filter.
+          {ptBR.patientWorkflow.imaging.noFilterMatches}
         </div>
       )}
     </div>

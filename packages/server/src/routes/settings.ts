@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
-import { authenticate, authorize, generateToken, generateRefreshToken } from '../middleware/auth';
+import { authenticate, authorize, generateToken, generateRefreshToken, invalidateSessions } from '../middleware/auth';
+import { getAuditLogs } from '../services/auditLog';
 
 const router = Router();
 router.use(authenticate);
@@ -11,7 +12,11 @@ router.use(authenticate);
 router.get('/practice', async (req: Request, res: Response) => {
   const practice = await prisma.practice.findUnique({
     where: { id: req.auth!.practiceId },
-    include: { settings: true, chairs: true, providers: { select: { id: true, name: true, email: true, role: true, title: true, color: true, isActive: true } } },
+    include: {
+      settings: { omit: { anthropicKey: true } },
+      chairs: true,
+      providers: { select: { id: true, name: true, email: true, role: true, title: true, color: true, isActive: true } },
+    },
   });
 
   if (!practice) {
@@ -103,6 +108,14 @@ router.put('/chairs/:id', authorize('OWNER'), async (req: Request, res: Response
     isActive: z.boolean().optional(),
   }).parse(req.body);
 
+  const existing = await prisma.chair.findFirst({
+    where: { id: req.params.id, practiceId: req.auth!.practiceId },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Chair not found' });
+    return;
+  }
+
   const chair = await prisma.chair.update({
     where: { id: req.params.id },
     data: { ...(name && { name }), ...(isActive !== undefined && { isActive }) },
@@ -180,6 +193,10 @@ router.put('/providers/:id', authorize('OWNER'), async (req: Request, res: Respo
     select: { id: true, name: true, email: true, role: true, title: true, color: true, isActive: true, npi: true, licenseNumber: true },
   });
 
+  if (data.role !== undefined || data.isActive !== undefined) {
+    await invalidateSessions(req.params.id);
+  }
+
   res.json(provider);
 });
 
@@ -200,8 +217,40 @@ router.post('/providers/:id/reset-password', authorize('OWNER'), async (req: Req
     where: { id: req.params.id },
     data: { passwordHash },
   });
+  await invalidateSessions(req.params.id);
 
   res.json({ message: 'Password reset successfully' });
+});
+
+// Audit trail (OWNER only) — every PHI read/write auditMiddleware records
+// for this practice, most recent first.
+router.get('/audit-log', authorize('OWNER'), async (req: Request, res: Response) => {
+  const querySchema = z.object({
+    providerId: z.string().optional(),
+    resource: z.string().optional(),
+    resourceId: z.string().optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    page: z.string().optional(),
+    limit: z.string().optional(),
+  });
+  const query = querySchema.parse(req.query);
+
+  const page = Math.max(1, parseInt(query.page ?? '1') || 1);
+  const limit = Math.min(200, Math.max(1, parseInt(query.limit ?? '50') || 50));
+
+  const { logs, total } = await getAuditLogs({
+    practiceId: req.auth!.practiceId,
+    providerId: query.providerId,
+    resource: query.resource,
+    resourceId: query.resourceId,
+    startDate: query.startDate ? new Date(query.startDate) : undefined,
+    endDate: query.endDate ? new Date(query.endDate) : undefined,
+    limit,
+    offset: (page - 1) * limit,
+  });
+
+  res.json({ logs, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
 });
 
 export default router;

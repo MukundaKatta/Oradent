@@ -7,14 +7,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Plus, Trash2, Search, User } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api';
+import { formatCurrency } from '@/lib/formatters';
 
 const claimSchema = z.object({
-  patientId: z.string().min(1, 'Patient is required'),
-  insuranceProvider: z.string().min(1, 'Insurance provider required'),
-  subscriberId: z.string().min(1, 'Subscriber ID required'),
+  patientId: z.string().min(1, 'Selecione um paciente'),
+  insuranceProvider: z.string().min(1, 'A operadora do convênio é obrigatória'),
+  subscriberId: z.string().min(1, 'O ID do beneficiário é obrigatório'),
   groupNumber: z.string().optional(),
-  providerNpi: z.string().min(1, 'Provider NPI required'),
-  diagnosisCodes: z.string().min(1, 'At least one diagnosis code required'),
+  providerNpi: z.string().min(1, 'O NPI do profissional é obrigatório'),
+  diagnosisCodes: z.string().min(1, 'Informe pelo menos um código de diagnóstico'),
   procedures: z
     .array(
       z.object({
@@ -131,7 +132,7 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Patient */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-stone-700">Patient</label>
+              <label className="mb-1.5 block text-sm font-medium text-stone-700">Paciente</label>
               {selectedPatient ? (
                 <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-stone-50 px-3 py-2">
                   <div className="flex items-center gap-2">
@@ -153,7 +154,7 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
                   <input
                     type="text"
-                    placeholder="Search patients..."
+                    placeholder="Busque pacientes..."
                     value={patientSearch}
                     onChange={(e) => { setPatientSearch(e.target.value); setShowSearch(true); }}
                     className="w-full rounded-lg border border-stone-200 py-2 pl-10 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -181,16 +182,16 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
             {/* Insurance Info */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Insurance Provider</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Operadora do convênio</label>
                 <input
                   {...register('insuranceProvider')}
-                  placeholder="e.g. Delta Dental"
+                  placeholder="Ex.: OdontoPrev"
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
                 {errors.insuranceProvider && <p className="mt-1 text-xs text-red-500">{errors.insuranceProvider.message}</p>}
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Subscriber ID</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">ID do beneficiário</label>
                 <input
                   {...register('subscriberId')}
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -201,15 +202,15 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Group Number</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">Número do grupo</label>
                 <input
                   {...register('groupNumber')}
-                  placeholder="Optional"
+                  placeholder="Opcional"
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-stone-700">Provider NPI</label>
+                <label className="mb-1.5 block text-sm font-medium text-stone-700">NPI do profissional</label>
                 <input
                   {...register('providerNpi')}
                   className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -219,10 +220,10 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-stone-700">Diagnosis Codes (ICD-10)</label>
+              <label className="mb-1.5 block text-sm font-medium text-stone-700">Códigos de diagnóstico (CID-10)</label>
               <input
                 {...register('diagnosisCodes')}
-                placeholder="e.g. K02.9, K05.1"
+                placeholder="Ex.: K02.9, K05.1"
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
               {errors.diagnosisCodes && <p className="mt-1 text-xs text-red-500">{errors.diagnosisCodes.message}</p>}
@@ -231,7 +232,7 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
             {/* Procedures */}
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label className="text-sm font-medium text-stone-700">Procedures</label>
+                <label className="text-sm font-medium text-stone-700">Procedimentos</label>
                 <button
                   type="button"
                   onClick={() => append({ cdtCode: '', toothNumber: '', surfaces: '', fee: 0, date: new Date().toISOString().split('T')[0] })}
@@ -248,19 +249,19 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
                       <input {...register(`procedures.${index}.cdtCode`)} placeholder="D2391" className="w-full rounded border border-stone-200 px-2 py-1.5 text-sm focus:border-teal-500 focus:outline-none" />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Tooth</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Dente</span>}
                       <input {...register(`procedures.${index}.toothNumber`)} placeholder="#" className="w-full rounded border border-stone-200 px-2 py-1.5 text-sm focus:border-teal-500 focus:outline-none" />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Surfaces</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Superfícies</span>}
                       <input {...register(`procedures.${index}.surfaces`)} placeholder="MOD" className="w-full rounded border border-stone-200 px-2 py-1.5 text-sm focus:border-teal-500 focus:outline-none" />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Date</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Data</span>}
                       <input type="date" {...register(`procedures.${index}.date`)} className="w-full rounded border border-stone-200 px-2 py-1.5 text-sm focus:border-teal-500 focus:outline-none" />
                     </div>
                     <div>
-                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Fee</span>}
+                      {index === 0 && <span className="mb-1 block text-xs text-stone-400">Valor</span>}
                       <input type="number" step="0.01" {...register(`procedures.${index}.fee`, { valueAsNumber: true })} className="w-full rounded border border-stone-200 px-2 py-1.5 text-sm text-right focus:border-teal-500 focus:outline-none" />
                     </div>
                     <div>
@@ -275,14 +276,14 @@ export function InsuranceClaimForm({ open, onClose, onSave }: InsuranceClaimForm
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-stone-700">Notes</label>
-              <textarea {...register('notes')} rows={2} placeholder="Additional notes..." className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              <label className="mb-1.5 block text-sm font-medium text-stone-700">Observações</label>
+              <textarea {...register('notes')} rows={2} placeholder="Observações adicionais..." className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={onClose} className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">Cancel</button>
+              <button type="button" onClick={onClose} className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">Cancelar</button>
               <button type="submit" disabled={saving} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50">
-                {saving ? 'Submitting...' : 'Submit Claim'}
+                {saving ? 'Enviando...' : 'Enviar guia'}
               </button>
             </div>
           </form>

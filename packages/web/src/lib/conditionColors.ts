@@ -20,24 +20,7 @@ export const CONDITION_COLORS: Record<string, string> = {
 };
 
 export const CONDITION_LABELS: Record<string, string> = {
-  cavity: 'Cavity',
-  filling: 'Filling',
-  crown: 'Crown',
-  bridge: 'Bridge',
-  implant: 'Implant',
-  missing: 'Missing',
-  rootCanal: 'Root Canal',
-  extraction: 'Extraction',
-  veneer: 'Veneer',
-  sealant: 'Sealant',
-  fracture: 'Fracture',
-  abscess: 'Abscess',
-  impacted: 'Impacted',
-  recession: 'Recession',
-  mobility: 'Mobility',
-  furcation: 'Furcation',
-  watchItem: 'Watch Item',
-  healthy: 'Healthy',
+  cavity: "Cárie", filling: "Restauração", crown: "Coroa", bridge: "Ponte", implant: "Implante", missing: "Ausente", rootCanal: "Tratamento de canal", extraction: "Extração", veneer: "Lente de contato dental", sealant: "Selante", fracture: "Fratura", abscess: "Abscesso", impacted: "Impactado", recession: "Recessão gengival", mobility: "Mobilidade dentária", furcation: "Lesão de furca", watchItem: "Acompanhar", healthy: "Saudável",
 };
 
 /** All condition keys */
