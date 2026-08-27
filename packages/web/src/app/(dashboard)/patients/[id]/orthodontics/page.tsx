@@ -8,6 +8,7 @@ import {
   useCreateOrthodonticCase,
   OrthodonticApplianceType,
 } from '@/hooks/useOrthodontics';
+import { OrthodonticVisitTimeline } from '@/components/orthodontics/OrthodonticVisitTimeline';
 import { ApiClientError } from '@/lib/api';
 import { formatDate } from '@/lib/formatters';
 import { ptBR, clinicalPtBR } from '@/i18n';
@@ -41,6 +42,7 @@ export default function OrthodonticsPage() {
   const [totalAlignerSteps, setTotalAlignerSteps] = useState('');
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [expandedCaseId, setExpandedCaseId] = useState<string | null>(null);
 
   const resetForm = () => {
     setApplianceType('FIXED_METAL');
@@ -218,38 +220,47 @@ export default function OrthodonticsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {cases?.map((c) => (
-            <div
-              key={c.id}
-              className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Smile className="h-5 w-5 text-teal-600" />
-                  <div>
-                    <h3 className="font-semibold text-stone-900">
-                      {clinicalPtBR.orthodonticApplianceType[c.applianceType]}
-                    </h3>
-                    <p className="mt-0.5 text-sm text-stone-500">
-                      {copy.since} {formatDate(c.startDate)}
-                      {c.estimatedEndDate
-                        ? ` · ${formatDate(c.estimatedEndDate)}`
-                        : ` · ${copy.noEstimatedEndDate}`}
-                      {c.totalAlignerSteps ? ` · ${c.totalAlignerSteps} ${copy.steps}` : ''}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    STATUS_STYLES[c.status] || STATUS_STYLES.ACTIVE
-                  }`}
+          {cases?.map((c) => {
+            const isExpanded = expandedCaseId === c.id;
+            return (
+              <div
+                key={c.id}
+                className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm"
+              >
+                <button
+                  onClick={() => setExpandedCaseId(isExpanded ? null : c.id)}
+                  className="flex w-full items-center justify-between text-left"
                 >
-                  {clinicalPtBR.orthodonticCaseStatus[c.status]}
-                </span>
+                  <div className="flex items-center gap-3">
+                    <Smile className="h-5 w-5 text-teal-600" />
+                    <div>
+                      <h3 className="font-semibold text-stone-900">
+                        {clinicalPtBR.orthodonticApplianceType[c.applianceType]}
+                      </h3>
+                      <p className="mt-0.5 text-sm text-stone-500">
+                        {copy.since} {formatDate(c.startDate)}
+                        {c.estimatedEndDate
+                          ? ` · ${formatDate(c.estimatedEndDate)}`
+                          : ` · ${copy.noEstimatedEndDate}`}
+                        {c.totalAlignerSteps ? ` · ${c.totalAlignerSteps} ${copy.steps}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      STATUS_STYLES[c.status] || STATUS_STYLES.ACTIVE
+                    }`}
+                  >
+                    {clinicalPtBR.orthodonticCaseStatus[c.status]}
+                  </span>
+                </button>
+                {c.notes && <p className="mt-3 text-sm text-stone-500 italic">{c.notes}</p>}
+                {isExpanded && (
+                  <OrthodonticVisitTimeline caseId={c.id} applianceType={c.applianceType} />
+                )}
               </div>
-              {c.notes && <p className="mt-3 text-sm text-stone-500 italic">{c.notes}</p>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

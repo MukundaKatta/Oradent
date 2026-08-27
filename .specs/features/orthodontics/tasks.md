@@ -419,6 +419,8 @@ T13 → T14 → T15 → T16
 **Gate**: build
 **Commit**: `feat(web): add orthodontic visit form and timeline`
 
+**Status**: ✅ Done
+
 ---
 
 ### T16: Add "Ortodontia" tab to patient navigation
