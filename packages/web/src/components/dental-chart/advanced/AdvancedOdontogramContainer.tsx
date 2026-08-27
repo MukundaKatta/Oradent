@@ -159,15 +159,49 @@ export function AdvancedOdontogramContainer({ patientId, readOnly = false }: Adv
         </button>
       </div>
 
-      <OdontogramShell
-        language="pt-br"
-        numberingSystem="FDI"
-        darkMode={isDark}
-        readOnly={readOnly}
-        enableNotes
-      />
+      <div className="oradent-odontogram-shell">
+        <OdontogramShell
+          language="pt-br"
+          numberingSystem="FDI"
+          darkMode={isDark}
+          readOnly={readOnly}
+          enableNotes
+        />
+      </div>
 
       {engineReady && <PerioChart open={perioOpen} onClose={() => setPerioOpen(false)} />}
+
+      {/*
+        The package's own header shows its library name and a technical
+        subtitle ("React Advanced Odontogram" / "Em português. Usando a
+        numeração FDI (ISO 3950). No modo escuro.") — there's no prop to
+        override that copy (OdontogramShell only takes UI-config props, no
+        title/subtitle), so it's replaced visually: the original text is
+        made transparent (kept in the DOM, still readable by screen readers)
+        and product-appropriate copy is overlaid via ::after, inheriting the
+        original element's font size/weight/color so it doesn't need to
+        guess those from the vendored stylesheet.
+      */}
+      <style jsx global>{`
+        .oradent-odontogram-shell .topbar .brand .title,
+        .oradent-odontogram-shell .topbar .brand .subtitle {
+          color: transparent;
+          position: relative;
+        }
+        .oradent-odontogram-shell .topbar .brand .title::after,
+        .oradent-odontogram-shell .topbar .brand .subtitle::after {
+          position: absolute;
+          inset: 0;
+        }
+        .oradent-odontogram-shell .topbar .brand .title::after {
+          content: '${chartText.advancedChart}';
+          color: var(--text);
+        }
+        .oradent-odontogram-shell .topbar .brand .subtitle::after {
+          content: '${chartText.advancedChartSubtitle}';
+          color: var(--muted);
+        }
+      `}</style>
     </div>
   );
 }
