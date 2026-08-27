@@ -112,6 +112,8 @@ T13 → T14 → T15 → T16
 **Gate**: build
 **Commit**: `feat(schema): add OrthodonticVisit model and relations`
 
+**Status**: ✅ Done
+
 ---
 
 ### T3: Generate the migration file
