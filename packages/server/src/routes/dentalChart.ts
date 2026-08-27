@@ -153,4 +153,81 @@ router.put('/:patientId/batch', async (req: Request, res: Response) => {
   res.json(results);
 });
 
+// Advanced odontogram (react-advanced-odontogram engine payload) — additive,
+// independent from ToothCondition above. The payload is an opaque blob (the
+// package documents no per-field shape); see ODONTOGRAM_DATA_MAPPING.md.
+const advancedChartSchema = z.object({
+  statusChart: z.any(),
+  version: z.number().int().min(1),
+});
+
+// Get the advanced odontogram chart for a patient (null if none saved yet)
+router.get('/advanced/:patientId', async (req: Request, res: Response) => {
+  const patient = await prisma.patient.findFirst({
+    where: { id: req.params.patientId, practiceId: req.auth!.practiceId },
+  });
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
+
+  const chart = await prisma.advancedOdontogramChart.findUnique({
+    where: { patientId: req.params.patientId },
+  });
+
+  res.json(chart);
+});
+
+// Save the advanced odontogram chart. Optimistic locking: the client must
+// send the `version` it last read; a mismatch means someone else saved in
+// the meantime, so we reject with 409 instead of silently overwriting.
+router.put('/advanced/:patientId', async (req: Request, res: Response) => {
+  const patient = await prisma.patient.findFirst({
+    where: { id: req.params.patientId, practiceId: req.auth!.practiceId },
+  });
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
+
+  const data = advancedChartSchema.parse(req.body);
+
+  const existing = await prisma.advancedOdontogramChart.findUnique({
+    where: { patientId: req.params.patientId },
+  });
+
+  if (!existing) {
+    const created = await prisma.advancedOdontogramChart.create({
+      data: {
+        patientId: req.params.patientId,
+        statusChart: data.statusChart,
+        version: 1,
+        updatedById: req.auth!.providerId,
+      },
+    });
+    res.json(created);
+    return;
+  }
+
+  if (existing.version !== data.version) {
+    res.status(409).json({
+      error: 'Conflict: chart was modified by someone else since you last loaded it',
+      currentVersion: existing.version,
+      currentChart: existing,
+    });
+    return;
+  }
+
+  const updated = await prisma.advancedOdontogramChart.update({
+    where: { patientId: req.params.patientId },
+    data: {
+      statusChart: data.statusChart,
+      version: existing.version + 1,
+      updatedById: req.auth!.providerId,
+    },
+  });
+
+  res.json(updated);
+});
+
 export default router;

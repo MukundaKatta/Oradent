@@ -56,6 +56,7 @@ model Provider {
   treatments    Treatment[]
   notes         ClinicalNote[]
   auditLogs     AuditLog[]
+  advancedCharts AdvancedOdontogramChart[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -101,6 +102,7 @@ model Patient {
   insuranceSecondary InsuranceInfo?   @relation("SecondaryInsurance")
   dentalChart        ToothCondition[]
   perioChart         PerioReading[]
+  advancedChart      AdvancedOdontogramChart?
   appointments       Appointment[]
   treatments         Treatment[]
   treatmentPlans     TreatmentPlan[]
@@ -180,6 +182,25 @@ model ToothCondition {
   updatedAt   DateTime    @updatedAt
 
   @@unique([patientId, toothNumber])
+  @@index([patientId])
+}
+
+// Opaque JSON payload from react-advanced-odontogram's engine (getStatusChart()/
+// importStatus()). The package does not document a per-tooth field shape, so this
+// is stored and round-tripped as a blob rather than decomposed — see
+// ODONTOGRAM_DATA_MAPPING.md. Additive to, and independent from, ToothCondition
+// (the legacy chart), which stays untouched for rollback via feature flag.
+model AdvancedOdontogramChart {
+  id          String    @id @default(cuid())
+  patientId   String    @unique
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  statusChart Json
+  version     Int       @default(1)
+  updatedById String?
+  updatedBy   Provider? @relation(fields: [updatedById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@index([patientId])
 }
 

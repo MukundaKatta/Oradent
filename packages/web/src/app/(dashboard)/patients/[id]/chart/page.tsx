@@ -1,64 +1,93 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Save, RotateCcw } from 'lucide-react';
-import { useDentalChart } from '@/hooks/useDentalChart';
-import DentalChart from '@/components/dental-chart/DentalChart';
-import { formatDate } from "@/lib/formatters";
-import { ptBR } from "@/i18n";
-import { formatUpdatedByLabel } from "@/lib/clinicalLabels";
+import { RotateCcw } from 'lucide-react';
+import { useDentalChart, useUpdateTooth } from '@/hooks/useDentalChart';
+import DentalChart, { type ToothRecord } from '@/components/dental-chart/DentalChart';
+import { toTeethDataMap, toUpdateToothInput } from '@/components/dental-chart/legacyAdapter';
+import { AdvancedOdontogramContainer } from '@/components/dental-chart/advanced/AdvancedOdontogramContainer';
+import { ptBR } from '@/i18n';
+import { cn } from '@/lib/utils';
+
+// Feature flag: which odontogram opens by default. Either mode stays
+// available via the toggle below, so this only controls the starting point
+// — flipping the env var and redeploying is not required for rollback.
+const ADVANCED_DEFAULT = process.env.NEXT_PUBLIC_ADVANCED_ODONTOGRAM_ENABLED === 'true';
+
+type ChartMode = 'legacy' | 'advanced';
 
 export default function DentalChartPage() {
   const params = useParams<{ id: string }>();
-  const { data: chartData, isLoading, refetch } = useDentalChart(params.id);
+  const patientId = params.id;
+  const [mode, setMode] = useState<ChartMode>(ADVANCED_DEFAULT ? 'advanced' : 'legacy');
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="h-12 w-48 animate-pulse rounded-lg bg-stone-200" />
-        <div className="h-[500px] animate-pulse rounded-xl bg-stone-200" />
-      </div>
-    );
-  }
+  const { data: chartData, isLoading, refetch } = useDentalChart(mode === 'legacy' ? patientId : undefined);
+  const updateTooth = useUpdateTooth(patientId);
+  const chartText = ptBR.patientWorkflow.chart;
+
+  const teethData = useMemo(() => (chartData ? toTeethDataMap(chartData) : {}), [chartData]);
+
+  const handleToothSave = (toothNumber: number, record: ToothRecord) => {
+    updateTooth.mutate(toUpdateToothInput(toothNumber, record));
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-stone-900">{ptBR.patientWorkflow.chart.dentalChart}</h2>
-          {chartData?.lastUpdated && (
-            <p className="mt-1 text-sm text-stone-500">
-              {ptBR.patientWorkflow.chart.lastUpdated}: {formatDate(chartData.lastUpdated)}
-              {chartData.updatedBy ? " " + formatUpdatedByLabel(chartData.updatedBy) : ""}
-            </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100">{chartText.dentalChart}</h2>
+
+        <div className="flex items-center gap-2">
+          <div className="glass flex rounded-full p-1 text-sm">
+            <button
+              onClick={() => setMode('legacy')}
+              className={cn(
+                'rounded-full px-3 py-1.5 font-medium transition-colors',
+                mode === 'legacy'
+                  ? 'bg-teal-600 text-white shadow-apple-sm'
+                  : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+              )}
+            >
+              {chartText.classicChart}
+            </button>
+            <button
+              onClick={() => setMode('advanced')}
+              className={cn(
+                'rounded-full px-3 py-1.5 font-medium transition-colors',
+                mode === 'advanced'
+                  ? 'bg-teal-600 text-white shadow-apple-sm'
+                  : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+              )}
+            >
+              {chartText.advancedChart}
+            </button>
+          </div>
+
+          {mode === 'legacy' && (
+            <button
+              onClick={() => refetch()}
+              className="flex items-center gap-2 rounded-full border border-stone-200/70 dark:border-white/10 bg-white/70 dark:bg-white/5 px-4 py-2 text-sm font-medium text-stone-600 dark:text-stone-300 shadow-apple-sm hover:bg-white dark:hover:bg-white/10 transition-colors"
+            >
+              <RotateCcw className="h-4 w-4" />
+              {ptBR.patientWorkflow.common.refresh}
+            </button>
           )}
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => refetch()}
-            className="flex items-center gap-2 rounded-lg border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors"
-          >
-            <RotateCcw className="h-4 w-4" />
-            {ptBR.patientWorkflow.common.refresh}
-          </button>
-          <button className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors">
-            <Save className="h-4 w-4" />
-            {ptBR.patientWorkflow.common.save}
-          </button>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
-        {chartData ? (
-          <DentalChart />
+      {mode === 'legacy' ? (
+        isLoading ? (
+          <div className="h-[500px] animate-pulse rounded-2xl bg-stone-200/60 dark:bg-white/5" />
         ) : (
-          <div className="flex h-96 items-center justify-center text-stone-400">
-            {ptBR.patientWorkflow.chart.noData}
+          <div className="glass-card p-6">
+            <DentalChart teethData={teethData} onToothSave={handleToothSave} />
           </div>
-        )}
-      </div>
+        )
+      ) : (
+        <AdvancedOdontogramContainer patientId={patientId} />
+      )}
     </div>
   );
 }
