@@ -441,6 +441,8 @@ T13 → T14 → T15 → T16
 **Gate**: build
 **Commit**: `feat(web): add orthodontics tab to patient navigation`
 
+**Status**: ✅ Done
+
 ---
 
 ## Phase Execution Map

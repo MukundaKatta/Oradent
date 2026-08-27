@@ -12,6 +12,7 @@ import {
   DollarSign,
   ClipboardList,
   Activity,
+  Smile,
 } from 'lucide-react';
 import { usePatient } from '@/hooks/usePatient';
 import { formatDate, formatAge, formatPhone, getInitials } from "@/lib/formatters";
@@ -19,7 +20,7 @@ import { ptBR } from "@/i18n";
 
 const copy = ptBR.patientWorkflow.profile;
 const TABS = [
-  { label: copy.chart, href: "chart", icon: ClipboardList }, { label: copy.treatments, href: "treatments", icon: FileText }, { label: copy.history, href: "history", icon: Activity }, { label: copy.imaging, href: "imaging", icon: Image }, { label: copy.billing.title, href: "billing", icon: DollarSign },
+  { label: copy.chart, href: "chart", icon: ClipboardList }, { label: copy.treatments, href: "treatments", icon: FileText }, { label: copy.orthodontics, href: "orthodontics", icon: Smile }, { label: copy.history, href: "history", icon: Activity }, { label: copy.imaging, href: "imaging", icon: Image }, { label: copy.billing.title, href: "billing", icon: DollarSign },
 ];
 
 export default function PatientProfilePage() {
