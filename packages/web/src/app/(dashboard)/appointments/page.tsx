@@ -136,14 +136,14 @@ export default function AppointmentsPage() {
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 rounded-lg border border-stone-200 bg-white p-1">
+          <div className="glass flex items-center gap-1 rounded-full p-1">
             <button
               onClick={() => setViewMode('calendar')}
               className={cn(
-                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
                 viewMode === 'calendar'
-                  ? 'bg-teal-600 text-white'
-                  : 'text-stone-600 hover:bg-stone-100'
+                  ? 'bg-teal-600 text-white shadow-apple-sm'
+                  : 'text-stone-600 hover:bg-stone-900/5 dark:text-stone-400 dark:hover:bg-white/5'
               )}
             >
               <Calendar className="h-4 w-4" />
@@ -152,10 +152,10 @@ export default function AppointmentsPage() {
             <button
               onClick={() => setViewMode('chair')}
               className={cn(
-                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
                 viewMode === 'chair'
-                  ? 'bg-teal-600 text-white'
-                  : 'text-stone-600 hover:bg-stone-100'
+                  ? 'bg-teal-600 text-white shadow-apple-sm'
+                  : 'text-stone-600 hover:bg-stone-900/5 dark:text-stone-400 dark:hover:bg-white/5'
               )}
             >
               <LayoutGrid className="h-4 w-4" />
@@ -164,14 +164,14 @@ export default function AppointmentsPage() {
           </div>
 
           {viewMode === 'calendar' && (
-            <div className="flex items-center gap-1 rounded-lg border border-stone-200 bg-white p-1">
+            <div className="glass flex items-center gap-1 rounded-full p-1">
               <button
                 onClick={() => setCalendarView('timeGridDay')}
                 className={cn(
-                  'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
                   calendarView === 'timeGridDay'
-                    ? 'bg-stone-200 text-stone-900'
-                    : 'text-stone-600 hover:bg-stone-100'
+                    ? 'bg-teal-600 text-white shadow-apple-sm'
+                    : 'text-stone-600 hover:bg-stone-900/5 dark:text-stone-400 dark:hover:bg-white/5'
                 )}
               >
                 {t('appointments.day', 'Dia')}
@@ -179,10 +179,10 @@ export default function AppointmentsPage() {
               <button
                 onClick={() => setCalendarView('timeGridWeek')}
                 className={cn(
-                  'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
                   calendarView === 'timeGridWeek'
-                    ? 'bg-stone-200 text-stone-900'
-                    : 'text-stone-600 hover:bg-stone-100'
+                    ? 'bg-teal-600 text-white shadow-apple-sm'
+                    : 'text-stone-600 hover:bg-stone-900/5 dark:text-stone-400 dark:hover:bg-white/5'
                 )}
               >
                 {t('appointments.week', 'Semana')}
@@ -190,10 +190,10 @@ export default function AppointmentsPage() {
               <button
                 onClick={() => setCalendarView('dayGridMonth')}
                 className={cn(
-                  'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
                   calendarView === 'dayGridMonth'
-                    ? 'bg-stone-200 text-stone-900'
-                    : 'text-stone-600 hover:bg-stone-100'
+                    ? 'bg-teal-600 text-white shadow-apple-sm'
+                    : 'text-stone-600 hover:bg-stone-900/5 dark:text-stone-400 dark:hover:bg-white/5'
                 )}
               >
                 {t('appointments.month', 'Mês')}
@@ -204,25 +204,25 @@ export default function AppointmentsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigateDate('prev')}
-              className="rounded-lg border border-stone-200 bg-white p-1.5 text-stone-600 hover:bg-stone-50"
-            >
               aria-label={t('appointments.previousPeriod', 'Período anterior')}
+              className="rounded-full border border-stone-200/70 dark:border-white/10 bg-white/70 dark:bg-white/5 p-1.5 text-stone-600 dark:text-stone-300 shadow-apple-sm backdrop-blur-sm transition-colors hover:bg-white dark:hover:bg-white/10"
+            >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => navigateDate('today')}
-              className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-50"
+              className="rounded-full border border-stone-200/70 dark:border-white/10 bg-white/70 dark:bg-white/5 px-3 py-1.5 text-sm font-medium text-stone-600 dark:text-stone-300 shadow-apple-sm backdrop-blur-sm transition-colors hover:bg-white dark:hover:bg-white/10"
             >
               {t('appointments.today', 'Hoje')}
             </button>
             <button
               onClick={() => navigateDate('next')}
-              className="rounded-lg border border-stone-200 bg-white p-1.5 text-stone-600 hover:bg-stone-50"
+              aria-label={t('appointments.nextPeriod', 'Próximo período')}
+              className="rounded-full border border-stone-200/70 dark:border-white/10 bg-white/70 dark:bg-white/5 p-1.5 text-stone-600 dark:text-stone-300 shadow-apple-sm backdrop-blur-sm transition-colors hover:bg-white dark:hover:bg-white/10"
             >
               <ChevronRight className="h-4 w-4" />
-              aria-label={t('appointments.nextPeriod', 'Próximo período')}
             </button>
-            <h2 className="ml-2 text-lg font-semibold text-stone-900">
+            <h2 className="ml-2 text-lg font-semibold text-stone-900 dark:text-stone-100">
               {format(currentDate, 'MMMM yyyy', { locale: dateFnsPtBR })}
             </h2>
           </div>
@@ -230,7 +230,7 @@ export default function AppointmentsPage() {
 
         <button
           onClick={handleNewAppointment}
-          className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-700 transition-colors"
+          className="flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-apple-sm transition-all hover:bg-teal-700 active:scale-[0.97]"
         >
           <Plus className="h-4 w-4" />
           {t('appointments.new', 'Nova consulta')}
@@ -238,16 +238,16 @@ export default function AppointmentsPage() {
       </div>
 
       {/* Calendar / Chair View */}
-      <div className="rounded-xl border border-stone-200 bg-white shadow-sm">
+      <div className="glass-card overflow-hidden">
         {loading ? (
           <div className="flex h-[600px] items-center justify-center">
             <div className="flex flex-col items-center gap-3">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-              <p className="text-sm text-stone-500">{t('appointments.loading', 'Carregando consultas...')}</p>
+              <p className="text-sm text-stone-500 dark:text-stone-400">{t('appointments.loading', 'Carregando consultas...')}</p>
             </div>
           </div>
         ) : error ? (
-          <div className="flex h-[600px] items-center justify-center px-6 text-center text-sm text-stone-500">{t('appointments.loadError', 'Não foi possível carregar as consultas. Tente novamente.')}</div>
+          <div className="flex h-[600px] items-center justify-center px-6 text-center text-sm text-stone-500 dark:text-stone-400">{t('appointments.loadError', 'Não foi possível carregar as consultas. Tente novamente.')}</div>
         ) : viewMode === 'calendar' ? (
           <CalendarView
             appointments={appointments}

@@ -98,17 +98,17 @@ export function ChairView({
     <div className="overflow-x-auto">
       <div className="min-w-[800px]">
         {/* Header */}
-        <div className="grid grid-cols-[80px_1fr_1fr_1fr] border-b border-stone-200">
-          <div className="border-r border-stone-200 bg-stone-50 p-3">
-            <span className="text-xs font-medium text-stone-500">{t('appointments.time', 'Horário')}</span>
+        <div className="grid grid-cols-[80px_1fr_1fr_1fr] border-b border-stone-200 dark:border-white/10">
+          <div className="border-r border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-3">
+            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">{t('appointments.time', 'Horário')}</span>
           </div>
           {CHAIRS.map((chair) => (
             <div
               key={chair}
-              className="border-r border-stone-200 bg-stone-50 p-3 text-center last:border-r-0"
+              className="border-r border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-3 text-center last:border-r-0"
             >
-              <span className="text-sm font-semibold text-stone-700">{chairLabel(chair)}</span>
-              <span className="ml-2 text-xs text-stone-400">
+              <span className="text-sm font-semibold text-stone-700 dark:text-stone-200">{chairLabel(chair)}</span>
+              <span className="ml-2 text-xs text-stone-400 dark:text-stone-500">
                 {chairGroups[chair]?.length || 0} {t('appointments.appointmentsAbbreviation', 'consultas')}
               </span>
             </div>
@@ -118,17 +118,17 @@ export function ChairView({
         {/* Time grid */}
         <div className="relative grid grid-cols-[80px_1fr_1fr_1fr]">
           {/* Time labels */}
-          <div className="border-r border-stone-200">
+          <div className="border-r border-stone-200 dark:border-white/10">
             {HOURS.map((hour) => (
               <div key={hour} className="relative" style={{ height: `${SLOT_HEIGHT * 2}px` }}>
-                <span className="absolute -top-2 right-3 text-xs text-stone-400">
+                <span className="absolute -top-2 right-3 text-xs text-stone-400 dark:text-stone-500">
                   {`${hour.toString().padStart(2, '0')}:00`}
                 </span>
                 <div
-                  className="absolute right-0 top-0 w-3 border-t border-stone-200"
+                  className="absolute right-0 top-0 w-3 border-t border-stone-200 dark:border-white/10"
                 />
                 <div
-                  className="absolute right-0 top-1/2 w-2 border-t border-stone-100"
+                  className="absolute right-0 top-1/2 w-2 border-t border-stone-100 dark:border-white/5"
                 />
               </div>
             ))}
@@ -138,19 +138,19 @@ export function ChairView({
           {CHAIRS.map((chair) => (
             <div
               key={chair}
-              className="relative border-r border-stone-200 last:border-r-0"
+              className="relative border-r border-stone-200 dark:border-white/10 last:border-r-0"
             >
               {/* Grid lines */}
               {HOURS.map((hour) => (
                 <div key={hour} style={{ height: `${SLOT_HEIGHT * 2}px` }}>
                   <div
-                    className="h-1/2 border-b border-stone-100 cursor-pointer hover:bg-teal-50/50 transition-colors"
+                    className="h-1/2 border-b border-stone-100 dark:border-white/5 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-teal-500/10 transition-colors"
                     onClick={() =>
                       onSlotClick(dateStr, `${hour.toString().padStart(2, '0')}:00`)
                     }
                   />
                   <div
-                    className="h-1/2 border-b border-stone-200 cursor-pointer hover:bg-teal-50/50 transition-colors"
+                    className="h-1/2 border-b border-stone-200 dark:border-white/10 cursor-pointer hover:bg-teal-50/50 dark:hover:bg-teal-500/10 transition-colors"
                     onClick={() =>
                       onSlotClick(dateStr, `${hour.toString().padStart(2, '0')}:30`)
                     }
