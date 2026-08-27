@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
-import { authenticate, authorize, generateToken, generateRefreshToken } from '../middleware/auth';
+import { authenticate, authorize, generateToken, generateRefreshToken, invalidateSessions } from '../middleware/auth';
 
 const router = Router();
 router.use(authenticate);
@@ -208,6 +208,7 @@ router.post('/providers/:id/reset-password', authorize('OWNER'), async (req: Req
     where: { id: req.params.id },
     data: { passwordHash },
   });
+  await invalidateSessions(req.params.id);
 
   res.json({ message: 'Password reset successfully' });
 });

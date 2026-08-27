@@ -52,6 +52,7 @@ model Provider {
   licenseNumber String?
   color         String        @default("#6366f1")
   isActive      Boolean       @default(true)
+  sessionVersion Int          @default(1)
   appointments  Appointment[]
   treatments    Treatment[]
   notes         ClinicalNote[]

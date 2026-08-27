@@ -9,10 +9,18 @@ function keyGenerator(req: Request): string {
   return req.ip || req.socket.remoteAddress || 'unknown';
 }
 
+// apiLimiter is mounted globally in index.ts, before any router — and every
+// router's own `authenticate` middleware is what actually sets req.auth.
+// So unlike aiLimiter (mounted after router.use(authenticate) in ai.ts),
+// req.auth is never populated yet when this runs: it is always IP-based in
+// practice, regardless of the shared keyGenerator. That's the correct
+// behavior for a limiter that has to apply before routing decides who the
+// caller is — per-user limiting for authenticated traffic is what aiLimiter
+// and similar per-router limiters are for.
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 500,
-  keyGenerator,
+  keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later' },

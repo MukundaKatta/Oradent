@@ -20,15 +20,16 @@ export function getUploadPath(patientId: string, filename: string): string {
   return path.join(patientDir, `${timestamp}-${safeName}`);
 }
 
-export function getFileUrl(filePath: string): string {
-  const relative = path.relative(uploadDir, filePath);
-  return `/uploads/${relative}`;
-}
-
 export function deleteFile(filePath: string): void {
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
   }
+}
+
+/** Resolve a filePath stored on DentalImage (absolute or a bare filename
+ *  from before that column stored relative paths) to an absolute path. */
+export function resolveUploadPath(filePath: string): string {
+  return path.isAbsolute(filePath) ? filePath : path.join(uploadDir, filePath);
 }
 
 export { uploadDir };

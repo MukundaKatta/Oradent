@@ -1,8 +1,6 @@
 import { Server as HttpServer } from 'http';
 import { Server as SocketServer, Socket } from 'socket.io';
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
-import { AuthPayload } from '../middleware/auth';
+import { AuthPayload, verifyAccessToken } from '../middleware/auth';
 import { logger } from '../utils/logger';
 
 let io: SocketServer | null = null;
@@ -21,13 +19,16 @@ export function initializeWebSocket(httpServer: HttpServer): SocketServer {
       return next(new Error('Authentication required'));
     }
 
-    try {
-      const payload = jwt.verify(token, env.JWT_SECRET) as AuthPayload;
-      (socket as any).auth = payload;
-      next();
-    } catch {
-      next(new Error('Invalid token'));
-    }
+    // Same checks as the HTTP authenticate middleware (signature, not a
+    // refresh token, not blacklisted, sessionVersion current) — previously
+    // this only verified the JWT signature, so a logged-out or
+    // password-reset session could keep an open socket connection.
+    verifyAccessToken(token)
+      .then((payload) => {
+        (socket as any).auth = payload;
+        next();
+      })
+      .catch(() => next(new Error('Invalid token')));
   });
 
   io.on('connection', (socket: Socket) => {

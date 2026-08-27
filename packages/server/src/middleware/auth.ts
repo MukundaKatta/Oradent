@@ -1,14 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { env } from '../config/env';
 import { ProviderRole } from '@prisma/client';
 import { redis } from '../config/redis';
+import { prisma } from '../config/database';
+import { cached, invalidateCache } from '../utils/cache';
 
 export interface AuthPayload {
   providerId: string;
   practiceId: string;
   role: ProviderRole;
   email: string;
+  sessionVersion: number;
   type?: 'access' | 'refresh';
 }
 
@@ -20,6 +24,80 @@ declare global {
   }
 }
 
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+function sessionVersionCacheKey(providerId: string): string {
+  return `sv:${providerId}`;
+}
+
+async function getCurrentSessionVersion(providerId: string): Promise<number | null> {
+  return cached(sessionVersionCacheKey(providerId), 60, async () => {
+    const provider = await prisma.provider.findUnique({
+      where: { id: providerId },
+      select: { sessionVersion: true },
+    });
+    return provider?.sessionVersion ?? null;
+  });
+}
+
+/**
+ * Bump a provider's session version, invalidating every access/refresh token
+ * issued before the call (their embedded sessionVersion will no longer
+ * match). Used on logout, password change, and admin password reset — the
+ * access-token blacklist alone doesn't cover the refresh token, which stays
+ * valid for days after logout otherwise.
+ */
+export async function invalidateSessions(providerId: string): Promise<void> {
+  await prisma.provider.update({
+    where: { id: providerId },
+    data: { sessionVersion: { increment: 1 } },
+  });
+  await invalidateCache(sessionVersionCacheKey(providerId));
+}
+
+export class TokenRejectedError extends Error {
+  constructor(public code: 'EXPIRED' | 'INVALID_TYPE' | 'REVOKED' | 'INVALID') {
+    super(code);
+  }
+}
+
+/**
+ * Verify an access token: signature/expiry, not a refresh token, not
+ * blacklisted (logout), and its sessionVersion still matches the current
+ * one (logout/password change/reset). Shared by the HTTP `authenticate`
+ * middleware and the WebSocket handshake, which previously only checked
+ * the JWT signature and skipped both revocation checks entirely.
+ */
+export async function verifyAccessToken(token: string): Promise<AuthPayload> {
+  let payload: AuthPayload;
+  try {
+    payload = jwt.verify(token, env.JWT_SECRET) as AuthPayload;
+  } catch (err: unknown) {
+    if (err instanceof jwt.TokenExpiredError) {
+      throw new TokenRejectedError('EXPIRED');
+    }
+    throw new TokenRejectedError('INVALID');
+  }
+
+  if (payload.type === 'refresh') {
+    throw new TokenRejectedError('INVALID_TYPE');
+  }
+
+  const isBlacklisted = await redis.get(`bl:${hashToken(token)}`);
+  if (isBlacklisted) {
+    throw new TokenRejectedError('REVOKED');
+  }
+
+  const currentVersion = await getCurrentSessionVersion(payload.providerId);
+  if (currentVersion === null || payload.sessionVersion !== currentVersion) {
+    throw new TokenRejectedError('REVOKED');
+  }
+
+  return payload;
+}
+
 export async function authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
@@ -29,26 +107,15 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 
   const token = header.slice(7);
   try {
-    const payload = jwt.verify(token, env.JWT_SECRET) as AuthPayload;
-
-    // Reject refresh tokens used as access tokens
-    if (payload.type === 'refresh') {
-      res.status(401).json({ error: 'Invalid token type' });
-      return;
-    }
-
-    // Check if token has been blacklisted (logout)
-    const isBlacklisted = await redis.get(`bl:${token.slice(-16)}`);
-    if (isBlacklisted) {
-      res.status(401).json({ error: 'Token has been revoked' });
-      return;
-    }
-
-    req.auth = payload;
+    req.auth = await verifyAccessToken(token);
     next();
   } catch (err: unknown) {
-    if (err instanceof jwt.TokenExpiredError) {
+    if (err instanceof TokenRejectedError && err.code === 'EXPIRED') {
       res.status(401).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' });
+      return;
+    }
+    if (err instanceof TokenRejectedError && err.code === 'REVOKED') {
+      res.status(401).json({ error: 'Session has been revoked' });
       return;
     }
     res.status(401).json({ error: 'Invalid token' });
@@ -96,7 +163,7 @@ export async function blacklistToken(token: string): Promise<void> {
     if (payload?.exp) {
       const ttl = payload.exp - Math.floor(Date.now() / 1000);
       if (ttl > 0) {
-        await redis.set(`bl:${token.slice(-16)}`, '1', 'EX', ttl);
+        await redis.set(`bl:${hashToken(token)}`, '1', 'EX', ttl);
       }
     }
   } catch {

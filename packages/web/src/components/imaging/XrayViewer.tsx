@@ -5,6 +5,7 @@ import { X, ZoomIn, ZoomOut, RotateCw, Brain, Download } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { formatDate } from "@/lib/formatters";
 import { ptBR } from "@/i18n";
+import { apiUrl } from "@/lib/api";
 
 interface XrayImage {
   id: string;
@@ -94,7 +95,7 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
             </button>
             <div className="mx-2 h-5 w-px bg-stone-700" />
             <a
-              href={image.url}
+              href={apiUrl(image.url)}
               download={image.filename}
               className="rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-white"
               title={ptBR.patientWorkflow.imaging.download} aria-label={ptBR.patientWorkflow.imaging.download}
@@ -106,7 +107,7 @@ export function XrayViewer({ image, onClose, onAnalyze }: XrayViewerProps) {
           {/* Image area */}
           <div className="flex flex-1 items-center justify-center overflow-hidden">
             <img
-              src={image.url}
+              src={apiUrl(image.url)}
               alt={image.filename}
               className="max-h-full max-w-full object-contain transition-transform duration-200"
               style={{

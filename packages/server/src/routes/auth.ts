@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../config/database';
-import { generateToken, generateRefreshToken, verifyRefreshToken, authenticate, blacklistToken, AuthPayload } from '../middleware/auth';
+import { generateToken, generateRefreshToken, verifyRefreshToken, authenticate, blacklistToken, invalidateSessions, AuthPayload } from '../middleware/auth';
 import { authLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
 
@@ -90,6 +90,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
     practiceId: practice.id,
     role: provider.role,
     email: provider.email,
+    sessionVersion: provider.sessionVersion,
   };
   const tokens = buildTokenResponse(payload);
 
@@ -138,6 +139,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
     practiceId: provider.practiceId,
     role: provider.role,
     email: provider.email,
+    sessionVersion: provider.sessionVersion,
   };
   const tokens = buildTokenResponse(payload);
 
@@ -169,12 +171,13 @@ router.post('/refresh', async (req: Request, res: Response) => {
   try {
     const payload = verifyRefreshToken(refreshToken);
 
-    // Verify provider still exists and is active
+    // Verify provider still exists, is active, and this refresh token
+    // wasn't issued before a logout/password change bumped sessionVersion.
     const provider = await prisma.provider.findUnique({
       where: { id: payload.providerId },
     });
-    if (!provider || !provider.isActive) {
-      res.status(401).json({ error: 'Account is deactivated' });
+    if (!provider || !provider.isActive || provider.sessionVersion !== payload.sessionVersion) {
+      res.status(401).json({ error: 'Session has been revoked' });
       return;
     }
 
@@ -183,6 +186,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       practiceId: provider.practiceId,
       role: provider.role,
       email: provider.email,
+      sessionVersion: provider.sessionVersion,
     };
     const tokens = buildTokenResponse(newPayload);
 
@@ -201,6 +205,10 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
   if (token) {
     await blacklistToken(token);
   }
+  // Also invalidates the refresh token (blacklisting only covers the access
+  // token, but a leaked/stolen refresh token would otherwise keep working
+  // for its full 7-day lifetime after logout).
+  await invalidateSessions(req.auth!.providerId);
   res.json({ message: 'Logged out successfully' });
 });
 
@@ -264,6 +272,7 @@ router.put('/password', authenticate, async (req: Request, res: Response) => {
     where: { id: provider.id },
     data: { passwordHash },
   });
+  await invalidateSessions(provider.id);
 
   res.json({ message: 'Password updated successfully' });
 });

@@ -15,12 +15,18 @@ const storage = multer.diskStorage({
   },
 });
 
+const ALLOWED_MIMETYPES = ['image/jpeg', 'image/png', 'image/tiff', 'image/dicom', 'application/dicom'];
+
 const fileFilter = (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowed = ['image/jpeg', 'image/png', 'image/dicom', 'image/tiff', 'application/dicom'];
-  if (allowed.includes(file.mimetype) || file.mimetype.startsWith('image/')) {
+  // The claimed mimetype is client-controlled and only a first-pass filter —
+  // the real content is verified after upload via utils/fileSignature.ts.
+  // Deliberately no `startsWith('image/')` fallback: that previously let
+  // image/svg+xml through, and an SVG can carry an embedded <script>,
+  // served back from this API's own origin.
+  if (ALLOWED_MIMETYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed'));
+    cb(new Error('Only JPEG, PNG, TIFF, or DICOM files are allowed'));
   }
 };
 

@@ -247,5 +247,13 @@ export async function apiUpload<T>(
   return handleResponse<T>(response);
 }
 
+/** Resolve a server-relative path (e.g. an image url from the imaging API)
+ *  against the API origin — web and server run on different ports/hosts,
+ *  so a bare "/api/..." path resolves against the Next.js app's own origin
+ *  if used directly in an <img src> or <a href>. */
+export function apiUrl(path: string): string {
+  return `${BASE_URL}${path}`;
+}
+
 export { ApiClientError };
 export type { ApiError, RequestOptions };
