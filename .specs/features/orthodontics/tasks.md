@@ -183,6 +183,8 @@ T13 → T14 → T15 → T16
 **Gate**: quick
 **Commit**: `feat(orthodontics): add GET /cases/:patientId endpoint`
 
+**Status**: ✅ Done
+
 ---
 
 ### T6: `PATCH /api/orthodontics/cases/:caseId`

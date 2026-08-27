@@ -60,4 +60,22 @@ router.post('/cases', async (req: Request, res: Response) => {
   res.status(201).json(created);
 });
 
+// List a patient's orthodontic cases, active and historical (ORTHO-06)
+router.get('/cases/:patientId', async (req: Request, res: Response) => {
+  const patient = await prisma.patient.findFirst({
+    where: { id: req.params.patientId, practiceId: req.auth!.practiceId },
+  });
+  if (!patient) {
+    res.status(404).json({ error: 'Patient not found' });
+    return;
+  }
+
+  const cases = await prisma.orthodonticCase.findMany({
+    where: { patientId: req.params.patientId },
+    orderBy: { startDate: 'desc' },
+  });
+
+  res.json(cases);
+});
+
 export default router;

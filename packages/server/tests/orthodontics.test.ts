@@ -180,3 +180,34 @@ describe('POST /cases', () => {
     expect(orthodonticCaseCreate).not.toHaveBeenCalled();
   });
 });
+
+describe('GET /cases/:patientId', () => {
+  // ORTHO-06: returns active + historical cases scoped to practiceId
+  it('returns cases (active and historical) for the patient', async () => {
+    patientFindFirst.mockResolvedValue(validCasePatient);
+    const cases = [
+      { id: 'case-1', status: 'ACTIVE' },
+      { id: 'case-2', status: 'COMPLETED' },
+    ];
+    orthodonticCaseFindMany.mockResolvedValue(cases);
+
+    const res = await json(baseUrl, '/cases/patient-1');
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual(cases);
+    expect(orthodonticCaseFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ patientId: 'patient-1' }) })
+    );
+  });
+
+  // Cross-tenant scoping edge case (spec.md Edge Cases): 404, not an empty list, not 500
+  it('returns 404 for a patientId outside the provider practice', async () => {
+    patientFindFirst.mockResolvedValue(null);
+
+    const res = await json(baseUrl, '/cases/other-practice-patient');
+
+    expect(res.status).toBe(404);
+    expect(orthodonticCaseFindMany).not.toHaveBeenCalled();
+  });
+});
