@@ -463,3 +463,44 @@ describe('POST /cases/:caseId/visits', () => {
     expect(orthodonticVisitCreate).not.toHaveBeenCalled();
   });
 });
+
+describe('GET /cases/:caseId/visits', () => {
+  const activeCase = {
+    id: 'case-1',
+    patientId: 'patient-1',
+    status: 'ACTIVE',
+    applianceType: 'FIXED_METAL',
+  };
+
+  // ORTHO-06: returns visits ordered by date descending
+  it('returns the case visits ordered by date descending', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(activeCase);
+    const visits = [
+      { id: 'visit-2', date: '2026-02-01T00:00:00.000Z' },
+      { id: 'visit-1', date: '2026-01-01T00:00:00.000Z' },
+    ];
+    orthodonticVisitFindMany.mockResolvedValue(visits);
+
+    const res = await json(baseUrl, '/cases/case-1/visits');
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual(visits);
+    expect(orthodonticVisitFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ caseId: 'case-1' }),
+        orderBy: { date: 'desc' },
+      })
+    );
+  });
+
+  // Cross-tenant caseId -> 404 (spec.md Edge Cases)
+  it('returns 404 for a caseId outside the provider practice', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(null);
+
+    const res = await json(baseUrl, '/cases/other-practice-case/visits');
+
+    expect(res.status).toBe(404);
+    expect(orthodonticVisitFindMany).not.toHaveBeenCalled();
+  });
+});

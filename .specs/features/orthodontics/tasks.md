@@ -280,6 +280,8 @@ T13 → T14 → T15 → T16
 **Gate**: quick
 **Commit**: `feat(orthodontics): add GET visits endpoint`
 
+**Status**: ✅ Done
+
 ---
 
 ### T10: Mount the orthodontics router
