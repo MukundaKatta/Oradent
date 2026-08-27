@@ -89,6 +89,19 @@ export const clinicalPtBR = {
     EXTRAORAL_PHOTO: "Fotografia extraoral",
     OTHER: "Outro",
   },
+  orthodonticApplianceType: {
+    FIXED_METAL: "Fixo metálico",
+    FIXED_CERAMIC: "Fixo estético (cerâmica)",
+    LINGUAL: "Lingual",
+    ALIGNER: "Alinhador",
+    RETAINER: "Contenção",
+  },
+  orthodonticCaseStatus: {
+    ACTIVE: "Ativo",
+    RETENTION: "Contenção",
+    COMPLETED: "Concluído",
+    DISCONTINUED: "Descontinuado",
+  },
 } as const;
 
 export type ClinicalPtBRCatalog = typeof clinicalPtBR;

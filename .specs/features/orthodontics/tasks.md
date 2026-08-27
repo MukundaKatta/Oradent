@@ -396,6 +396,8 @@ T13 → T14 → T15 → T16
 **Gate**: build
 **Commit**: `feat(web): add orthodontics case page`
 
+**Status**: ✅ Done
+
 ---
 
 ### T15: Visit form + timeline
