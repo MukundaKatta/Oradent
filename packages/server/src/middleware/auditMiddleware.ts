@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { logger } from '../utils/logger';
 
-const PHI_ROUTES = ['/api/patients', '/api/imaging', '/api/dental-chart', '/api/treatments', '/api/billing'];
+const PHI_ROUTES = ['/api/patients', '/api/imaging', '/api/dental-chart', '/api/treatments', '/api/billing', '/api/orthodontics'];
 
 // Prisma's default cuid() ids are 25 lowercase alphanumeric chars starting
 // with 'c' — distinct enough from route keywords (advanced, tooth, batch,

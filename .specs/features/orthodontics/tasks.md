@@ -326,6 +326,8 @@ T13 → T14 → T15 → T16
 **Gate**: quick
 **Commit**: `feat(orthodontics): audit-log orthodontics writes as PHI`
 
+**Status**: ✅ Done
+
 ---
 
 ### T12: Reminder job

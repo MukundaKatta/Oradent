@@ -49,4 +49,13 @@ describe('parseAuditResource', () => {
       resourceId: '',
     });
   });
+
+  // Orthodontics writes are clinical/PHI (spec.md Observability sweep row)
+  // and must be recognized the same way /api/dental-chart already is.
+  it('recognizes /api/orthodontics case writes as PHI', () => {
+    expect(parseAuditResource(`/api/orthodontics/cases/${REAL_PATIENT_ID}`)).toEqual({
+      resource: 'orthodontics',
+      resourceId: REAL_PATIENT_ID,
+    });
+  });
 });
