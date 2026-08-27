@@ -206,6 +206,8 @@ T13 → T14 → T15 → T16
 **Gate**: full (phase-completing schema+route surface before moving to visits)
 **Commit**: `feat(orthodontics): add PATCH /cases/:id status transitions`
 
+**Status**: ✅ Done
+
 ---
 
 ### Phase 3: Backend - Visits API + Wiring

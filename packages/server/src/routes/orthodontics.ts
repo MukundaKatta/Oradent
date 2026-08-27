@@ -7,6 +7,16 @@ const router = Router();
 router.use(authenticate);
 
 const APPLIANCE_TYPES = ['FIXED_METAL', 'FIXED_CERAMIC', 'LINGUAL', 'ALIGNER', 'RETAINER'] as const;
+const CASE_STATUSES = ['ACTIVE', 'RETENTION', 'COMPLETED', 'DISCONTINUED'] as const;
+
+// Closed transition table (ORTHO-09). Anything not listed here is invalid,
+// including staying in place or moving backward (e.g. COMPLETED -> ACTIVE).
+const VALID_STATUS_TRANSITIONS: Record<string, readonly string[]> = {
+  ACTIVE: ['RETENTION', 'COMPLETED', 'DISCONTINUED'],
+  RETENTION: ['COMPLETED'],
+  COMPLETED: [],
+  DISCONTINUED: [],
+};
 
 const createCaseSchema = z
   .object({
@@ -76,6 +86,36 @@ router.get('/cases/:patientId', async (req: Request, res: Response) => {
   });
 
   res.json(cases);
+});
+
+const patchCaseSchema = z.object({
+  status: z.enum(CASE_STATUSES),
+});
+
+// Transition a case's status (ORTHO-09)
+router.patch('/cases/:caseId', async (req: Request, res: Response) => {
+  const { status } = patchCaseSchema.parse(req.body);
+
+  const existing = await prisma.orthodonticCase.findFirst({
+    where: { id: req.params.caseId, patient: { practiceId: req.auth!.practiceId } },
+  });
+  if (!existing) {
+    res.status(404).json({ error: 'Orthodontic case not found' });
+    return;
+  }
+
+  const allowedTransitions = VALID_STATUS_TRANSITIONS[existing.status] || [];
+  if (!allowedTransitions.includes(status)) {
+    res.status(400).json({ error: `Invalid status transition from ${existing.status} to ${status}` });
+    return;
+  }
+
+  const updated = await prisma.orthodonticCase.update({
+    where: { id: req.params.caseId },
+    data: { status },
+  });
+
+  res.json(updated);
 });
 
 export default router;

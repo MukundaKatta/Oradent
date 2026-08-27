@@ -211,3 +211,55 @@ describe('GET /cases/:patientId', () => {
     expect(orthodonticCaseFindMany).not.toHaveBeenCalled();
   });
 });
+
+describe('PATCH /cases/:caseId', () => {
+  const transitionCases: Array<[string, string]> = [
+    ['ACTIVE', 'RETENTION'],
+    ['ACTIVE', 'COMPLETED'],
+    ['ACTIVE', 'DISCONTINUED'],
+    ['RETENTION', 'COMPLETED'],
+  ];
+
+  // ORTHO-09 AC1: each valid transition -> 200
+  for (const [from, to] of transitionCases) {
+    it(`allows ${from} -> ${to} and returns 200`, async () => {
+      orthodonticCaseFindFirst.mockResolvedValue({ id: 'case-1', status: from });
+      orthodonticCaseUpdate.mockResolvedValue({ id: 'case-1', status: to });
+
+      const res = await json(baseUrl, '/cases/case-1', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: to }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.status).toBe(to);
+    });
+  }
+
+  // ORTHO-09 AC2: invalid transition -> 400
+  it('returns 400 for an invalid transition (COMPLETED -> ACTIVE)', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue({ id: 'case-1', status: 'COMPLETED' });
+
+    const res = await json(baseUrl, '/cases/case-1', {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'ACTIVE' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(orthodonticCaseUpdate).not.toHaveBeenCalled();
+  });
+
+  // Cross-tenant caseId -> 404 (spec.md Edge Cases)
+  it('returns 404 for a caseId outside the provider practice', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(null);
+
+    const res = await json(baseUrl, '/cases/other-practice-case', {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'COMPLETED' }),
+    });
+
+    expect(res.status).toBe(404);
+    expect(orthodonticCaseUpdate).not.toHaveBeenCalled();
+  });
+});
