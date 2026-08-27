@@ -3,10 +3,8 @@ import { Server as SocketServer, Socket } from 'socket.io';
 import { AuthPayload, verifyAccessToken } from '../middleware/auth';
 import { logger } from '../utils/logger';
 
-let io: SocketServer | null = null;
-
 export function initializeWebSocket(httpServer: HttpServer): SocketServer {
-  io = new SocketServer(httpServer, {
+  const io = new SocketServer(httpServer, {
     cors: {
       origin: process.env.NODE_ENV === 'production' ? false : '*',
       methods: ['GET', 'POST'],
@@ -43,21 +41,5 @@ export function initializeWebSocket(httpServer: HttpServer): SocketServer {
     });
   });
 
-  return io;
-}
-
-export function emitAppointmentUpdate(practiceId: string, data: unknown): void {
-  io?.to(`practice:${practiceId}`).emit('appointment:updated', data);
-}
-
-export function emitChairStatus(practiceId: string, data: unknown): void {
-  io?.to(`practice:${practiceId}`).emit('chair:status', data);
-}
-
-export function emitNotification(practiceId: string, notification: { type: string; title: string; message: string }): void {
-  io?.to(`practice:${practiceId}`).emit('notification', notification);
-}
-
-export function getIO(): SocketServer | null {
   return io;
 }

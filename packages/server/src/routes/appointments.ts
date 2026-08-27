@@ -150,11 +150,13 @@ router.get('/check-conflict', async (req: Request, res: Response) => {
     return;
   }
 
-  // Parse as UTC to match how POST / and PUT /:id interpret startTime (an
-  // ISO string run through `new Date()`), otherwise this pre-check can say
-  // "free" for a slot the create endpoint then rejects as conflicting, or
-  // vice versa, depending on the server's local timezone offset.
-  const startTime = new Date(`${date}T${time}:00Z`);
+  // No timezone designator on purpose: the only real caller
+  // (AppointmentModal.tsx) builds startTime for POST/PUT the same way,
+  // `${date}T${time}:00` with no offset, which Node's Date parses as
+  // server-local time — matching that (rather than assuming a proper ISO/UTC
+  // string, which is not what's actually sent) keeps this pre-check
+  // consistent with what create/update will decide.
+  const startTime = new Date(`${date}T${time}:00`);
   const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
 
   const where: Record<string, unknown> = {
