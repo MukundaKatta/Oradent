@@ -7,6 +7,7 @@ import {
   Users,
   Plus,
   Brain,
+  ArrowRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -96,33 +97,30 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <div className="glass-card p-6">
             <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">{t('dashboard.quickActions', 'Ações rápidas')}</h3>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-1">
               <Link
                 href="/patients?new=true"
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition-colors group"
+                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-stone-900/5 dark:hover:bg-white/5"
               >
-                <div className="p-2 bg-teal-100/80 rounded-lg group-hover:bg-teal-200/80 transition-colors">
-                  <Users className="w-4 h-4 text-teal-600" />
-                </div>
-                <span className="text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.newPatient', 'Novo paciente')}</span>
+                <Users className="w-4 h-4 shrink-0 text-stone-500 transition-colors group-hover:text-teal-600 dark:text-stone-400 dark:group-hover:text-teal-400" strokeWidth={1.75} />
+                <span className="flex-1 text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.newPatient', 'Novo paciente')}</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0 text-stone-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-stone-600" />
               </Link>
               <Link
                 href="/appointments?new=true"
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition-colors group"
+                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-stone-900/5 dark:hover:bg-white/5"
               >
-                <div className="p-2 bg-blue-100/80 rounded-lg group-hover:bg-blue-200/80 transition-colors">
-                  <Calendar className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.newAppointment', 'Nova consulta')}</span>
+                <Calendar className="w-4 h-4 shrink-0 text-stone-500 transition-colors group-hover:text-teal-600 dark:text-stone-400 dark:group-hover:text-teal-400" strokeWidth={1.75} />
+                <span className="flex-1 text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.newAppointment', 'Nova consulta')}</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0 text-stone-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-stone-600" />
               </Link>
               <Link
                 href="/ai-assistant"
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition-colors group"
+                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-stone-900/5 dark:hover:bg-white/5"
               >
-                <div className="p-2 bg-purple-100/80 rounded-lg group-hover:bg-purple-200/80 transition-colors">
-                  <Brain className="w-4 h-4 text-purple-600" />
-                </div>
-                <span className="text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.aiAnalysis', 'Análise com IA')}</span>
+                <Brain className="w-4 h-4 shrink-0 text-stone-500 transition-colors group-hover:text-teal-600 dark:text-stone-400 dark:group-hover:text-teal-400" strokeWidth={1.75} />
+                <span className="flex-1 text-sm font-medium text-stone-700 dark:text-stone-200">{t('dashboard.aiAnalysis', 'Análise com IA')}</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0 text-stone-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-stone-600" />
               </Link>
             </div>
           </div>
