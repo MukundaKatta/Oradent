@@ -131,7 +131,7 @@ export default function OrthodonticsPage() {
               <select
                 value={applianceType}
                 onChange={(e) => setApplianceType(e.target.value as OrthodonticApplianceType)}
-                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 [color-scheme:light]"
               >
                 {APPLIANCE_TYPES.map((type) => (
                   <option key={type} value={type}>
