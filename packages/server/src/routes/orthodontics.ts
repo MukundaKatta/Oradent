@@ -128,6 +128,8 @@ const createVisitSchema = z
     alignerStepNumber: z.number().int().positive().optional(),
     notes: z.string().optional(),
     nextVisitDate: z.string().transform((s) => new Date(s)).optional(),
+    cdtCode: z.string().optional(),
+    fee: z.number().min(0).optional(),
   })
   .refine(
     (data) =>
@@ -179,19 +181,48 @@ router.post('/cases/:caseId/visits', async (req: Request, res: Response) => {
     return;
   }
 
-  const visit = await prisma.orthodonticVisit.create({
-    data: {
-      caseId: orthoCase.id,
-      appointmentId: data.appointmentId,
-      date: data.date,
-      wireChanged: data.wireChanged ?? false,
-      wireStrength: data.wireStrength,
-      elasticsUsed: data.elasticsUsed,
-      alignerStepNumber: data.alignerStepNumber,
-      notes: data.notes,
-      nextVisitDate: data.nextVisitDate,
-    },
-  });
+  // ORTHO-07 AC2: cdtCode, when present at all, must be an orthodontic
+  // (D8xxx) code — checked independently of whether `fee` was also sent.
+  if (data.cdtCode !== undefined && !/^D8\d{3}$/.test(data.cdtCode)) {
+    res.status(400).json({ error: 'cdtCode must be an orthodontic code in the D8000-D8999 range' });
+    return;
+  }
+
+  const visitData = {
+    caseId: orthoCase.id,
+    appointmentId: data.appointmentId,
+    date: data.date,
+    wireChanged: data.wireChanged ?? false,
+    wireStrength: data.wireStrength,
+    elasticsUsed: data.elasticsUsed,
+    alignerStepNumber: data.alignerStepNumber,
+    notes: data.notes,
+    nextVisitDate: data.nextVisitDate,
+  };
+
+  // ORTHO-07 AC1/AC3: a linked Treatment is only created when both cdtCode
+  // and fee are supplied; when it is, Treatment + visit are created in a
+  // single Prisma transaction (AC8 of the visits story) so a failure to
+  // create the Treatment leaves no visit behind either.
+  const createsBilling = data.cdtCode !== undefined && data.fee !== undefined;
+
+  const visit = createsBilling
+    ? await prisma.$transaction(async (tx) => {
+        const treatment = await tx.treatment.create({
+          data: {
+            patientId: orthoCase.patientId,
+            providerId: req.auth!.providerId,
+            date: data.date,
+            cdtCode: data.cdtCode!,
+            description: `Orthodontic visit (${data.cdtCode})`,
+            fee: data.fee!,
+          },
+        });
+        return tx.orthodonticVisit.create({
+          data: { ...visitData, treatmentId: treatment.id },
+        });
+      })
+    : await prisma.orthodonticVisit.create({ data: visitData });
 
   res.status(201).json(visit);
 });

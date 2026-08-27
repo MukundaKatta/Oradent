@@ -258,6 +258,8 @@ T13 → T14 → T15 → T16
 **Gate**: quick
 **Commit**: `feat(orthodontics): link optional Treatment to visit creation`
 
+**Status**: ✅ Done
+
 ---
 
 ### T9: `GET /api/orthodontics/cases/:caseId/visits`

@@ -14,6 +14,24 @@ const orthodonticCaseUpdate = vi.fn();
 const appointmentFindFirst = vi.fn();
 const orthodonticVisitCreate = vi.fn();
 const orthodonticVisitFindMany = vi.fn();
+const treatmentCreate = vi.fn();
+
+// A minimal but faithful stand-in for prisma.$transaction: it invokes the
+// callback with a `tx` client backed by the SAME spies used elsewhere in
+// this file, so assertions on e.g. `orthodonticVisitCreate` reflect calls
+// made inside the transaction too. Critically, it does NOT swallow a
+// rejection from one step to let a later step still run — if the callback
+// throws (e.g. because `treatmentCreate` rejects), the whole thing rejects
+// before any subsequent tx call happens, which is what lets the T8
+// atomicity test prove the visit was never created when Treatment creation
+// fails, without needing a real Postgres transaction.
+const transactionMock = vi.fn(async (callback: (tx: unknown) => unknown) => {
+  const tx = {
+    orthodonticVisit: { create: (...args: unknown[]) => orthodonticVisitCreate(...args) },
+    treatment: { create: (...args: unknown[]) => treatmentCreate(...args) },
+  };
+  return callback(tx);
+});
 
 vi.mock('../src/config/database', () => ({
   prisma: {
@@ -31,6 +49,10 @@ vi.mock('../src/config/database', () => ({
       create: (...args: unknown[]) => orthodonticVisitCreate(...args),
       findMany: (...args: unknown[]) => orthodonticVisitFindMany(...args),
     },
+    treatment: {
+      create: (...args: unknown[]) => treatmentCreate(...args),
+    },
+    $transaction: (...args: [(tx: unknown) => unknown]) => transactionMock(...args),
   },
 }));
 
@@ -369,6 +391,75 @@ describe('POST /cases/:caseId/visits', () => {
     });
 
     expect(res.status).toBe(400);
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
+  });
+
+  // ORTHO-07 AC1: cdtCode + fee present -> Treatment created and linked via treatmentId
+  it('creates a linked Treatment when cdtCode and fee are provided', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(activeCase);
+    treatmentCreate.mockResolvedValue({ id: 'treatment-1', cdtCode: 'D8670', fee: 500 });
+    orthodonticVisitCreate.mockResolvedValue({ id: 'visit-1', treatmentId: 'treatment-1' });
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', wireChanged: true, cdtCode: 'D8670', fee: 500 }),
+    });
+
+    expect(res.status).toBe(201);
+    expect(treatmentCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ cdtCode: 'D8670', fee: 500 }) })
+    );
+    expect(orthodonticVisitCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ treatmentId: 'treatment-1' }) })
+    );
+  });
+
+  // ORTHO-07 AC2: cdtCode outside D8000-D8999 -> 400, nothing created
+  it('returns 400 when cdtCode is outside the D8000-D8999 orthodontic range', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(activeCase);
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', wireChanged: true, cdtCode: 'D1110', fee: 100 }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(treatmentCreate).not.toHaveBeenCalled();
+    expect(orthodonticVisitCreate).not.toHaveBeenCalled();
+  });
+
+  // ORTHO-07 AC3: neither cdtCode nor fee -> visit created without a Treatment
+  it('creates the visit without a Treatment when cdtCode/fee are absent', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(activeCase);
+    orthodonticVisitCreate.mockResolvedValue({ id: 'visit-1', treatmentId: null });
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', wireChanged: true }),
+    });
+
+    expect(res.status).toBe(201);
+    expect(treatmentCreate).not.toHaveBeenCalled();
+    const call = orthodonticVisitCreate.mock.calls[0][0];
+    expect(call.data).not.toHaveProperty('treatmentId');
+  });
+
+  // Visits story AC8: Treatment + visit created in one transaction; if Treatment
+  // creation fails, the visit must NOT be persisted either.
+  it('does not create the visit when the linked Treatment creation fails (transaction rollback)', async () => {
+    orthodonticCaseFindFirst.mockResolvedValue(activeCase);
+    treatmentCreate.mockRejectedValue(new Error('insert failed'));
+
+    const res = await json(baseUrl, '/cases/case-1/visits', {
+      method: 'POST',
+      body: JSON.stringify({ date: '2026-01-05', wireChanged: true, cdtCode: 'D8670', fee: 500 }),
+    });
+
+    expect(res.status).toBeGreaterThanOrEqual(500);
+    expect(treatmentCreate).toHaveBeenCalled();
+    // The visit-create call must never happen once Treatment creation
+    // threw inside the same $transaction callback — proving the two are
+    // atomic rather than two independent writes.
     expect(orthodonticVisitCreate).not.toHaveBeenCalled();
   });
 });
