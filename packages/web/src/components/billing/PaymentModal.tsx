@@ -58,7 +58,13 @@ export function PaymentModal({ open, onClose, onSave, invoice }: PaymentModalPro
   const onSubmit = async (data: PaymentFormData) => {
     setSaving(true);
     try {
-      await apiPost(`/api/billing/invoices/${invoice.id}/payments`, data);
+      await apiPost('/api/billing/payments', {
+        invoiceId: invoice.id,
+        amount: data.amount,
+        method: data.method,
+        reference: data.referenceNumber,
+        notes: data.notes,
+      });
       onSave();
     } catch (error) {
       console.error('Failed to record payment:', error);

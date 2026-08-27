@@ -3,11 +3,20 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { DollarSign, FileText, CreditCard, Plus } from 'lucide-react';
-import { useInvoices, usePayments } from '@/hooks/useBilling';
+import { usePatientLedger } from '@/hooks/useBilling';
+import { usePatient } from '@/hooks/usePatient';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { CreateInvoice } from '@/components/billing/CreateInvoice';
 import { PaymentModal } from "@/components/billing/PaymentModal";
 import { ptBR } from "@/i18n";
+
+const invoiceStatusStyle: Record<string, string> = {
+  PAID: 'bg-green-100 text-green-700',
+  OVERDUE: 'bg-red-100 text-red-700',
+  PARTIALLY_PAID: 'bg-amber-100 text-amber-700',
+  VOID: 'bg-stone-100 text-stone-500',
+  WRITE_OFF: 'bg-stone-100 text-stone-500',
+};
 
 export default function PatientBillingPage() {
   const params = useParams<{ id: string }>();
@@ -15,18 +24,21 @@ export default function PatientBillingPage() {
   const [showPayment, setShowPayment] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 
-  const { data: invoiceData, isLoading: invoicesLoading } = useInvoices({
-    patientId: params.id,
-  });
-  const { data: paymentData, isLoading: paymentsLoading } = usePayments(params.id);
+  const { data: patient } = usePatient(params.id);
+  const { data: ledger, isLoading } = usePatientLedger(params.id);
 
-  const invoices = invoiceData?.data ?? [];
-  const payments = paymentData?.data ?? [];
+  const invoices = ledger?.invoices ?? [];
+  const payments = invoices
+    .flatMap((inv) => inv.payments.map((p) => ({ ...p, invoiceNumber: inv.invoiceNumber })))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const totalBalance = invoices.reduce((sum, inv) => sum + (inv.total - inv.amountPaid), 0);
-  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+  const totalBalance = ledger?.summary.balance ?? 0;
+  const totalPaid = ledger?.summary.totalPayments ?? 0;
 
-  const isLoading = invoicesLoading || paymentsLoading;
+  const selectedInvoice = invoices.find((i) => i.id === selectedInvoiceId);
+  const selectedInvoicePaid = selectedInvoice
+    ? selectedInvoice.payments.reduce((sum, p) => sum + p.amount, 0)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -38,7 +50,7 @@ export default function PatientBillingPage() {
           className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          New Invoice
+          {ptBR.patientWorkflow.profile.billing.newInvoice}
         </button>
       </div>
 
@@ -121,48 +133,45 @@ export default function PatientBillingPage() {
               </tr>
             </thead>
             <tbody>
-              {invoices.map((invoice) => (
-                <tr key={invoice.id} className="border-b border-stone-100 hover:bg-stone-50 transition-colors">
-                  <td className="px-6 py-3 font-medium text-stone-900">
-                    {invoice.invoiceNumber}
-                  </td>
-                  <td className="px-6 py-3 text-stone-600">{formatDate(invoice.date)}</td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        invoice.status === 'paid'
-                          ? 'bg-green-100 text-green-700'
-                          : invoice.status === 'overdue'
-                          ? 'bg-red-100 text-red-700'
-                          : invoice.status === 'partial'
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-stone-100 text-stone-600'
-                      }`}
-                    >
-                      {ptBR.invoice.status[invoice.status.toUpperCase() as keyof typeof ptBR.invoice.status] ?? invoice.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 text-right text-stone-900">
-                    {formatCurrency(invoice.total)}
-                  </td>
-                  <td className="px-6 py-3 text-right font-medium text-stone-900">
-                    {formatCurrency(invoice.total - invoice.amountPaid)}
-                  </td>
-                  <td className="px-6 py-3 text-right">
-                    {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
-                      <button
-                        onClick={() => {
-                          setSelectedInvoiceId(invoice.id);
-                          setShowPayment(true);
-                        }}
-                        className="text-sm font-medium text-teal-600 hover:text-teal-700"
+              {invoices.map((invoice) => {
+                const paid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+                return (
+                  <tr key={invoice.id} className="border-b border-stone-100 hover:bg-stone-50 transition-colors">
+                    <td className="px-6 py-3 font-medium text-stone-900">
+                      {invoice.invoiceNumber}
+                    </td>
+                    <td className="px-6 py-3 text-stone-600">{formatDate(invoice.date)}</td>
+                    <td className="px-6 py-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          invoiceStatusStyle[invoice.status] ?? 'bg-stone-100 text-stone-600'
+                        }`}
                       >
-                        Record Payment
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                        {ptBR.invoice.status[invoice.status] ?? invoice.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-right text-stone-900">
+                      {formatCurrency(invoice.total)}
+                    </td>
+                    <td className="px-6 py-3 text-right font-medium text-stone-900">
+                      {formatCurrency(invoice.total - paid)}
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      {invoice.status !== 'PAID' && invoice.status !== 'VOID' && invoice.status !== 'WRITE_OFF' && (
+                        <button
+                          onClick={() => {
+                            setSelectedInvoiceId(invoice.id);
+                            setShowPayment(true);
+                          }}
+                          className="text-sm font-medium text-teal-600 hover:text-teal-700"
+                        >
+                          {ptBR.patientWorkflow.profile.billing.recordPayment}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         ) : (
@@ -193,7 +202,7 @@ export default function PatientBillingPage() {
                   <td className="px-6 py-3 text-stone-600">{formatDate(payment.date)}</td>
                   <td className="px-6 py-3">
                     <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
-                      {ptBR.payment.method[payment.method as keyof typeof ptBR.payment.method] ?? payment.method.replace("_", " ")}
+                      {ptBR.payment.method[payment.method] ?? payment.method.replace("_", " ")}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-stone-500">{payment.reference || '-'}</td>
@@ -221,7 +230,7 @@ export default function PatientBillingPage() {
         />
       )}
 
-      {showPayment && selectedInvoiceId && (
+      {showPayment && selectedInvoice && (
         <PaymentModal
           open={showPayment}
           onClose={() => {
@@ -232,7 +241,13 @@ export default function PatientBillingPage() {
             setShowPayment(false);
             setSelectedInvoiceId(null);
           }}
-          invoice={invoices.find((i) => i.id === selectedInvoiceId)!}
+          invoice={{
+            id: selectedInvoice.id,
+            invoiceNumber: selectedInvoice.invoiceNumber,
+            patientName: patient ? `${patient.firstName} ${patient.lastName}` : '',
+            total: selectedInvoice.total,
+            amountPaid: selectedInvoicePaid,
+          }}
         />
       )}
     </div>

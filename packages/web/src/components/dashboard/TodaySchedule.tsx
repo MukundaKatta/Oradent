@@ -6,15 +6,17 @@ import Link from 'next/link';
 import { Clock, CalendarPlus } from 'lucide-react';
 import { t } from '@/i18n';
 import { appointmentStatusLabel, appointmentTypeLabel } from '@/components/appointments/appointmentLabels';
+import { formatTime } from '@/lib/formatters';
 
 const statusColors: Record<string, string> = {
-  scheduled: 'bg-stone-100 text-stone-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  'checked-in': 'bg-teal-100 text-teal-700',
-  'in-progress': 'bg-amber-100 text-amber-700',
-  completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
-  'no-show': 'bg-rose-100 text-rose-700',
+  SCHEDULED: 'bg-stone-100 text-stone-700',
+  CONFIRMED: 'bg-blue-100 text-blue-700',
+  CHECKED_IN: 'bg-teal-100 text-teal-700',
+  IN_CHAIR: 'bg-amber-100 text-amber-700',
+  COMPLETED: 'bg-green-100 text-green-700',
+  CANCELLED: 'bg-red-100 text-red-700',
+  NO_SHOW: 'bg-rose-100 text-rose-700',
+  RESCHEDULED: 'bg-stone-100 text-stone-700',
 };
 
 function ScheduleSkeleton() {
@@ -43,16 +45,16 @@ function ScheduleRow({ item }: { item: TodayScheduleItem }) {
     >
       <span className="text-sm font-medium text-stone-900 dark:text-stone-100 w-16 shrink-0 flex items-center gap-1.5">
         <Clock className="w-3.5 h-3.5 text-stone-400 dark:text-stone-500" />
-        {item.time}
+        {formatTime(item.startTime)}
       </span>
       <span className="text-sm font-medium text-stone-900 dark:text-stone-100 flex-1 min-w-0 truncate">
-        {item.patientName}
+        {item.patient ? `${item.patient.firstName} ${item.patient.lastName}` : ''}
       </span>
       <span className="text-sm text-stone-500 dark:text-stone-400 w-28 shrink-0 truncate hidden sm:block">
         {appointmentTypeLabel(item.type)}
       </span>
       <span className="text-sm text-stone-500 dark:text-stone-400 w-16 shrink-0 hidden md:block">
-        {item.chair}
+        {item.chair?.name ?? '-'}
       </span>
       <span
         className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${

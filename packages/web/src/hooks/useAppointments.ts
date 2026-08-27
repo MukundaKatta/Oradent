@@ -1,72 +1,62 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPut } from '@/lib/api';
 
+// Mirrors packages/server/src/routes/appointments.ts and prisma/schema.prisma's
+// Appointment model + enums.
+
+export type AppointmentType =
+  | 'EXAM' | 'CLEANING' | 'FILLING' | 'CROWN' | 'ROOT_CANAL'
+  | 'EXTRACTION' | 'IMPLANT' | 'COSMETIC' | 'EMERGENCY'
+  | 'CONSULTATION' | 'FOLLOW_UP' | 'OTHER';
+
+export type AppointmentStatus =
+  | 'SCHEDULED' | 'CONFIRMED' | 'CHECKED_IN' | 'IN_CHAIR'
+  | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW' | 'RESCHEDULED';
+
 export interface Appointment {
   id: string;
   patientId: string;
-  patientName: string;
+  patient?: { id: string; firstName: string; lastName: string; phone?: string };
   providerId: string;
-  providerName: string;
-  date: string;
+  provider?: { id: string; name: string; color: string; title?: string };
+  chairId?: string | null;
+  chair?: { id: string; name: string } | null;
   startTime: string;
   endTime: string;
-  type: string;
-  chair: string;
-  status: 'scheduled' | 'confirmed' | 'checked-in' | 'in-progress' | 'completed' | 'cancelled' | 'no-show';
-  notes?: string;
-  procedures?: string[];
+  duration: number;
+  type: AppointmentType;
+  status: AppointmentStatus;
+  reason?: string | null;
+  procedures: string[];
+  notes?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface TodayScheduleItem {
-  id: string;
-  time: string;
-  patientName: string;
-  patientId: string;
-  type: string;
-  chair: string;
-  status: Appointment['status'];
-  duration: number;
-  provider: string;
-}
+// GET /today/schedule returns the same Appointment shape as the list
+// endpoint (no flattened {time, patientName, chair, provider} view exists
+// server-side).
+export type TodayScheduleItem = Appointment;
 
 export interface AppointmentListParams {
-  date?: string;
-  startDate?: string;
-  endDate?: string;
+  start?: string;
+  end?: string;
   providerId?: string;
-  patientId?: string;
+  chairId?: string;
   status?: string;
-  page?: number;
-  limit?: number;
 }
-
-export interface AppointmentListResponse {
-  data: Appointment[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-export type CreateAppointmentInput = Omit<Appointment, 'id' | 'createdAt' | 'updatedAt' | 'patientName' | 'providerName'>;
-export type UpdateAppointmentInput = Partial<CreateAppointmentInput>;
 
 export function useAppointments(params: AppointmentListParams = {}) {
   const queryString = new URLSearchParams();
-  if (params.date) queryString.set('date', params.date);
-  if (params.startDate) queryString.set('startDate', params.startDate);
-  if (params.endDate) queryString.set('endDate', params.endDate);
+  if (params.start) queryString.set('start', params.start);
+  if (params.end) queryString.set('end', params.end);
   if (params.providerId) queryString.set('providerId', params.providerId);
-  if (params.patientId) queryString.set('patientId', params.patientId);
+  if (params.chairId) queryString.set('chairId', params.chairId);
   if (params.status) queryString.set('status', params.status);
-  if (params.page) queryString.set('page', String(params.page));
-  if (params.limit) queryString.set('limit', String(params.limit));
 
-  return useQuery<AppointmentListResponse>({
+  return useQuery<Appointment[]>({
     queryKey: ['appointments', params],
-    queryFn: () => apiGet<AppointmentListResponse>(`/api/appointments?${queryString.toString()}`),
+    queryFn: () => apiGet<Appointment[]>(`/api/appointments?${queryString.toString()}`),
   });
 }
 
@@ -77,6 +67,22 @@ export function useTodaySchedule() {
     refetchInterval: 60_000,
   });
 }
+
+export type CreateAppointmentInput = {
+  patientId: string;
+  providerId: string;
+  chairId?: string;
+  startTime: string;
+  duration: number;
+  type: AppointmentType;
+  reason?: string;
+  procedures?: string[];
+  notes?: string;
+  isRecurring?: boolean;
+  recurringRule?: string;
+};
+
+export type UpdateAppointmentInput = Partial<CreateAppointmentInput> & { status?: AppointmentStatus };
 
 export function useCreateAppointment() {
   const queryClient = useQueryClient();
